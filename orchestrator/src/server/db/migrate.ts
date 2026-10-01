@@ -179,6 +179,10 @@ const pipelineRunsHasConfigSnapshot = tableHasColumn(
 const pipelineRunsHasTenantId = tableHasColumn("pipeline_runs", "tenant_id");
 const jobsHasPdfRegenerating = tableHasColumn("jobs", "pdf_regenerating");
 const jobsHasJobBrief = tableHasColumn("jobs", "job_brief");
+const postApplicationMessagesHasMessageType = tableHasColumn(
+  "post_application_messages",
+  "message_type",
+);
 const watchlistJobStatesHasUserId = tableHasColumn(
   "watchlist_job_states",
   "user_id",
@@ -864,14 +868,16 @@ const migrations = [
   `UPDATE post_application_messages
    SET match_confidence = CAST(round(COALESCE(relevance_llm_score, 0)) AS INTEGER)
    WHERE match_confidence IS NULL`,
-  `UPDATE post_application_messages
-   SET message_type = CASE
-      WHEN lower(COALESCE(classification_label, '')) LIKE '%interview%' THEN 'interview'
-      WHEN lower(COALESCE(classification_label, '')) LIKE '%offer%' THEN 'offer'
-      WHEN lower(COALESCE(classification_label, '')) LIKE '%reject%' THEN 'rejection'
-      WHEN lower(COALESCE(classification_label, '')) IN ('false positive', 'did not apply - inbound request') THEN 'other'
-      ELSE 'update'
-   END`,
+  postApplicationMessagesHasMessageType
+    ? `SELECT 1`
+    : `UPDATE post_application_messages
+       SET message_type = CASE
+          WHEN lower(COALESCE(classification_label, '')) LIKE '%interview%' THEN 'interview'
+          WHEN lower(COALESCE(classification_label, '')) LIKE '%offer%' THEN 'offer'
+          WHEN lower(COALESCE(classification_label, '')) LIKE '%reject%' THEN 'rejection'
+          WHEN lower(COALESCE(classification_label, '')) IN ('false positive', 'did not apply - inbound request') THEN 'other'
+          ELSE 'update'
+       END`,
   `UPDATE post_application_messages
    SET processing_status = CASE
       WHEN review_status = 'approved' THEN 'manual_linked'

@@ -375,4 +375,62 @@ describe.sequential("database migrations", () => {
       },
     );
   });
+  it("preserves existing post-application message_type across repeated startup migrations", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "job-ops-migrate-"));
+    const script = `
+      import { join } from "node:path";
+      import { pathToFileURL } from "node:url";
+      import Database from "better-sqlite3";
+
+      const dbPath = join(process.env.DATA_DIR, "jobs.db");
+      const migrationUrl = pathToFileURL(join(process.cwd(), "src/server/db/migrate.ts")).href;
+
+      await import(\`\${migrationUrl}?run=initial\`);
+
+      const sqlite = new Database(dbPath);
+      sqlite.prepare(
+        \`INSERT INTO post_application_messages(
+          id, provider, account_key, external_message_id, from_address,
+          subject, received_at, snippet, classification_label, message_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)\`,
+      ).run(
+        "message-1",
+        "gmail",
+        "default",
+        "external-1",
+        "recruiter@example.com",
+        "Application update",
+        1,
+        "Thanks for your application.",
+        "Application Update",
+        "other",
+      );
+      sqlite.close();
+
+      await import(\`\${migrationUrl}?run=restart\`);
+
+      const migratedDb = new Database(dbPath, { readonly: true });
+      const row = migratedDb
+        .prepare("SELECT message_type FROM post_application_messages WHERE id = ?")
+        .get("message-1");
+      if (row?.message_type !== "other") {
+        throw new Error(
+          \`Expected existing message_type to remain other after restart migration, got \${row?.message_type}\`,
+        );
+      }
+      migratedDb.close();
+    `;
+
+    execFileSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "-e", script],
+      {
+        env: {
+          ...process.env,
+          DATA_DIR: tempDir,
+        },
+        stdio: "pipe",
+      },
+    );
+  });
 });
