@@ -1611,8 +1611,21 @@ describe.sequential("Jobs API routes", () => {
       jobDescription: "Test description",
     });
 
+    const denied = await fetch(`${baseUrl}/api/jobs/${job.id}/apply`, {
+      method: "POST",
+    });
+    expect(denied.status).toBe(409);
     const res = await fetch(`${baseUrl}/api/jobs/${job.id}/apply`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        evidence: {
+          kind: "submission",
+          sourceType: "manual_verified",
+          verifiedBy: "user",
+          note: "Checked submission confirmation page on 2026-10-01",
+        },
+      }),
     });
     const body = await res.json();
     expect(body.ok).toBe(true);
@@ -1823,15 +1836,37 @@ describe.sequential("Jobs API routes", () => {
       const { trackCanonicalActivationEvent } = await import(
         "@server/services/activation-funnel"
       );
-      // 1. Initial transition to applied
+      // 1. Critical transition is blocked without evidence.
+      const blockedApplied = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/stages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ toStage: "applied" }),
+        },
+      );
+      expect(blockedApplied.status).toBe(409);
+
+      // 2. Initial transition to applied with verified submission evidence.
       const trans1 = await fetch(`${baseUrl}/api/jobs/${jobId}/stages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toStage: "applied" }),
+        body: JSON.stringify({
+          toStage: "applied",
+          metadata: {
+            evidence: {
+              kind: "submission",
+              sourceType: "manual_verified",
+              note: "User verified submission in API test.",
+              verifiedBy: "user",
+            },
+          },
+        }),
       });
       const body1 = await trans1.json();
       expect(body1.ok).toBe(true);
       expect(body1.data.toStage).toBe("applied");
+      expect(body1.data.metadata.evidence.kind).toBe("submission");
       const eventId = body1.data.id;
       expect(trackCanonicalActivationEvent).toHaveBeenCalledWith(
         "application_marked_applied",
@@ -1843,17 +1878,29 @@ describe.sequential("Jobs API routes", () => {
         }),
       );
 
-      // 2. Transition to recruiter_screen with metadata
-      await fetch(`${baseUrl}/api/jobs/${jobId}/stages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toStage: "recruiter_screen",
-          metadata: { note: "Called by recruiter" },
-        }),
-      });
+      // 3. Transition to recruiter_screen with verified interview evidence.
+      const recruiterTransition = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/stages`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toStage: "recruiter_screen",
+            metadata: {
+              note: "Called by recruiter",
+              evidence: {
+                kind: "interview",
+                sourceType: "manual_verified",
+                note: "User verified recruiter contact in API test.",
+                verifiedBy: "user",
+              },
+            },
+          }),
+        },
+      );
+      expect(recruiterTransition.status).toBe(200);
 
-      // 3. Get events
+      // 4. Get events
       const eventsRes = await fetch(`${baseUrl}/api/jobs/${jobId}/events`);
       const eventsBody = await eventsRes.json();
       expect(eventsBody.ok).toBe(true);
@@ -1871,7 +1918,7 @@ describe.sequential("Jobs API routes", () => {
         }),
       );
 
-      // 4. Patch an event
+      // 5. Patch an event
       const patchRes = await fetch(
         `${baseUrl}/api/jobs/${jobId}/events/${eventId}`,
         {
@@ -1885,8 +1932,9 @@ describe.sequential("Jobs API routes", () => {
       const eventsRes2 = await fetch(`${baseUrl}/api/jobs/${jobId}/events`);
       const eventsBody2 = await eventsRes2.json();
       expect(eventsBody2.data[0].metadata.note).toBe("Updated note");
+      expect(eventsBody2.data[0].metadata.evidence.kind).toBe("submission");
 
-      // 5. Delete an event
+      // 6. Delete an event
       const deleteRes = await fetch(
         `${baseUrl}/api/jobs/${jobId}/events/${eventId}`,
         {
@@ -1980,24 +2028,134 @@ describe.sequential("Jobs API routes", () => {
       expect(body4.data).toHaveLength(1);
     });
 
-    it("updates job outcome", async () => {
+    it("updates job outcome with rejection evidence", async () => {
       const { trackCanonicalActivationEvent } = await import(
         "@server/services/activation-funnel"
       );
-      const res = await fetch(`${baseUrl}/api/jobs/${jobId}/outcome`, {
+
+      const blocked = await fetch(`${baseUrl}/api/jobs/${jobId}/outcome`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ outcome: "rejected" }),
+      });
+      expect(blocked.status).toBe(409);
+
+      const res = await fetch(`${baseUrl}/api/jobs/${jobId}/outcome`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          outcome: "rejected",
+          evidence: {
+            kind: "rejection",
+            sourceType: "manual_verified",
+            note: "User verified rejection in API test.",
+            verifiedBy: "user",
+          },
+        }),
       });
       const body = await res.json();
       expect(body.ok).toBe(true);
       expect(body.data.outcome).toBe("rejected");
       expect(body.data.closedAt).toBeTruthy();
+
+      const eventsRes = await fetch(`${baseUrl}/api/jobs/${jobId}/events`);
+      const eventsBody = await eventsRes.json();
+      expect(eventsBody.ok).toBe(true);
+      expect(eventsBody.data).toHaveLength(1);
+      expect(eventsBody.data[0].toStage).toBe("closed");
+      expect(eventsBody.data[0].outcome).toBe("rejected");
+      expect(eventsBody.data[0].metadata.evidence.kind).toBe("rejection");
+
       expect(trackCanonicalActivationEvent).not.toHaveBeenCalledWith(
         "application_accepted",
         expect.anything(),
         expect.anything(),
       );
+    });
+
+    it("requires user-verified evidence for critical hard-exclusion facts", async () => {
+      const missing = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/verified-facts/no_sponsorship`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+      );
+      expect(missing.status).toBe(400);
+
+      const wrongKind = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/verified-facts/no_sponsorship`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            evidence: {
+              kind: "mandatory_license",
+              sourceType: "url",
+              sourceUrl: "https://example.com/job-requirements",
+              verifiedBy: "user",
+            },
+          }),
+        },
+      );
+      expect(wrongKind.status).toBe(400);
+
+      const systemOnly = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/verified-facts/no_sponsorship`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            evidence: {
+              kind: "no_sponsorship",
+              sourceType: "url",
+              sourceUrl: "https://example.com/job-requirements",
+              verifiedBy: "system",
+            },
+          }),
+        },
+      );
+      expect(systemOnly.status).toBe(400);
+
+      const put = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/verified-facts/no_sponsorship`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            evidence: {
+              kind: "no_sponsorship",
+              sourceType: "url",
+              sourceUrl: "https://example.com/job-requirements",
+              note: "User verified the employer statement.",
+              verifiedBy: "user",
+            },
+          }),
+        },
+      );
+      const putBody = await put.json();
+      expect(put.status).toBe(200);
+      expect(putBody.data.factKey).toBe("no_sponsorship");
+      expect(putBody.data.evidence.kind).toBe("no_sponsorship");
+
+      const list = await fetch(`${baseUrl}/api/jobs/${jobId}/verified-facts`);
+      expect(list.status).toBe(200);
+      const listBody = await list.json();
+      expect(listBody.data).toHaveLength(1);
+      expect(listBody.data[0].factKey).toBe("no_sponsorship");
+
+      const del = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/verified-facts/no_sponsorship`,
+        { method: "DELETE" },
+      );
+      expect(del.status).toBe(200);
+
+      const afterDelete = await fetch(
+        `${baseUrl}/api/jobs/${jobId}/verified-facts`,
+      );
+      const afterDeleteBody = await afterDelete.json();
+      expect(afterDeleteBody.data).toEqual([]);
     });
 
     it("tracks accepted outcomes as a canonical backend event", async () => {

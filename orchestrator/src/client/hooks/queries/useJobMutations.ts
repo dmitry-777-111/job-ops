@@ -6,6 +6,7 @@ import type {
 } from "@shared/types";
 import type { QueryClient } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { requestManualEvidence } from "@/client/lib/evidence";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { invalidateJobData } from "./invalidate";
 
@@ -32,15 +33,14 @@ export function useUpdateJobMutation() {
 export function useMarkAsAppliedMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.markAsApplied(id),
+    mutationFn: (id: string) =>
+      api.markAsApplied(id, requestManualEvidence("submission")),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.jobs.detail(id) });
       const previousJob = queryClient.getQueryData<Job>(
         queryKeys.jobs.detail(id),
       );
-      queryClient.setQueryData<Job>(queryKeys.jobs.detail(id), (current) =>
-        current ? { ...current, status: "applied" } : current,
-      );
+      // Applied is displayed only after the server accepts the evidence.
       return { previousJob, id };
     },
     onError: (_error, _id, context) => {

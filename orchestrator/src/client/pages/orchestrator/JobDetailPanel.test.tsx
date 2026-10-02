@@ -196,6 +196,9 @@ const getApplyPanel = () => screen.getByRole("tabpanel", { name: /apply/i });
 
 describe("JobDetailPanel", () => {
   beforeEach(() => {
+    vi.spyOn(window, "prompt").mockReturnValue(
+      "Verified submission confirmation from employer portal",
+    );
     vi.clearAllMocks();
     mockSettings.settings = null;
     mockSettings.renderMarkdownInJobDescriptions = true;
@@ -630,7 +633,14 @@ describe("JobDetailPanel", () => {
     );
 
     await waitFor(() =>
-      expect(api.markAsApplied).toHaveBeenCalledWith("job-1"),
+      expect(api.markAsApplied).toHaveBeenCalledWith(
+        "job-1",
+        expect.objectContaining({
+          kind: "submission",
+          sourceType: "manual_verified",
+          verifiedBy: "user",
+        }),
+      ),
     );
     expect(onJobUpdated).toHaveBeenCalled();
   });

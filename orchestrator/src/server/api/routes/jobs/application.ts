@@ -6,7 +6,10 @@ import { isDemoMode } from "@server/config/demo";
 import { resolveRequestOrigin } from "@server/infra/request-origin";
 import * as jobsRepo from "@server/repositories/jobs";
 import { trackCanonicalActivationEvent } from "@server/services/activation-funnel";
-import { transitionStage } from "@server/services/applicationTracking";
+import {
+  stageEvidenceSchema,
+  transitionStage,
+} from "@server/services/applicationTracking";
 import { simulateApplyJob } from "@server/services/demo-simulator";
 import { notifyJobCompleteWebhook } from "@server/services/jobs/webhooks";
 import * as visaSponsors from "@server/services/visa-sponsors/index";
@@ -91,7 +94,10 @@ jobsApplicationRouter.post(
         Math.floor(appliedAtDate.getTime() / 1000),
         {
           eventLabel: "Applied",
-          actor: "system",
+          actor: "user",
+          evidence: req.body?.evidence
+            ? stageEvidenceSchema.parse(req.body.evidence)
+            : null,
         },
         null,
       );

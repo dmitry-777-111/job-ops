@@ -3,14 +3,8 @@ import * as pipeline from "@server/pipeline/index";
 import { buildPipelineRunSavedDetails } from "@server/pipeline/run-details";
 import * as jobsRepo from "@server/repositories/jobs";
 import * as pipelineRepo from "@server/repositories/pipeline";
-import { transitionStage } from "@server/services/applicationTracking";
 import { persistDemoGeneratedPdf } from "@server/services/demo-pdf";
-import type {
-  Job,
-  JobSource,
-  PipelineConfig,
-  StageEventMetadata,
-} from "@shared/types";
+import type { Job, JobSource, PipelineConfig } from "@shared/types";
 
 type ProcessOptions = {
   force?: boolean;
@@ -177,18 +171,9 @@ export async function simulateRescoreJob(jobId: string): Promise<Job> {
 export async function simulateApplyJob(jobId: string): Promise<Job> {
   const job = await ensureJob(jobId);
   const appliedAtDate = new Date();
-  transitionStage(
-    job.id,
-    "applied",
-    Math.floor(appliedAtDate.getTime() / 1000),
-    {
-      eventLabel: "Applied (Demo Simulation)",
-      actor: "system",
-      note: "This apply action was simulated in demo mode.",
-    } satisfies StageEventMetadata,
-    null,
-  );
 
+  // Demo mode may present a simulated applied state, but it must not create a
+  // production stage event with fabricated submission evidence.
   const updated = await jobsRepo.updateJob(job.id, {
     status: "applied",
     appliedAt: appliedAtDate.toISOString(),

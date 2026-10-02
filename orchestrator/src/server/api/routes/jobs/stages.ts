@@ -120,11 +120,27 @@ jobsStagesRouter.patch("/:id/outcome", async (req: Request, res: Response) => {
     const closedAt = input.outcome
       ? (input.closedAt ?? Math.floor(Date.now() / 1000))
       : null;
-    const job = await jobsRepo.updateJob(req.params.id, {
-      outcome: input.outcome,
-      closedAt,
-    });
 
+    if (input.outcome === "rejected") {
+      transitionStage(
+        req.params.id,
+        "closed",
+        closedAt ?? undefined,
+        {
+          actor: "user",
+          eventLabel: "Rejected",
+          evidence: input.evidence ?? null,
+        },
+        "rejected",
+      );
+    } else {
+      await jobsRepo.updateJob(req.params.id, {
+        outcome: input.outcome,
+        closedAt,
+      });
+    }
+
+    const job = await jobsRepo.getJobById(req.params.id);
     if (!job) {
       return fail(res, notFound("Job not found"));
     }

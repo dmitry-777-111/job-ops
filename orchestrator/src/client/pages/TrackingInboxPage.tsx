@@ -654,7 +654,9 @@ export const TrackingInboxPage: React.FC = () => {
           <p className="text-sm text-muted-foreground">
             Connect your inbox to ingest related emails, review the suggested
             job matches, and approve or deny to automatically update your
-            tracking timeline.
+            tracking timeline. Approving confirms you personally checked the
+            original email and its suggested stage. AI classifications alone are
+            not evidence.
           </p>
         </section>
 
@@ -931,7 +933,7 @@ export const TrackingInboxPage: React.FC = () => {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {inboxActionDialog.action === "approve"
-                ? `This will approve ${inboxActionDialog.itemCount} message${inboxActionDialog.itemCount === 1 ? "" : "s"} with suggested job matches. Messages without matches will be skipped.`
+                ? `This will approve ${inboxActionDialog.itemCount} message${inboxActionDialog.itemCount === 1 ? "" : "s"} with suggested job matches. Messages without matches will be skipped. Continue only if you personally verified every included original email and stage; AI classifications are not evidence.`
                 : `This will ignore all ${inboxActionDialog.itemCount} pending message${inboxActionDialog.itemCount === 1 ? "" : "s"}.`}
             </AlertDialogDescription>
           </AlertDialogHeader>

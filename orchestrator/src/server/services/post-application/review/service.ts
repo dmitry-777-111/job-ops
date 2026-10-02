@@ -152,6 +152,21 @@ export async function approvePostApplicationInboxItem(args: {
     const transition = resolveStageTransitionForTarget(resolvedTarget);
 
     if (transition.toStage !== "no_change") {
+      const evidenceKind =
+        transition.outcome === "rejected"
+          ? "rejection"
+          : transition.toStage === "applied"
+            ? "submission"
+            : [
+                  "recruiter_screen",
+                  "assessment",
+                  "hiring_manager_screen",
+                  "technical_interview",
+                  "onsite",
+                ].includes(transition.toStage)
+              ? "interview"
+              : null;
+
       const event = transitionStage(
         resolvedJobId,
         transition.toStage,
@@ -161,11 +176,22 @@ export async function approvePostApplicationInboxItem(args: {
             : decidedAt / 1000,
         ),
         {
-          actor: "system",
+          actor: "user",
           eventType: "status_update",
           eventLabel: `Post-application: ${resolvedTarget}`,
           note: args.note ?? null,
           reasonCode: transition.reasonCode ?? "post_application_manual_linked",
+          evidence: evidenceKind
+            ? {
+                kind: evidenceKind,
+                sourceType: "gmail_message",
+                sourceId: message.id,
+                note:
+                  args.note ??
+                  `User verified Gmail message: ${message.subject}`,
+                verifiedBy: "user",
+              }
+            : undefined,
         },
         transition.outcome,
       );

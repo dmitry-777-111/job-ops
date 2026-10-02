@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { AppError } from "@infra/errors";
 import { trackServerProductEvent } from "@infra/product-analytics";
 import { trackCanonicalActivationEvent } from "@server/services/activation-funnel";
 import type {
@@ -58,8 +59,90 @@ const INTERVIEW_STAGES = new Set<ApplicationStage>([
   "onsite",
 ]);
 
+export const stageEvidenceSchema = z
+  .object({
+    kind: z.enum([
+      "submission",
+      "interview",
+      "rejection",
+      "no_sponsorship",
+      "mandatory_license",
+      "us_authorization_required",
+    ]),
+    sourceType: z.enum([
+      "manual_verified",
+      "gmail_message",
+      "calendar_event",
+      "document",
+      "url",
+    ]),
+    sourceId: z.string().trim().min(1).nullable().optional(),
+    sourceUrl: z
+      .string()
+      .trim()
+      .url()
+      .regex(/^https?:\/\//i, "Use an HTTP(S) source URL")
+      .nullable()
+      .optional(),
+    note: z.string().trim().min(1).nullable().optional(),
+    verifiedBy: z.literal("user"),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (
+      value.sourceType === "manual_verified" &&
+      (!value.note || value.verifiedBy !== "user")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "manual_verified evidence requires a user verification note",
+      });
+    }
+    if (
+      ["gmail_message", "calendar_event", "document"].includes(
+        value.sourceType,
+      ) &&
+      !value.sourceId
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${value.sourceType} evidence requires sourceId`,
+      });
+    }
+    if (value.sourceType === "url" && !value.sourceUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "url evidence requires sourceUrl",
+      });
+    }
+  });
+
+export function validateEvidenceSource(
+  evidence: z.infer<typeof stageEvidenceSchema>,
+): void {
+  if (evidence.sourceType !== "gmail_message") return;
+  const messages = schema.postApplicationMessages;
+  const message = db
+    .select({ id: messages.id })
+    .from(messages)
+    .where(
+      and(
+        privateDataScopeFilter(messages),
+        eq(messages.id, evidence.sourceId ?? ""),
+      ),
+    )
+    .get();
+  if (!message)
+    throw new AppError({
+      status: 400,
+      code: "INVALID_REQUEST",
+      message: "Gmail evidence must reference an accessible stored message",
+    });
+}
+
 export const stageEventMetadataSchema = z
   .object({
+    evidence: stageEvidenceSchema.nullable().optional(),
     note: z.string().nullable().optional(),
     actor: z.enum(["system", "user"]).optional(),
     groupId: z.string().nullable().optional(),
@@ -73,6 +156,69 @@ export const stageEventMetadataSchema = z
       .optional(),
   })
   .strict();
+
+const EVIDENCE_REQUIRED_INTERVIEW_STAGES = new Set<ApplicationStage>([
+  "recruiter_screen",
+  "assessment",
+  "hiring_manager_screen",
+  "technical_interview",
+  "onsite",
+]);
+
+function requireStageEvidence(
+  toStage: ApplicationStage | "no_change",
+  outcome: JobOutcome | null | undefined,
+  metadata: StageEventMetadata | null,
+): void {
+  if (
+    outcome === "rejected" &&
+    toStage !== "closed" &&
+    toStage !== "no_change"
+  ) {
+    throw new AppError({
+      status: 409,
+      code: "CONFLICT",
+      message: "Rejection requires a closed stage",
+    });
+  }
+  if (toStage === "no_change" && outcome !== "rejected") return;
+
+  const expectedKind =
+    outcome === "rejected"
+      ? "rejection"
+      : toStage === "applied"
+        ? "submission"
+        : toStage !== "no_change" &&
+            EVIDENCE_REQUIRED_INTERVIEW_STAGES.has(toStage)
+          ? "interview"
+          : null;
+
+  if (!expectedKind) return;
+
+  const evidence = metadata?.evidence;
+  if (
+    !evidence ||
+    evidence.kind !== expectedKind ||
+    evidence.verifiedBy !== "user" ||
+    metadata?.actor === "system" ||
+    (expectedKind === "interview" &&
+      !["gmail_message", "calendar_event", "manual_verified"].includes(
+        evidence.sourceType,
+      ))
+  ) {
+    throw new AppError({
+      status: 409,
+      code: "CONFLICT",
+      message: `${expectedKind} evidence is required before moving to ${toStage}`,
+      details: {
+        evidenceRequired: true,
+        expectedKind,
+        toStage,
+        outcome: outcome ?? null,
+      },
+    });
+  }
+}
 
 export async function getStageEvents(
   applicationId: string,
@@ -141,6 +287,9 @@ export function transitionStage(
     ? stageEventMetadataSchema.parse(metadata)
     : null;
 
+  requireStageEvidence(toStage, outcome, parsedMetadata);
+
+  if (parsedMetadata?.evidence) validateEvidenceSource(parsedMetadata.evidence);
   const now = Math.floor(Date.now() / 1000);
   const timestamp = occurredAt ?? now;
   const scope = getPrivateDataScope();
@@ -259,11 +408,58 @@ export function updateStageEvent(
       .get();
     if (!event) throw new Error("Event not found");
 
+    const existingMetadata = parseMetadata(event.metadata);
+    const hasEvidenceUpdate =
+      metadata != null && Object.hasOwn(metadata, "evidence");
+    if (
+      hasEvidenceUpdate &&
+      existingMetadata?.evidence &&
+      !parsedMetadata?.evidence
+    ) {
+      throw new AppError({
+        status: 409,
+        code: "CONFLICT",
+        message: "Existing stage evidence cannot be removed",
+        details: { evidenceRequired: true, eventId },
+      });
+    }
+
+    const effectiveMetadata =
+      parsedMetadata !== undefined
+        ? {
+            ...(existingMetadata ?? {}),
+            ...parsedMetadata,
+            evidence: hasEvidenceUpdate
+              ? parsedMetadata.evidence
+              : existingMetadata?.evidence,
+          }
+        : existingMetadata;
+    const effectiveStage = (toStage ?? event.toStage) as ApplicationStage;
+    const effectiveOutcome = hasOutcome
+      ? (outcome ?? null)
+      : toStage && !isClosingStage(toStage)
+        ? null
+        : ((event.outcome as JobOutcome | null) ?? null);
+
+    if (
+      toStage ||
+      hasEvidenceUpdate ||
+      (hasOutcome && outcome === "rejected")
+    ) {
+      requireStageEvidence(
+        effectiveStage,
+        effectiveOutcome,
+        effectiveMetadata ?? null,
+      );
+    }
+
+    if (parsedMetadata?.evidence)
+      validateEvidenceSource(parsedMetadata.evidence);
     const updates: Partial<typeof stageEvents.$inferInsert> = {};
     if (toStage) updates.toStage = toStage;
     if (occurredAt) updates.occurredAt = occurredAt;
     if (parsedMetadata !== undefined) {
-      updates.metadata = parsedMetadata;
+      updates.metadata = effectiveMetadata;
       if (parsedMetadata?.eventLabel) updates.title = parsedMetadata.eventLabel;
       if (parsedMetadata?.groupId !== undefined)
         updates.groupId = parsedMetadata.groupId;
@@ -277,6 +473,10 @@ export function updateStageEvent(
       .set(updates)
       .where(and(stageEventsScopeFilter(), eq(stageEvents.id, eventId)))
       .run();
+
+    // Ordinary metadata edits must not reapply a historical stage.
+    if (!toStage && occurredAt === undefined && !hasOutcome) return;
+    if (effectiveMetadata?.eventType === "note" && !outcome) return;
 
     // If this was the latest event, update the job status
     const lastEvent = tx
@@ -293,6 +493,11 @@ export function updateStageEvent(
       .get();
 
     if (lastEvent && lastEvent.id === eventId) {
+      requireStageEvidence(
+        lastEvent.toStage as ApplicationStage,
+        lastEvent.outcome as JobOutcome | null,
+        parseMetadata(lastEvent.metadata),
+      );
       const job = tx
         .select()
         .from(jobs)
@@ -333,9 +538,12 @@ export function deleteStageEvent(eventId: string): void {
       .get();
     if (!event) return;
 
+    const deletingNote = parseMetadata(event.metadata)?.eventType === "note";
     tx.delete(stageEvents)
       .where(and(stageEventsScopeFilter(), eq(stageEvents.id, eventId)))
       .run();
+
+    if (deletingNote) return;
 
     // Update job status based on the new latest event
     const lastEvent = tx
@@ -352,6 +560,12 @@ export function deleteStageEvent(eventId: string): void {
       .get();
 
     if (lastEvent) {
+      if (parseMetadata(lastEvent.metadata)?.eventType === "note") return;
+      requireStageEvidence(
+        lastEvent.toStage as ApplicationStage,
+        lastEvent.outcome as JobOutcome | null,
+        parseMetadata(lastEvent.metadata),
+      );
       const job = tx
         .select()
         .from(jobs)
@@ -538,10 +752,10 @@ function maybeTrackStageAnalytics(
 
 function inferOutcome(
   toStage: ApplicationStage,
-  metadata: StageEventMetadata | null,
+  _metadata: StageEventMetadata | null,
 ): JobOutcome | null {
   if (toStage === "offer") return "offer_accepted";
-  if (toStage === "closed" && metadata?.reasonCode) return "rejected";
+  // A reason/classification is not rejection evidence. Preserve explicit outcomes only.
   return null;
 }
 

@@ -11,6 +11,15 @@ describe.sequential("Application Tracking Service", () => {
   let applicationTracking: any;
   let jobsRepo: any;
 
+  function evidence(kind: "submission" | "interview" | "rejection") {
+    return {
+      kind,
+      sourceType: "manual_verified",
+      note: `Verified ${kind} in test`,
+      verifiedBy: "user",
+    } as const;
+  }
+
   beforeEach(async () => {
     vi.resetModules();
     tempDir = await mkdtemp(join(tmpdir(), "job-ops-service-test-"));
@@ -45,7 +54,12 @@ describe.sequential("Application Tracking Service", () => {
     });
 
     // 1. Initial Transition (Applied)
-    const event1 = applicationTracking.transitionStage(job.id, "applied");
+    const event1 = applicationTracking.transitionStage(
+      job.id,
+      "applied",
+      undefined,
+      { evidence: evidence("submission") },
+    );
 
     expect(event1.toStage).toBe("applied");
 
@@ -62,6 +76,8 @@ describe.sequential("Application Tracking Service", () => {
     const event2 = applicationTracking.transitionStage(
       job.id,
       "recruiter_screen",
+      undefined,
+      { evidence: evidence("interview") },
     );
     expect(event2.fromStage).toBe("applied");
     expect(event2.toStage).toBe("recruiter_screen");
@@ -108,11 +124,14 @@ describe.sequential("Application Tracking Service", () => {
     });
 
     const now = Math.floor(Date.now() / 1000);
-    applicationTracking.transitionStage(job.id, "applied", now - 100);
+    applicationTracking.transitionStage(job.id, "applied", now - 100, {
+      evidence: evidence("submission"),
+    });
     const event2 = applicationTracking.transitionStage(
       job.id,
       "recruiter_screen",
       now,
+      { evidence: evidence("interview") },
     );
 
     // Update event2 (latest) to 'offer'
@@ -142,14 +161,16 @@ describe.sequential("Application Tracking Service", () => {
     });
 
     const now = Math.floor(Date.now() / 1000);
-    applicationTracking.transitionStage(job.id, "applied", now - 100); // event1
+    applicationTracking.transitionStage(job.id, "applied", now - 100, {
+      evidence: evidence("submission"),
+    }); // event1
 
     // Simulate UI sending outcome for rejection
     const event2 = applicationTracking.transitionStage(
       job.id,
       "closed",
       now,
-      { reasonCode: "Skills" },
+      { reasonCode: "Skills", evidence: evidence("rejection") },
       "rejected",
     ); // event2
 
@@ -183,7 +204,9 @@ describe.sequential("Application Tracking Service", () => {
       jobUrl: "https://example.com/job/4",
     });
 
-    applicationTracking.transitionStage(job.id, "applied");
+    applicationTracking.transitionStage(job.id, "applied", undefined, {
+      evidence: evidence("submission"),
+    });
     const noteEvent = applicationTracking.transitionStage(
       job.id,
       "no_change",
@@ -209,12 +232,14 @@ describe.sequential("Application Tracking Service", () => {
     });
 
     const now = Math.floor(Date.now() / 1000);
-    applicationTracking.transitionStage(job.id, "applied", now - 100);
+    applicationTracking.transitionStage(job.id, "applied", now - 100, {
+      evidence: evidence("submission"),
+    });
     const event2 = applicationTracking.transitionStage(
       job.id,
       "closed",
       now,
-      { reasonCode: "Other" },
+      { reasonCode: "Other", evidence: evidence("rejection") },
       "rejected",
     );
 
@@ -229,6 +254,7 @@ describe.sequential("Application Tracking Service", () => {
     // 1. Update event2 to not be a closure
     applicationTracking.updateStageEvent(event2.id, {
       toStage: "technical_interview",
+      metadata: { evidence: evidence("interview") },
     });
     jobCheck = await db
       .select()
@@ -268,7 +294,9 @@ describe.sequential("Application Tracking Service", () => {
     });
 
     const now = Math.floor(Date.now() / 1000);
-    applicationTracking.transitionStage(job.id, "applied", now - 100);
+    applicationTracking.transitionStage(job.id, "applied", now - 100, {
+      evidence: evidence("submission"),
+    });
     applicationTracking.transitionStage(job.id, "closed", now);
 
     const jobCheck = await db
@@ -290,7 +318,9 @@ describe.sequential("Application Tracking Service", () => {
     });
 
     const now = Math.floor(Date.now() / 1000);
-    applicationTracking.transitionStage(job.id, "applied", now - 100);
+    applicationTracking.transitionStage(job.id, "applied", now - 100, {
+      evidence: evidence("submission"),
+    });
     const closedEvent = applicationTracking.transitionStage(
       job.id,
       "closed",
@@ -310,5 +340,138 @@ describe.sequential("Application Tracking Service", () => {
       .get();
     expect(jobCheck?.outcome).toBe("withdrawn");
     expect(jobCheck?.closedAt).toBe(now);
+  });
+
+  it("rejects critical transitions without matching evidence", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Evidence Guardrail",
+      employer: "Guardrail Co",
+      jobUrl: "https://example.com/job/evidence-guardrail",
+    });
+
+    expect(() =>
+      applicationTracking.transitionStage(job.id, "applied"),
+    ).toThrow(/submission evidence is required/i);
+
+    applicationTracking.transitionStage(job.id, "applied", undefined, {
+      evidence: evidence("submission"),
+    });
+
+    expect(() =>
+      applicationTracking.transitionStage(job.id, "assessment"),
+    ).toThrow(/interview evidence is required/i);
+
+    expect(() =>
+      applicationTracking.transitionStage(
+        job.id,
+        "closed",
+        undefined,
+        null,
+        "rejected",
+      ),
+    ).toThrow(/rejection evidence is required/i);
+  });
+
+  it("does not allow updateStageEvent to bypass evidence requirements", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Evidence Update Guardrail",
+      employer: "Guardrail Co",
+      jobUrl: "https://example.com/job/evidence-update-guardrail",
+    });
+
+    const applied = applicationTracking.transitionStage(
+      job.id,
+      "applied",
+      undefined,
+      { evidence: evidence("submission") },
+    );
+
+    expect(() =>
+      applicationTracking.updateStageEvent(applied.id, {
+        toStage: "technical_interview",
+      }),
+    ).toThrow(/interview evidence is required/i);
+
+    applicationTracking.updateStageEvent(applied.id, {
+      toStage: "technical_interview",
+      metadata: { evidence: evidence("interview") },
+    });
+
+    const events = await applicationTracking.getStageEvents(job.id);
+    expect(events[0]?.toStage).toBe("technical_interview");
+    expect(events[0]?.metadata?.evidence?.kind).toBe("interview");
+  });
+  it("blocks model actors, evidence replacement and no-change rejection bypasses", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Guard",
+      employer: "Fixture employer",
+      jobUrl: "https://example.com/guard",
+    });
+    expect(() =>
+      applicationTracking.transitionStage(job.id, "applied", undefined, {
+        actor: "system",
+        evidence: evidence("submission"),
+      }),
+    ).toThrow();
+    expect(() =>
+      applicationTracking.transitionStage(
+        job.id,
+        "no_change",
+        undefined,
+        null,
+        "rejected",
+      ),
+    ).toThrow();
+    const event = applicationTracking.transitionStage(
+      job.id,
+      "applied",
+      undefined,
+      { evidence: evidence("submission") },
+    );
+    expect(() =>
+      applicationTracking.updateStageEvent(event.id, {
+        metadata: { evidence: evidence("interview") },
+      }),
+    ).toThrow();
+    applicationTracking.updateStageEvent(event.id, {
+      metadata: { note: "New annotation" },
+    });
+    expect(
+      (await applicationTracking.getStageEvents(job.id))[0].metadata.evidence,
+    ).toEqual(evidence("submission"));
+  });
+
+  it("does not infer rejection from a reason or turn an edited note into Applied", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Note",
+      employer: "Fixture employer",
+      jobUrl: "https://example.com/note",
+    });
+    const note = applicationTracking.transitionStage(
+      job.id,
+      "no_change",
+      undefined,
+      { eventType: "note", note: "AI suggestion only" },
+    );
+    applicationTracking.updateStageEvent(note.id, {
+      metadata: { note: "Annotation" },
+    });
+    expect((await jobsRepo.getJobById(job.id)).status).toBe("discovered");
+    applicationTracking.deleteStageEvent(note.id);
+    expect((await jobsRepo.getJobById(job.id)).status).toBe("discovered");
+    const closed = applicationTracking.transitionStage(
+      job.id,
+      "closed",
+      undefined,
+      { reasonCode: "AI classified rejection" },
+    );
+    applicationTracking.updateStageEvent(closed.id, {
+      metadata: { note: "Still unverified" },
+    });
+    expect((await jobsRepo.getJobById(job.id)).outcome).toBeNull();
   });
 });

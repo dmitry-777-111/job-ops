@@ -171,7 +171,7 @@ describe("gmail sync auto-log idempotency", () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("creates auto stage event only on first auto_linked transition", async () => {
+  it("does not auto-create evidence-required stage events from AI classification", async () => {
     const { runGmailIngestionSync } = await import("./gmail-sync");
 
     mocks.getPostApplicationMessageByExternalId
@@ -239,6 +239,6 @@ describe("gmail sync auto-log idempotency", () => {
     await runGmailIngestionSync({ accountKey: "default", maxMessages: 1 });
 
     expect(mocks.upsertPostApplicationMessage).toHaveBeenCalledTimes(2);
-    expect(mocks.transitionStage).toHaveBeenCalledTimes(1);
+    expect(mocks.transitionStage).not.toHaveBeenCalled();
   });
 });

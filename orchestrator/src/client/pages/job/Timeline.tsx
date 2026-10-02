@@ -18,6 +18,7 @@ import {
   Video,
 } from "lucide-react";
 import React from "react";
+import { EvidenceSummary } from "@/client/components/EvidenceSummary";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatTimestamp, formatTimestampWithTime } from "@/lib/utils";
 
@@ -172,6 +173,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
               onEdit={onEdit ? () => onEdit(entry.event) : undefined}
               onDelete={onDelete ? () => onDelete(entry.event.id) : undefined}
             >
+              <EvidenceSummary evidence={entry.event.metadata?.evidence} />
               {note && (
                 <div className="text-sm text-muted-foreground">{note}</div>
               )}
@@ -231,6 +233,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
                       onEdit={onEdit ? () => onEdit(event) : undefined}
                       onDelete={onDelete ? () => onDelete(event.id) : undefined}
                     >
+                      <EvidenceSummary evidence={event.metadata?.evidence} />
                       {event.metadata?.note && (
                         <div className="text-xs text-muted-foreground">
                           {event.metadata.note}

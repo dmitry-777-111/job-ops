@@ -86,6 +86,14 @@ describe("LogEventModal", () => {
 
     const reasonSelect = screen.getAllByTestId("select")[1];
     fireEvent.change(reasonSelect, { target: { value: "Visa" } });
+    fireEvent.click(screen.getByRole("button", { name: /log event/i }));
+    await screen.findByText(
+      "Describe the evidence you personally verified, including source and date.",
+    );
+    expect(onLog).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Verified evidence (required)"), {
+      target: { value: "Employer rejection email received 2026-10-01" },
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /log event/i }));
 

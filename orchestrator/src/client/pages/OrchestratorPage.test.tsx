@@ -532,6 +532,9 @@ const openManualImport = () => {
 
 describe("OrchestratorPage", () => {
   beforeEach(() => {
+    vi.spyOn(window, "prompt").mockReturnValue(
+      "Verified submission confirmation from employer portal",
+    );
     vi.clearAllMocks();
     _resetKeyboardAvailabilityForTests();
     localStorage.clear();
@@ -1697,7 +1700,14 @@ describe("OrchestratorPage", () => {
 
     pressKey("a");
     await waitFor(() => {
-      expect(api.markAsApplied).toHaveBeenCalledWith("job-1");
+      expect(api.markAsApplied).toHaveBeenCalledWith(
+        "job-1",
+        expect.objectContaining({
+          kind: "submission",
+          sourceType: "manual_verified",
+          verifiedBy: "user",
+        }),
+      );
       expect(toast.success).toHaveBeenCalledWith(
         "Marked as applied",
         expect.anything(),

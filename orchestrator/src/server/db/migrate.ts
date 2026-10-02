@@ -620,6 +620,25 @@ const migrations = [
     FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
   )`,
 
+  `CREATE TABLE IF NOT EXISTS job_verified_facts (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+    user_id TEXT,
+    job_id TEXT NOT NULL,
+    fact_key TEXT NOT NULL CHECK(fact_key IN ('no_sponsorship', 'mandatory_license', 'us_authorization_required')),
+    evidence TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_job_verified_facts_tenant_user_job_fact_unique
+    ON job_verified_facts(tenant_id, coalesce(user_id, ''), job_id, fact_key)`,
+  `CREATE INDEX IF NOT EXISTS idx_job_verified_facts_tenant_user_job
+    ON job_verified_facts(tenant_id, user_id, job_id)`,
+
   `CREATE TABLE IF NOT EXISTS stage_events (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL DEFAULT 'tenant_default',

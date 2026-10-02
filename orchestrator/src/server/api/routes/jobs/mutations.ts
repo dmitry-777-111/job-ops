@@ -38,6 +38,15 @@ jobsMutationsRouter.patch("/:id", async (req: Request, res: Response) => {
       return;
     }
 
+    if (input.status === "applied" || input.outcome === "rejected") {
+      throw new AppError({
+        status: 409,
+        code: "CONFLICT",
+        message:
+          "Use the application or stage endpoint with verified evidence for Applied or Rejected",
+      });
+    }
+
     const isTurningTracerLinksOn =
       input.tracerLinksEnabled === true && !currentJob.tracerLinksEnabled;
 

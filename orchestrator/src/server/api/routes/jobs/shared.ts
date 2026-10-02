@@ -8,7 +8,10 @@ import {
 } from "@infra/errors";
 import { logger } from "@infra/logger";
 import * as jobsRepo from "@server/repositories/jobs";
-import { stageEventMetadataSchema } from "@server/services/applicationTracking";
+import {
+  stageEventMetadataSchema,
+  stageEvidenceSchema,
+} from "@server/services/applicationTracking";
 import {
   enqueueAutoPdfRegenerationForJob,
   shouldEnqueueTailoringAutoPdfRegeneration,
@@ -198,6 +201,7 @@ export const updateStageEventSchema = z.object({
 export const updateOutcomeSchema = z.object({
   outcome: z.enum(APPLICATION_OUTCOMES).nullable(),
   closedAt: z.number().int().nullable().optional(),
+  evidence: stageEvidenceSchema.nullable().optional(),
 });
 
 export const jobActionRequestSchema = z.discriminatedUnion("action", [

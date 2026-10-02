@@ -80,7 +80,52 @@ export const INTERVIEW_OUTCOMES = [
 
 export type InterviewOutcome = (typeof INTERVIEW_OUTCOMES)[number];
 
+export const EVIDENCE_KINDS = [
+  "submission",
+  "interview",
+  "rejection",
+  "no_sponsorship",
+  "mandatory_license",
+  "us_authorization_required",
+] as const;
+export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
+
+export const EVIDENCE_SOURCE_TYPES = [
+  "manual_verified",
+  "gmail_message",
+  "calendar_event",
+  "document",
+  "url",
+] as const;
+export type EvidenceSourceType = (typeof EVIDENCE_SOURCE_TYPES)[number];
+
+export const VERIFIED_JOB_FACT_KEYS = [
+  "no_sponsorship",
+  "mandatory_license",
+  "us_authorization_required",
+] as const;
+export type VerifiedJobFactKey = (typeof VERIFIED_JOB_FACT_KEYS)[number];
+
+export interface StageEvidence {
+  kind: EvidenceKind;
+  sourceType: EvidenceSourceType;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  note?: string | null;
+  verifiedBy: "user";
+}
+
+export interface JobVerifiedFact {
+  id: string;
+  jobId: string;
+  factKey: VerifiedJobFactKey;
+  evidence: StageEvidence;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface StageEventMetadata {
+  evidence?: StageEvidence | null;
   note?: string | null;
   actor?: "system" | "user";
   groupId?: string | null;

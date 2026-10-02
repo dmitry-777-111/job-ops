@@ -25,6 +25,10 @@ import { invalidateJobData } from "@/client/hooks/queries/invalidate";
 import { useQueryErrorToast } from "@/client/hooks/useQueryErrorToast";
 import { celebrateOffer } from "@/client/lib/celebrate";
 import { showErrorToast } from "@/client/lib/error-toast";
+import {
+  evidenceKindForStage,
+  requestManualEvidence,
+} from "@/client/lib/evidence";
 import { logJobStageEvent } from "@/client/lib/logJobStageEvent";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { Badge } from "@/components/ui/badge";
@@ -170,6 +174,11 @@ export const InProgressBoardPage: React.FC = () => {
           eventType: "status_update",
           eventLabel: `Moved to ${STAGE_LABELS[toStage]}`,
           reasonCode: "in_progress_board_drag",
+          evidence: evidenceKindForStage(toStage)
+            ? requestManualEvidence(
+                evidenceKindForStage(toStage) ?? "submission",
+              )
+            : undefined,
         },
       }),
   });

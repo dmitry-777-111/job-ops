@@ -375,6 +375,73 @@ describe.sequential("database migrations", () => {
       },
     );
   });
+  it("preserves verified job facts across repeated startup migrations", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "job-ops-migrate-"));
+    const script = `
+      import { join } from "node:path";
+      import { pathToFileURL } from "node:url";
+      import Database from "better-sqlite3";
+
+      const dbPath = join(process.env.DATA_DIR, "jobs.db");
+      const migrationUrl = pathToFileURL(join(process.cwd(), "src/server/db/migrate.ts")).href;
+
+      await import(\`\${migrationUrl}?run=initial\`);
+
+      const sqlite = new Database(dbPath);
+      sqlite.prepare(
+        "INSERT INTO jobs(id, title, employer, job_url) VALUES (?, ?, ?, ?)",
+      ).run(
+        "verified-fact-job",
+        "Verified Fact Job",
+        "Acme",
+        "https://example.com/verified-fact-job",
+      );
+      const evidence = JSON.stringify({
+        kind: "no_sponsorship",
+        sourceType: "url",
+        sourceUrl: "https://example.com/requirements",
+        verifiedBy: "user",
+      });
+      sqlite.prepare(
+        \`INSERT INTO job_verified_facts(
+          id, tenant_id, user_id, job_id, fact_key, evidence
+        ) VALUES (?, ?, NULL, ?, ?, ?)\`,
+      ).run(
+        "verified-fact-1",
+        "tenant_default",
+        "verified-fact-job",
+        "no_sponsorship",
+        evidence,
+      );
+      sqlite.close();
+
+      await import(\`\${migrationUrl}?run=restart\`);
+
+      const migratedDb = new Database(dbPath, { readonly: true });
+      const row = migratedDb
+        .prepare(
+          "SELECT fact_key, evidence FROM job_verified_facts WHERE id = ?",
+        )
+        .get("verified-fact-1");
+      if (row?.fact_key !== "no_sponsorship" || row?.evidence !== evidence) {
+        throw new Error("Verified job fact changed across restart migration");
+      }
+      migratedDb.close();
+    `;
+
+    execFileSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "-e", script],
+      {
+        env: {
+          ...process.env,
+          DATA_DIR: tempDir,
+        },
+        stdio: "pipe",
+      },
+    );
+  });
+
   it("preserves existing post-application message_type across repeated startup migrations", async () => {
     tempDir = await mkdtemp(join(tmpdir(), "job-ops-migrate-"));
     const script = `

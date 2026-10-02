@@ -12,12 +12,15 @@ import type {
   JobsListResponse,
   JobsRevisionResponse,
   JobTracerLinksResponse,
+  JobVerifiedFact,
   PostApplicationJobEmailsResponse,
   StageEvent,
   StageEventMetadata,
+  StageEvidence,
   StageTransitionTarget,
   TracerAnalyticsResponse,
   TracerReadinessResponse,
+  VerifiedJobFactKey,
 } from "@shared/types";
 import { formatUserFacingError } from "@/client/lib/error-format";
 import {
@@ -332,10 +335,41 @@ export async function checkSponsor(id: string): Promise<Job> {
   });
 }
 
-export async function markAsApplied(id: string): Promise<Job> {
+export async function markAsApplied(
+  id: string,
+  evidence?: StageEvidence,
+): Promise<Job> {
   return fetchApi<Job>(`/jobs/${id}/apply`, {
     method: "POST",
+    body: JSON.stringify({ evidence }),
   });
+}
+
+export async function getJobVerifiedFacts(
+  id: string,
+): Promise<JobVerifiedFact[]> {
+  return fetchApi<JobVerifiedFact[]>(`/jobs/${id}/verified-facts`);
+}
+
+export async function saveJobVerifiedFact(
+  id: string,
+  factKey: VerifiedJobFactKey,
+  evidence: StageEvidence,
+): Promise<JobVerifiedFact> {
+  return fetchApi<JobVerifiedFact>(`/jobs/${id}/verified-facts/${factKey}`, {
+    method: "PUT",
+    body: JSON.stringify({ evidence }),
+  });
+}
+
+export async function removeJobVerifiedFact(
+  id: string,
+  factKey: VerifiedJobFactKey,
+): Promise<{ deleted: boolean }> {
+  return fetchApi<{ deleted: boolean }>(
+    `/jobs/${id}/verified-facts/${factKey}`,
+    { method: "DELETE" },
+  );
 }
 
 export async function skipJob(ids: string[]): Promise<JobActionResponse>;
@@ -438,7 +472,11 @@ export async function deleteJobStageEvent(
 
 export async function updateJobOutcome(
   id: string,
-  input: { outcome: JobOutcome | null; closedAt?: number | null },
+  input: {
+    outcome: JobOutcome | null;
+    closedAt?: number | null;
+    evidence?: StageEvidence;
+  },
 ): Promise<Job> {
   return fetchApi<Job>(`/jobs/${id}/outcome`, {
     method: "PATCH",

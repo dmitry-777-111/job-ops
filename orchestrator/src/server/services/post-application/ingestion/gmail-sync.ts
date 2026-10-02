@@ -113,6 +113,23 @@ function resolveProcessingStatus(input: {
   return "ignored";
 }
 
+const USER_EVIDENCE_REQUIRED_TARGETS =
+  new Set<PostApplicationRouterStageTarget>([
+    "applied",
+    "recruiter_screen",
+    "assessment",
+    "hiring_manager_screen",
+    "technical_interview",
+    "onsite",
+    "rejected",
+  ]);
+
+function requiresUserEvidenceForStageTarget(
+  target: PostApplicationRouterStageTarget,
+): boolean {
+  return USER_EVIDENCE_REQUIRED_TARGETS.has(target);
+}
+
 function normalizeErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return "Unknown error";
@@ -136,7 +153,12 @@ async function createAutoStageEvent(args: {
   );
 
   const transition = resolveStageTransitionForTarget(args.stageTarget);
-  if (transition.toStage === "no_change") return;
+  if (
+    transition.toStage === "no_change" ||
+    requiresUserEvidenceForStageTarget(args.stageTarget)
+  ) {
+    return;
+  }
 
   const eventLabel =
     args.stageTarget === "applied"
@@ -337,7 +359,10 @@ export async function runGmailIngestionSync(args: {
           routerResult.bestMatchId && activeJobIds.has(routerResult.bestMatchId)
             ? routerResult.bestMatchId
             : null;
-        const isAutoLinked = routerResult.confidence >= 95 && matchedJobId;
+        const isAutoLinked =
+          routerResult.confidence >= 95 &&
+          matchedJobId &&
+          !requiresUserEvidenceForStageTarget(routerResult.stageTarget);
         const isPendingMatch = routerResult.confidence >= 50;
         const isRelevantOrphan = routerResult.isRelevant;
         const processingStatus = resolveProcessingStatus({

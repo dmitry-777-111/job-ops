@@ -18,6 +18,7 @@ import {
   POST_APPLICATION_PROVIDERS,
   POST_APPLICATION_RELEVANCE_DECISIONS,
   POST_APPLICATION_SYNC_RUN_STATUSES,
+  VERIFIED_JOB_FACT_KEYS,
 } from "@shared/types";
 import { sql } from "drizzle-orm";
 import {
@@ -309,6 +310,40 @@ export const jobs = sqliteTable(
     tenantDiscoveredAtIndex: index("idx_jobs_tenant_discovered_at").on(
       table.tenantId,
       table.discoveredAt,
+    ),
+  }),
+);
+
+export const jobVerifiedFacts = sqliteTable(
+  "job_verified_facts",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    jobId: text("job_id")
+      .notNull()
+      .references(() => jobs.id, { onDelete: "cascade" }),
+    factKey: text("fact_key", { enum: VERIFIED_JOB_FACT_KEYS }).notNull(),
+    evidence: text("evidence", { mode: "json" }).notNull(),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserJobFactUnique: uniqueIndex(
+      "idx_job_verified_facts_tenant_user_job_fact_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.jobId,
+      table.factKey,
+    ),
+    tenantUserJobIndex: index("idx_job_verified_facts_tenant_user_job").on(
+      table.tenantId,
+      table.userId,
+      table.jobId,
     ),
   }),
 );
@@ -1089,6 +1124,8 @@ export type NewHostedUsageReservationRow =
   typeof hostedUsageReservations.$inferInsert;
 export type JobRow = typeof jobs.$inferSelect;
 export type NewJobRow = typeof jobs.$inferInsert;
+export type JobVerifiedFactRow = typeof jobVerifiedFacts.$inferSelect;
+export type NewJobVerifiedFactRow = typeof jobVerifiedFacts.$inferInsert;
 export type StageEventRow = typeof stageEvents.$inferSelect;
 export type NewStageEventRow = typeof stageEvents.$inferInsert;
 export type TaskRow = typeof tasks.$inferSelect;

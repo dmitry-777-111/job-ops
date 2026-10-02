@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { JobBriefPane } from "@/client/components/JobBriefPane";
 import { JobDescriptionPanel } from "@/client/components/JobDescriptionPanel";
+import { VerifiedFactsPanel } from "@/client/components/VerifiedFactsPanel";
 import { invalidateJobData } from "@/client/hooks/queries/invalidate";
 import {
   useCheckSponsorMutation,
@@ -841,6 +842,7 @@ export const JobPage: React.FC = () => {
                       This application is closed. Stage logging is disabled.
                     </div>
                   )}
+                  <VerifiedFactsPanel key={job.id} jobId={job.id} />
                   <JobTimeline
                     events={events}
                     discoveredAt={job.discoveredAt}

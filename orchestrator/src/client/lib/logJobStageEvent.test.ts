@@ -6,6 +6,7 @@ import { logJobStageEvent } from "./logJobStageEvent";
 vi.mock("../api", () => ({
   transitionJobStage: vi.fn(),
   updateJobStageEvent: vi.fn(),
+  getJobStageEvents: vi.fn().mockResolvedValue([]),
 }));
 
 const baseValues: LogEventFormValues = {
@@ -13,6 +14,7 @@ const baseValues: LogEventFormValues = {
   title: "Recruiter Screen",
   date: "2026-05-27T10:00",
   notes: "Follow-up scheduled",
+  evidenceNote: "Verified recruiter email dated 2026-05-27",
 };
 
 beforeEach(() => {
@@ -69,7 +71,7 @@ describe("logJobStageEvent", () => {
     expect(api.transitionJobStage).toHaveBeenCalledWith(
       "job-1",
       expect.objectContaining({
-        toStage: "assessment",
+        toStage: "no_change",
         metadata: expect.objectContaining({
           eventType: "note",
           reasonCode: undefined,

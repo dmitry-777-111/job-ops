@@ -90,6 +90,7 @@ vi.mock("../api", () => ({
   deleteJobStageEvent: vi.fn(),
   transitionJobStage: vi.fn(),
   markAsApplied: vi.fn(),
+  getJobVerifiedFacts: vi.fn().mockResolvedValue([]),
   skipJob: vi.fn(),
   rescoreJob: vi.fn(),
   generateJobPdf: vi.fn(),

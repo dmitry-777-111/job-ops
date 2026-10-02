@@ -271,6 +271,46 @@ describe.sequential("Hosted current-user isolation", () => {
     );
     expect(bobMutatesAliceJob.status).toBe(404);
 
+    const aliceFact = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/verified-facts/no_sponsorship`,
+      {
+        method: "PUT",
+        headers: authHeaders(aliceToken),
+        body: JSON.stringify({
+          evidence: {
+            kind: "no_sponsorship",
+            sourceType: "url",
+            sourceUrl: "https://example.com/alice-role-requirements",
+            verifiedBy: "user",
+          },
+        }),
+      },
+    );
+    expect(aliceFact.status).toBe(200);
+
+    const bobReadsAliceFacts = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/verified-facts`,
+      { headers: { Authorization: `Bearer ${bobToken}` } },
+    );
+    expect(bobReadsAliceFacts.status).toBe(404);
+
+    const bobMutatesAliceFact = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/verified-facts/no_sponsorship`,
+      {
+        method: "PUT",
+        headers: authHeaders(bobToken),
+        body: JSON.stringify({
+          evidence: {
+            kind: "no_sponsorship",
+            sourceType: "url",
+            sourceUrl: "https://example.com/not-bobs-job",
+            verifiedBy: "user",
+          },
+        }),
+      },
+    );
+    expect(bobMutatesAliceFact.status).toBe(404);
+
     const pdfBytes = Buffer.from("%PDF-1.4\n%EOF\n").toString("base64");
     const uploadPdfRes = await fetch(`${baseUrl}/api/jobs/${aliceJob.id}/pdf`, {
       method: "POST",

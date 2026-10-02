@@ -5,6 +5,7 @@ import type {
   StageEvent,
 } from "@shared/types.js";
 import * as api from "../api";
+import { evidenceKindForStage } from "./evidence";
 
 export type LogJobStageEventReasonCode =
   | "job_page_manual_stage"
@@ -52,7 +53,26 @@ export async function logJobStageEvent({
 
   const effectiveStage = toStage === "no_change" ? currentStage : toStage;
 
+  const kind = evidenceKindForStage(values.stage);
+  const existing = eventId
+    ? (await api.getJobStageEvents(jobId)).find((event) => event.id === eventId)
+        ?.metadata?.evidence
+    : undefined;
+  const evidence =
+    kind && values.evidenceNote?.trim()
+      ? existing?.kind === kind &&
+        values.evidenceNote.trim() ===
+          (existing.note || existing.sourceId || existing.sourceUrl)
+        ? existing
+        : {
+            kind,
+            sourceType: "manual_verified" as const,
+            verifiedBy: "user" as const,
+            note: values.evidenceNote.trim(),
+          }
+      : undefined;
   const metadata = {
+    ...(evidence ? { evidence } : {}),
     note: values.notes?.trim() || undefined,
     eventLabel: values.title.trim() || undefined,
     reasonCode:
@@ -77,7 +97,7 @@ export async function logJobStageEvent({
   }
 
   const newEvent = await api.transitionJobStage(jobId, {
-    toStage: effectiveStage,
+    toStage,
     occurredAt: toTimestamp(values.date),
     metadata,
     outcome,

@@ -4,6 +4,7 @@ import { STAGE_LABELS } from "@shared/types.js";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
+import { evidenceKindForStage } from "@/client/lib/evidence";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -25,14 +26,26 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-const logEventSchema = z.object({
-  stage: z.string(),
-  title: z.string().min(1, "Title is required"),
-  date: z.string().min(1, "Date is required"),
-  notes: z.string().optional(),
-  reasonCode: z.string().optional(),
-  salary: z.string().optional(),
-});
+const logEventSchema = z
+  .object({
+    stage: z.string(),
+    title: z.string().min(1, "Title is required"),
+    date: z.string().min(1, "Date is required"),
+    notes: z.string().optional(),
+    reasonCode: z.string().optional(),
+    salary: z.string().optional(),
+    evidenceNote: z.string().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (evidenceKindForStage(value.stage) && !value.evidenceNote?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["evidenceNote"],
+        message:
+          "Describe the evidence you personally verified, including source and date.",
+      });
+    }
+  });
 
 export type LogEventFormValues = z.infer<typeof logEventSchema>;
 
@@ -100,10 +113,18 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
     if (isOpen) {
       if (editingEvent) {
         reset({
-          stage: editingEvent.toStage,
+          stage:
+            editingEvent.outcome === "rejected"
+              ? "rejected"
+              : editingEvent.toStage,
           title: editingEvent.metadata?.eventLabel || "",
           date: toDateTimeLocal(new Date(editingEvent.occurredAt * 1000)),
           notes: editingEvent.metadata?.note || "",
+          evidenceNote:
+            editingEvent.metadata?.evidence?.note ||
+            editingEvent.metadata?.evidence?.sourceId ||
+            editingEvent.metadata?.evidence?.sourceUrl ||
+            "",
           reasonCode: editingEvent.metadata?.reasonCode || undefined,
           salary: editingEvent.metadata?.externalUrl?.startsWith("Salary: ")
             ? editingEvent.metadata.externalUrl.replace("Salary: ", "")
@@ -201,6 +222,24 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
             <Textarea {...register("notes")} placeholder="Add details..." />
             <FieldError errors={[errors.notes]} />
           </Field>
+
+          {evidenceKindForStage(selectedStage) && (
+            <Field>
+              <FieldLabel htmlFor="evidence-note">
+                Verified evidence (required)
+              </FieldLabel>
+              <Textarea
+                id="evidence-note"
+                {...register("evidenceNote")}
+                placeholder="Describe the confirmation you checked, its source and date."
+              />
+              <p className="text-xs text-muted-foreground">
+                Saving confirms you personally verified this evidence. AI
+                classifications are not evidence.
+              </p>
+              <FieldError errors={[errors.evidenceNote]} />
+            </Field>
+          )}
 
           {selectedStage === "rejected" && (
             <Field className="animate-in fade-in slide-in-from-top-1 duration-200">
