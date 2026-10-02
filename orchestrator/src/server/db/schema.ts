@@ -7,11 +7,13 @@ import {
   APPLICATION_STAGES,
   APPLICATION_TASK_TYPES,
   HOSTED_USAGE_ACTIONS,
+  IMMIGRATION_EMPLOYER_SUPPORT_STATUSES,
   INTERVIEW_OUTCOMES,
   INTERVIEW_TYPES,
   JOB_CHAT_MESSAGE_ROLES,
   JOB_CHAT_MESSAGE_STATUSES,
   JOB_CHAT_RUN_STATUSES,
+  LMIA_HISTORICAL_SIGNAL_STATUSES,
   POST_APPLICATION_INTEGRATION_STATUSES,
   POST_APPLICATION_MESSAGE_TYPES,
   POST_APPLICATION_PROCESSING_STATUSES,
@@ -345,6 +347,61 @@ export const jobVerifiedFacts = sqliteTable(
       table.userId,
       table.jobId,
     ),
+  }),
+);
+
+export const jobImmigrationProfiles = sqliteTable(
+  "job_immigration_profiles",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    jobId: text("job_id")
+      .notNull()
+      .references(() => jobs.id, { onDelete: "cascade" }),
+    nocCode: text("noc_code"),
+    lmiaHistoricalSignal: text("lmia_historical_signal", {
+      enum: LMIA_HISTORICAL_SIGNAL_STATUSES,
+    })
+      .notNull()
+      .default("unknown"),
+    lmiaLatestQuarter: text("lmia_latest_quarter"),
+    lmiaStreams: text("lmia_streams", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    lmiaMatchedEmployerNames: text("lmia_matched_employer_names", {
+      mode: "json",
+    })
+      .notNull()
+      .default(sql`'[]'`),
+    lmiaMatchedRows: integer("lmia_matched_rows").notNull().default(0),
+    lmiaSourceUrl: text("lmia_source_url"),
+    lmiaSourceDate: text("lmia_source_date"),
+    lmiaLastCheckedAt: text("lmia_last_checked_at"),
+    employerSupportStatus: text("employer_support_status", {
+      enum: IMMIGRATION_EMPLOYER_SUPPORT_STATUSES,
+    })
+      .notNull()
+      .default("unknown"),
+    workPermitRequirement: text("work_permit_requirement"),
+    usTravelRequired: integer("us_travel_required", { mode: "boolean" }),
+    wageHourlyCad: real("wage_hourly_cad"),
+    wageAnnualCad: real("wage_annual_cad"),
+    immigrationNotes: text("immigration_notes"),
+    evidence: text("evidence", { mode: "json" }).notNull().default(sql`'[]'`),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserJobUnique: uniqueIndex(
+      "idx_job_immigration_profiles_tenant_user_job_unique",
+    ).on(table.tenantId, sql`coalesce(${table.userId}, '')`, table.jobId),
+    tenantUserJobIndex: index(
+      "idx_job_immigration_profiles_tenant_user_job",
+    ).on(table.tenantId, table.userId, table.jobId),
   }),
 );
 
@@ -1126,6 +1183,10 @@ export type JobRow = typeof jobs.$inferSelect;
 export type NewJobRow = typeof jobs.$inferInsert;
 export type JobVerifiedFactRow = typeof jobVerifiedFacts.$inferSelect;
 export type NewJobVerifiedFactRow = typeof jobVerifiedFacts.$inferInsert;
+export type JobImmigrationProfileRow =
+  typeof jobImmigrationProfiles.$inferSelect;
+export type NewJobImmigrationProfileRow =
+  typeof jobImmigrationProfiles.$inferInsert;
 export type StageEventRow = typeof stageEvents.$inferSelect;
 export type NewStageEventRow = typeof stageEvents.$inferInsert;
 export type TaskRow = typeof tasks.$inferSelect;

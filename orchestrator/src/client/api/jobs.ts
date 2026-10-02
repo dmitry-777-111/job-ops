@@ -6,6 +6,8 @@ import type {
   JobActionResponse,
   JobActionStreamEvent,
   JobDocument,
+  JobImmigrationContext,
+  JobImmigrationProfile,
   JobListItem,
   JobNote,
   JobOutcome,
@@ -20,6 +22,7 @@ import type {
   StageTransitionTarget,
   TracerAnalyticsResponse,
   TracerReadinessResponse,
+  UpdateJobImmigrationProfileInput,
   VerifiedJobFactKey,
 } from "@shared/types";
 import { formatUserFacingError } from "@/client/lib/error-format";
@@ -349,6 +352,31 @@ export async function getJobVerifiedFacts(
   id: string,
 ): Promise<JobVerifiedFact[]> {
   return fetchApi<JobVerifiedFact[]>(`/jobs/${id}/verified-facts`);
+}
+
+export async function getJobImmigrationContext(
+  id: string,
+): Promise<JobImmigrationContext> {
+  return fetchApi<JobImmigrationContext>(`/jobs/${id}/immigration-profile`);
+}
+
+export async function saveJobImmigrationProfile(
+  id: string,
+  input: UpdateJobImmigrationProfileInput,
+): Promise<JobImmigrationProfile> {
+  return fetchApi<JobImmigrationProfile>(`/jobs/${id}/immigration-profile`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function refreshJobLmiaHistory(
+  id: string,
+): Promise<JobImmigrationProfile> {
+  return fetchApi<JobImmigrationProfile>(
+    `/jobs/${id}/immigration-profile/refresh-lmia`,
+    { method: "POST" },
+  );
 }
 
 export async function saveJobVerifiedFact(

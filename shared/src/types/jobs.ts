@@ -124,6 +124,69 @@ export interface JobVerifiedFact {
   updatedAt: string;
 }
 
+export const IMMIGRATION_EMPLOYER_SUPPORT_STATUSES = [
+  "unknown",
+  "possible",
+  "confirmed",
+  "not_available",
+] as const;
+export type ImmigrationEmployerSupportStatus =
+  (typeof IMMIGRATION_EMPLOYER_SUPPORT_STATUSES)[number];
+
+export const LMIA_HISTORICAL_SIGNAL_STATUSES = [
+  "unknown",
+  "none",
+  "matched",
+] as const;
+export type LmiaHistoricalSignalStatus =
+  (typeof LMIA_HISTORICAL_SIGNAL_STATUSES)[number];
+
+export interface ImmigrationEvidence {
+  sourceType: EvidenceSourceType;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  note: string;
+  verifiedBy: "user";
+}
+
+export interface JobImmigrationProfile {
+  jobId: string;
+  nocCode: string | null;
+  lmiaHistoricalSignal: LmiaHistoricalSignalStatus;
+  lmiaLatestQuarter: string | null;
+  lmiaStreams: string[];
+  lmiaMatchedEmployerNames: string[];
+  lmiaMatchedRows: number;
+  lmiaSourceUrl: string | null;
+  lmiaSourceDate: string | null;
+  lmiaLastCheckedAt: string | null;
+  employerSupportStatus: ImmigrationEmployerSupportStatus;
+  workPermitRequirement: string | null;
+  usTravelRequired: boolean | null;
+  wageHourlyCad: number | null;
+  wageAnnualCad: number | null;
+  immigrationNotes: string | null;
+  evidence: ImmigrationEvidence[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobImmigrationContext {
+  profile: JobImmigrationProfile | null;
+  verifiedFacts: JobVerifiedFact[];
+}
+
+export interface UpdateJobImmigrationProfileInput {
+  nocCode?: string | null;
+  employerSupportStatus?: ImmigrationEmployerSupportStatus;
+  workPermitRequirement?: string | null;
+  usTravelRequired?: boolean | null;
+  wageHourlyCad?: number | null;
+  wageAnnualCad?: number | null;
+  immigrationNotes?: string | null;
+  evidence?: ImmigrationEvidence[];
+}
+
 export interface StageEventMetadata {
   evidence?: StageEvidence | null;
   note?: string | null;

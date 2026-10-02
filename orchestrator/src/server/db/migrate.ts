@@ -639,6 +639,39 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_job_verified_facts_tenant_user_job
     ON job_verified_facts(tenant_id, user_id, job_id)`,
 
+  `CREATE TABLE IF NOT EXISTS job_immigration_profiles (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+    user_id TEXT,
+    job_id TEXT NOT NULL,
+    noc_code TEXT,
+    lmia_historical_signal TEXT NOT NULL DEFAULT 'unknown' CHECK(lmia_historical_signal IN ('unknown', 'none', 'matched')),
+    lmia_latest_quarter TEXT,
+    lmia_streams TEXT NOT NULL DEFAULT '[]',
+    lmia_matched_employer_names TEXT NOT NULL DEFAULT '[]',
+    lmia_matched_rows INTEGER NOT NULL DEFAULT 0,
+    lmia_source_url TEXT,
+    lmia_source_date TEXT,
+    lmia_last_checked_at TEXT,
+    employer_support_status TEXT NOT NULL DEFAULT 'unknown' CHECK(employer_support_status IN ('unknown', 'possible', 'confirmed', 'not_available')),
+    work_permit_requirement TEXT,
+    us_travel_required INTEGER,
+    wage_hourly_cad REAL,
+    wage_annual_cad REAL,
+    immigration_notes TEXT,
+    evidence TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_job_immigration_profiles_tenant_user_job_unique
+    ON job_immigration_profiles(tenant_id, coalesce(user_id, ''), job_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_job_immigration_profiles_tenant_user_job
+    ON job_immigration_profiles(tenant_id, user_id, job_id)`,
+
   `CREATE TABLE IF NOT EXISTS stage_events (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL DEFAULT 'tenant_default',

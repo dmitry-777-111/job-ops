@@ -311,6 +311,36 @@ describe.sequential("Hosted current-user isolation", () => {
     );
     expect(bobMutatesAliceFact.status).toBe(404);
 
+    const aliceImmigration = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/immigration-profile`,
+      {
+        method: "PUT",
+        headers: authHeaders(aliceToken),
+        body: JSON.stringify({
+          nocCode: "72422",
+          employerSupportStatus: "possible",
+          wageHourlyCad: 40,
+        }),
+      },
+    );
+    expect(aliceImmigration.status).toBe(200);
+
+    const bobReadsAliceImmigration = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/immigration-profile`,
+      { headers: { Authorization: `Bearer ${bobToken}` } },
+    );
+    expect(bobReadsAliceImmigration.status).toBe(404);
+
+    const bobMutatesAliceImmigration = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/immigration-profile`,
+      {
+        method: "PUT",
+        headers: authHeaders(bobToken),
+        body: JSON.stringify({ immigrationNotes: "Not Bob's profile" }),
+      },
+    );
+    expect(bobMutatesAliceImmigration.status).toBe(404);
+
     const pdfBytes = Buffer.from("%PDF-1.4\n%EOF\n").toString("base64");
     const uploadPdfRes = await fetch(`${baseUrl}/api/jobs/${aliceJob.id}/pdf`, {
       method: "POST",

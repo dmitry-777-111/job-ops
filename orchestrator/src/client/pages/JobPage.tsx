@@ -28,6 +28,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { toast } from "sonner";
+import { ImmigrationProfilePanel } from "@/client/components/ImmigrationProfilePanel";
 import { JobBriefPane } from "@/client/components/JobBriefPane";
 import { JobDescriptionPanel } from "@/client/components/JobDescriptionPanel";
 import { VerifiedFactsPanel } from "@/client/components/VerifiedFactsPanel";
@@ -842,6 +843,10 @@ export const JobPage: React.FC = () => {
                       This application is closed. Stage logging is disabled.
                     </div>
                   )}
+                  <ImmigrationProfilePanel
+                    key={`immigration-${job.id}`}
+                    jobId={job.id}
+                  />
                   <VerifiedFactsPanel key={job.id} jobId={job.id} />
                   <JobTimeline
                     events={events}
