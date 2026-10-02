@@ -7,6 +7,7 @@ import {
   APPLICATION_STAGES,
   APPLICATION_TASK_TYPES,
   HOSTED_USAGE_ACTIONS,
+  HUMAN_BRIDGE_LEVELS,
   IMMIGRATION_EMPLOYER_SUPPORT_STATUSES,
   INTERVIEW_OUTCOMES,
   INTERVIEW_TYPES,
@@ -402,6 +403,97 @@ export const jobImmigrationProfiles = sqliteTable(
     tenantUserJobIndex: index(
       "idx_job_immigration_profiles_tenant_user_job",
     ).on(table.tenantId, table.userId, table.jobId),
+  }),
+);
+
+export const humanBridgeCompanies = sqliteTable(
+  "human_bridge_companies",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    normalizedName: text("normalized_name").notNull(),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserNameUnique: uniqueIndex(
+      "idx_human_bridge_companies_tenant_user_name_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.normalizedName,
+    ),
+  }),
+);
+
+export const jobHumanBridgeCompanies = sqliteTable(
+  "job_human_bridge_companies",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    jobId: text("job_id")
+      .notNull()
+      .references(() => jobs.id, { onDelete: "cascade" }),
+    companyId: text("company_id")
+      .notNull()
+      .references(() => humanBridgeCompanies.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserJobUnique: uniqueIndex(
+      "idx_job_human_bridge_companies_tenant_user_job_unique",
+    ).on(table.tenantId, sql`coalesce(${table.userId}, '')`, table.jobId),
+    tenantUserCompanyIndex: index(
+      "idx_job_human_bridge_companies_tenant_user_company",
+    ).on(table.tenantId, table.userId, table.companyId),
+  }),
+);
+
+export const humanBridgeContacts = sqliteTable(
+  "human_bridge_contacts",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    companyId: text("company_id")
+      .notNull()
+      .references(() => humanBridgeCompanies.id, { onDelete: "cascade" }),
+    jobId: text("job_id").references(() => jobs.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    role: text("role"),
+    linkedinUrl: text("linkedin_url"),
+    influenceScore: integer("influence_score").notNull().default(0),
+    bridgeLevel: text("bridge_level", { enum: HUMAN_BRIDGE_LEVELS })
+      .notNull()
+      .default("B0"),
+    bridgeEvidence: text("bridge_evidence"),
+    lastContactAt: integer("last_contact_at", { mode: "number" }),
+    outcome: text("outcome"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserCompanyIndex: index(
+      "idx_human_bridge_contacts_tenant_user_company",
+    ).on(table.tenantId, table.userId, table.companyId),
+    tenantUserJobIndex: index("idx_human_bridge_contacts_tenant_user_job").on(
+      table.tenantId,
+      table.userId,
+      table.jobId,
+    ),
   }),
 );
 

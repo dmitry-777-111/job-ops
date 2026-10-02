@@ -187,6 +187,61 @@ export interface UpdateJobImmigrationProfileInput {
   evidence?: ImmigrationEvidence[];
 }
 
+export const HUMAN_BRIDGE_LEVELS = ["B0", "B1", "B2", "B3"] as const;
+export type HumanBridgeLevel = (typeof HUMAN_BRIDGE_LEVELS)[number];
+
+export interface HumanBridgeCompany {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HumanBridgeContact {
+  id: string;
+  companyId: string;
+  jobId: string | null;
+  name: string;
+  role: string | null;
+  linkedinUrl: string | null;
+  influenceScore: number;
+  bridgeLevel: HumanBridgeLevel;
+  bridgeEvidence: string | null;
+  lastContactAt: number | null;
+  outcome: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobHumanBridgeContext {
+  company: HumanBridgeCompany;
+  contacts: HumanBridgeContact[];
+}
+
+export interface CreateHumanBridgeContactInput {
+  name: string;
+  role?: string | null;
+  linkedinUrl?: string | null;
+  influenceScore?: number;
+  bridgeLevel?: HumanBridgeLevel;
+  bridgeEvidence?: string | null;
+  lastContactAt?: number | null;
+  outcome?: string | null;
+  linkToJob?: boolean;
+}
+
+export interface UpdateHumanBridgeContactInput {
+  name?: string;
+  role?: string | null;
+  linkedinUrl?: string | null;
+  influenceScore?: number;
+  bridgeLevel?: HumanBridgeLevel;
+  bridgeEvidence?: string | null;
+  lastContactAt?: number | null;
+  outcome?: string | null;
+  linkToJob?: boolean;
+}
+
 export interface StageEventMetadata {
   evidence?: StageEvidence | null;
   note?: string | null;

@@ -341,6 +341,39 @@ describe.sequential("Hosted current-user isolation", () => {
     );
     expect(bobMutatesAliceImmigration.status).toBe(404);
 
+    const aliceHumanBridge = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/human-bridge/contacts`,
+      {
+        method: "POST",
+        headers: authHeaders(aliceToken),
+        body: JSON.stringify({
+          name: "Alice Hiring Manager",
+          influenceScore: 1,
+          bridgeLevel: "B1",
+          bridgeEvidence: "Alice verified direct reply.",
+          outcome: "replied",
+        }),
+      },
+    );
+    expect(aliceHumanBridge.status).toBe(200);
+    const aliceHumanBridgeBody = await aliceHumanBridge.json();
+
+    const bobReadsAliceHumanBridge = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/human-bridge`,
+      { headers: { Authorization: `Bearer ${bobToken}` } },
+    );
+    expect(bobReadsAliceHumanBridge.status).toBe(404);
+
+    const bobMutatesAliceHumanBridge = await fetch(
+      `${baseUrl}/api/jobs/${aliceJob.id}/human-bridge/contacts/${aliceHumanBridgeBody.data.id}`,
+      {
+        method: "PATCH",
+        headers: authHeaders(bobToken),
+        body: JSON.stringify({ outcome: "not-bob-data" }),
+      },
+    );
+    expect(bobMutatesAliceHumanBridge.status).toBe(404);
+
     const pdfBytes = Buffer.from("%PDF-1.4\n%EOF\n").toString("base64");
     const uploadPdfRes = await fetch(`${baseUrl}/api/jobs/${aliceJob.id}/pdf`, {
       method: "POST",

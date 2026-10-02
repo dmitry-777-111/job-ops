@@ -1,11 +1,14 @@
 import type {
   ApplicationStage,
   ApplicationTask,
+  CreateHumanBridgeContactInput,
+  HumanBridgeContact,
   Job,
   JobActionRequest,
   JobActionResponse,
   JobActionStreamEvent,
   JobDocument,
+  JobHumanBridgeContext,
   JobImmigrationContext,
   JobImmigrationProfile,
   JobListItem,
@@ -22,6 +25,7 @@ import type {
   StageTransitionTarget,
   TracerAnalyticsResponse,
   TracerReadinessResponse,
+  UpdateHumanBridgeContactInput,
   UpdateJobImmigrationProfileInput,
   VerifiedJobFactKey,
 } from "@shared/types";
@@ -352,6 +356,36 @@ export async function getJobVerifiedFacts(
   id: string,
 ): Promise<JobVerifiedFact[]> {
   return fetchApi<JobVerifiedFact[]>(`/jobs/${id}/verified-facts`);
+}
+
+export async function getJobHumanBridgeContext(
+  id: string,
+): Promise<JobHumanBridgeContext> {
+  return fetchApi<JobHumanBridgeContext>(`/jobs/${id}/human-bridge`);
+}
+
+export async function createHumanBridgeContact(
+  id: string,
+  input: CreateHumanBridgeContactInput,
+): Promise<HumanBridgeContact> {
+  return fetchApi<HumanBridgeContact>(`/jobs/${id}/human-bridge/contacts`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateHumanBridgeContact(
+  id: string,
+  contactId: string,
+  input: UpdateHumanBridgeContactInput,
+): Promise<HumanBridgeContact> {
+  return fetchApi<HumanBridgeContact>(
+    `/jobs/${id}/human-bridge/contacts/${contactId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 export async function getJobImmigrationContext(

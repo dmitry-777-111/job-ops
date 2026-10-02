@@ -672,6 +672,69 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_job_immigration_profiles_tenant_user_job
     ON job_immigration_profiles(tenant_id, user_id, job_id)`,
 
+  `CREATE TABLE IF NOT EXISTS human_bridge_companies (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+    user_id TEXT,
+    name TEXT NOT NULL,
+    normalized_name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_human_bridge_companies_tenant_user_name_unique
+    ON human_bridge_companies(tenant_id, coalesce(user_id, ''), normalized_name)`,
+
+  `CREATE TABLE IF NOT EXISTS job_human_bridge_companies (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+    user_id TEXT,
+    job_id TEXT NOT NULL,
+    company_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+    FOREIGN KEY (company_id) REFERENCES human_bridge_companies(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_job_human_bridge_companies_tenant_user_job_unique
+    ON job_human_bridge_companies(tenant_id, coalesce(user_id, ''), job_id)`,
+
+  `CREATE INDEX IF NOT EXISTS idx_job_human_bridge_companies_tenant_user_company
+    ON job_human_bridge_companies(tenant_id, user_id, company_id)`,
+
+  `CREATE TABLE IF NOT EXISTS human_bridge_contacts (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+    user_id TEXT,
+    company_id TEXT NOT NULL,
+    job_id TEXT,
+    name TEXT NOT NULL,
+    role TEXT,
+    linkedin_url TEXT,
+    influence_score INTEGER NOT NULL DEFAULT 0 CHECK(influence_score BETWEEN 0 AND 3),
+    bridge_level TEXT NOT NULL DEFAULT 'B0' CHECK(bridge_level IN ('B0', 'B1', 'B2', 'B3')),
+    bridge_evidence TEXT,
+    last_contact_at INTEGER,
+    outcome TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (company_id) REFERENCES human_bridge_companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE SET NULL
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_human_bridge_contacts_tenant_user_company
+    ON human_bridge_contacts(tenant_id, user_id, company_id)`,
+
+  `CREATE INDEX IF NOT EXISTS idx_human_bridge_contacts_tenant_user_job
+    ON human_bridge_contacts(tenant_id, user_id, job_id)`,
+
   `CREATE TABLE IF NOT EXISTS stage_events (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL DEFAULT 'tenant_default',

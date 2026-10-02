@@ -28,6 +28,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { toast } from "sonner";
+import { HumanBridgePanel } from "@/client/components/HumanBridgePanel";
 import { ImmigrationProfilePanel } from "@/client/components/ImmigrationProfilePanel";
 import { JobBriefPane } from "@/client/components/JobBriefPane";
 import { JobDescriptionPanel } from "@/client/components/JobDescriptionPanel";
@@ -848,6 +849,7 @@ export const JobPage: React.FC = () => {
                     jobId={job.id}
                   />
                   <VerifiedFactsPanel key={job.id} jobId={job.id} />
+                  <HumanBridgePanel jobId={job.id} />
                   <JobTimeline
                     events={events}
                     discoveredAt={job.discoveredAt}
