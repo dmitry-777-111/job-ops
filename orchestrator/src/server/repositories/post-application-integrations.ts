@@ -7,11 +7,18 @@ import type {
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
+  deleteCredentialSecret,
+  getCredentialSecret,
+  putCredentialSecret,
+} from "./credential-secrets";
+import {
   getPrivateDataScope,
   privateDataScopeFilter,
 } from "../tenancy/private-scope";
 
 const { postApplicationIntegrations } = schema;
+const CREDENTIAL_OWNER_TYPE = "post_application_integration";
+const CREDENTIAL_SECRET_NAME = "credentials";
 
 function integrationsScopeFilter() {
   return privateDataScopeFilter(postApplicationIntegrations);
@@ -42,16 +49,22 @@ function asCredentials(value: unknown): IntegrationCredentials | null {
   return value as IntegrationCredentials;
 }
 
-function mapRowToIntegration(
+async function mapRowToIntegration(
   row: typeof postApplicationIntegrations.$inferSelect,
-): PostApplicationIntegration {
+): Promise<PostApplicationIntegration> {
+  const vaultedCredentials = await getCredentialSecret({
+    ownerType: CREDENTIAL_OWNER_TYPE,
+    ownerId: row.id,
+    secretName: CREDENTIAL_SECRET_NAME,
+  });
   return {
     id: row.id,
     provider: row.provider,
     accountKey: row.accountKey,
     displayName: row.displayName,
     status: row.status as PostApplicationIntegrationStatus,
-    credentials: asCredentials(row.credentials),
+    // Legacy plaintext is read-only compatibility until the migration gate.
+    credentials: vaultedCredentials ?? asCredentials(row.credentials),
     lastConnectedAt: row.lastConnectedAt,
     lastSyncedAt: row.lastSyncedAt,
     lastError: row.lastError,
@@ -75,7 +88,7 @@ export async function getPostApplicationIntegration(
       ),
     );
 
-  return row ? mapRowToIntegration(row) : null;
+  return row ? await mapRowToIntegration(row) : null;
 }
 
 export async function upsertConnectedPostApplicationIntegration(
@@ -90,12 +103,18 @@ export async function upsertConnectedPostApplicationIntegration(
   );
 
   if (existing) {
+    await putCredentialSecret({
+      ownerType: CREDENTIAL_OWNER_TYPE,
+      ownerId: existing.id,
+      secretName: CREDENTIAL_SECRET_NAME,
+      payload: input.credentials,
+    });
     await db
       .update(postApplicationIntegrations)
       .set({
         displayName: input.displayName ?? existing.displayName,
         status: "connected",
-        credentials: input.credentials,
+        credentials: null,
         lastConnectedAt: nowEpoch,
         lastError: null,
         updatedAt: nowIso,
@@ -123,12 +142,26 @@ export async function upsertConnectedPostApplicationIntegration(
     accountKey: input.accountKey,
     displayName: input.displayName ?? null,
     status: "connected",
-    credentials: input.credentials,
+    credentials: null,
     lastConnectedAt: nowEpoch,
     lastError: null,
     createdAt: nowIso,
     updatedAt: nowIso,
   });
+
+  try {
+    await putCredentialSecret({
+      ownerType: CREDENTIAL_OWNER_TYPE,
+      ownerId: id,
+      secretName: CREDENTIAL_SECRET_NAME,
+      payload: input.credentials,
+    });
+  } catch (error) {
+    await db
+      .delete(postApplicationIntegrations)
+      .where(and(integrationsScopeFilter(), eq(postApplicationIntegrations.id, id)));
+    throw error;
+  }
 
   const created = await getPostApplicationIntegration(
     input.provider,
@@ -150,6 +183,11 @@ export async function disconnectPostApplicationIntegration(
   if (!existing) return null;
 
   const nowIso = new Date().toISOString();
+  await deleteCredentialSecret({
+    ownerType: CREDENTIAL_OWNER_TYPE,
+    ownerId: existing.id,
+    secretName: CREDENTIAL_SECRET_NAME,
+  });
   await db
     .update(postApplicationIntegrations)
     .set({
@@ -178,6 +216,22 @@ export async function updatePostApplicationIntegrationSyncState(
   if (!existing) return null;
 
   const nowIso = new Date().toISOString();
+  if (input.credentials !== undefined) {
+    if (input.credentials === null) {
+      await deleteCredentialSecret({
+        ownerType: CREDENTIAL_OWNER_TYPE,
+        ownerId: existing.id,
+        secretName: CREDENTIAL_SECRET_NAME,
+      });
+    } else {
+      await putCredentialSecret({
+        ownerType: CREDENTIAL_OWNER_TYPE,
+        ownerId: existing.id,
+        secretName: CREDENTIAL_SECRET_NAME,
+        payload: input.credentials,
+      });
+    }
+  }
   await db
     .update(postApplicationIntegrations)
     .set({
@@ -186,9 +240,7 @@ export async function updatePostApplicationIntegrationSyncState(
         ? { lastSyncedAt: input.lastSyncedAt }
         : {}),
       ...(input.lastError !== undefined ? { lastError: input.lastError } : {}),
-      ...(input.credentials !== undefined
-        ? { credentials: input.credentials }
-        : {}),
+      ...(input.credentials !== undefined ? { credentials: null } : {}),
       updatedAt: nowIso,
     })
     .where(

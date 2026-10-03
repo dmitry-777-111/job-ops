@@ -1931,6 +1931,31 @@ function rebuildPostApplicationPrivateTables(): void {
   }
 }
 
+function ensureCredentialSecretsTable(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS credential_secrets (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      owner_type TEXT NOT NULL,
+      owner_id TEXT NOT NULL,
+      secret_name TEXT NOT NULL,
+      ciphertext TEXT NOT NULL,
+      iv TEXT NOT NULL,
+      auth_tag TEXT NOT NULL,
+      key_version TEXT NOT NULL DEFAULT 'v1',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_credential_secrets_owner_unique
+      ON credential_secrets(tenant_id, coalesce(user_id, ''), owner_type, owner_id, secret_name);
+    CREATE INDEX IF NOT EXISTS idx_credential_secrets_owner
+      ON credential_secrets(owner_type, owner_id);
+  `);
+}
+
 function ensureCandidateProfileAndStrategyTables(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS candidate_profile_versions (
@@ -2099,6 +2124,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensureCredentialSecretsTable();
 ensureCandidateProfileAndStrategyTables();
 ensurePipelineRunItemsTable();
 rebuildPostApplicationPrivateTables();

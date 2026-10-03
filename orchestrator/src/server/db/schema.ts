@@ -1394,6 +1394,42 @@ export const jobDocuments = sqliteTable(
   }),
 );
 
+export const credentialSecrets = sqliteTable(
+  "credential_secrets",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    ownerType: text("owner_type").notNull(),
+    ownerId: text("owner_id").notNull(),
+    secretName: text("secret_name").notNull(),
+    ciphertext: text("ciphertext").notNull(),
+    iv: text("iv").notNull(),
+    authTag: text("auth_tag").notNull(),
+    keyVersion: text("key_version").notNull().default("v1"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    ownerSecretUnique: uniqueIndex(
+      "idx_credential_secrets_owner_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.ownerType,
+      table.ownerId,
+      table.secretName,
+    ),
+    ownerIndex: index("idx_credential_secrets_owner").on(
+      table.ownerType,
+      table.ownerId,
+    ),
+  }),
+);
+
 export const postApplicationIntegrations = sqliteTable(
   "post_application_integrations",
   {
@@ -1704,6 +1740,8 @@ export type NewDesignResumeDocumentRow =
   typeof designResumeDocuments.$inferInsert;
 export type DesignResumeAssetRow = typeof designResumeAssets.$inferSelect;
 export type NewDesignResumeAssetRow = typeof designResumeAssets.$inferInsert;
+export type CredentialSecretRow = typeof credentialSecrets.$inferSelect;
+export type NewCredentialSecretRow = typeof credentialSecrets.$inferInsert;
 export type PostApplicationIntegrationRow =
   typeof postApplicationIntegrations.$inferSelect;
 export type NewPostApplicationIntegrationRow =
