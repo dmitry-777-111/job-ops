@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildGmailQuery,
   gmailApi,
+  isLikelyRecruitmentMetadata,
   listMessageIds,
   resolveGmailAccessToken,
 } from "./gmail-api";
@@ -91,6 +92,24 @@ describe("gmail sync http behavior", () => {
     await expect(
       gmailApi("access-token", "https://gmail.googleapis.com/test"),
     ).rejects.toThrow("Gmail API request failed (502).");
+  });
+
+  it("prefilters broad intake after discovery without requiring a known sender", () => {
+    expect(
+      isLikelyRecruitmentMetadata({
+        from: "Alex Person <alex@example.com>",
+        subject: "Quick question",
+        snippet: "I saw your profile and would like to discuss a service manager role.",
+      }),
+    ).toBe(true);
+
+    expect(
+      isLikelyRecruitmentMetadata({
+        from: "store@example.com",
+        subject: "Your receipt",
+        snippet: "Thanks for your purchase.",
+      }),
+    ).toBe(false);
   });
 
   it("searches all mail including Spam and Trash", async () => {

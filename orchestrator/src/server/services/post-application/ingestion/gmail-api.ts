@@ -149,106 +149,99 @@ export async function gmailApi<T>(token: string, url: string): Promise<T> {
   return data as T;
 }
 
+const RECRUITMENT_SUBJECT_TERMS = [
+  "application",
+  "interview",
+  "assessment",
+  "coding challenge",
+  "take-home",
+  "availability",
+  "offer",
+  "referral",
+  "recruiter",
+  "hiring",
+  "candidate",
+  "phone screen",
+  "screening call",
+  "next steps",
+  "reschedule",
+];
+
+const RECRUITMENT_SENDER_TERMS = [
+  "careers@",
+  "jobs@",
+  "recruiting@",
+  "talent@",
+  "jobbank.gc.ca",
+  "linkedin.com",
+  "indeed.com",
+  "greenhouse",
+  "workday",
+  "smartrecruiters",
+  "hire.lever.co",
+  "ashbyhq",
+  "bamboohr",
+  "jobvite",
+  "icims",
+  "taleo",
+  "calendly",
+  "savvycal",
+];
+
+const RECRUITMENT_TEXT_TERMS = [
+  "application",
+  "applying",
+  "candidate",
+  "interview",
+  "recruiter",
+  "hiring",
+  "position",
+  "role",
+  "opportunity",
+  "resume",
+  "cv",
+  "assessment",
+  "offer",
+  "career",
+  "job",
+  "schedule a call",
+  "book a time",
+  "microsoft teams meeting",
+];
+
+const NOISE_SUBJECT_TERMS = [
+  "newsletter",
+  "webinar",
+  "course",
+  "discount",
+  "job search council",
+  "matched new opportunities",
+];
+
+function includesAny(value: string, terms: readonly string[]): boolean {
+  return terms.some((term) => value.includes(term));
+}
+
+export function isLikelyRecruitmentMetadata(input: {
+  from: string;
+  subject: string;
+  snippet: string;
+}): boolean {
+  const from = input.from.toLowerCase();
+  const subject = input.subject.toLowerCase();
+  const text = `${input.subject}\n${input.snippet}`.toLowerCase();
+
+  if (includesAny(subject, NOISE_SUBJECT_TERMS)) return false;
+  return (
+    includesAny(subject, RECRUITMENT_SUBJECT_TERMS) ||
+    includesAny(from, RECRUITMENT_SENDER_TERMS) ||
+    includesAny(text, RECRUITMENT_TEXT_TERMS)
+  );
+}
+
 export function buildGmailQuery(searchDays: number): string {
-  const subjectTerms = [
-    "application",
-    "thank you for applying",
-    "thanks for applying",
-    "application received",
-    "application submitted",
-    "your application",
-    "interview",
-    "assessment",
-    "coding challenge",
-    "take-home",
-    "availability",
-    "offer",
-    "offer letter",
-    "referral",
-    "recruiter",
-    "hiring team",
-    "regret to inform",
-    "not moving forward",
-    "not selected",
-    "application unsuccessful",
-    "moving forward with other candidates",
-    "unable to proceed",
-    "position has been filled",
-    "hiring freeze",
-    "position on hold",
-    "withdrawn",
-    // Interview scheduling / calendar coordination
-    "invitation",
-    "updated invitation",
-    "reschedule",
-    "rescheduled",
-    "next steps",
-    "phone screen",
-    "screening call",
-    "let's chat",
-    "quick chat",
-  ];
-  const fromTerms = [
-    "careers@",
-    "jobs@",
-    "recruiting@",
-    "talent@",
-    "no-reply@greenhouse.io",
-    "no-reply@us.greenhouse-mail.io",
-    "no-reply@ashbyhq.com",
-    "notification@smartrecruiters.com",
-    "@smartrecruiters.com",
-    "@workablemail.com",
-    "@hire.lever.co",
-    "@myworkday.com",
-    "@workdaymail.com",
-    "@greenhouse.io",
-    "@ashbyhq.com",
-    // Scheduling / calendar providers
-    "@calendly.com",
-    "@savvycal.com",
-    "calendar-notification@google.com",
-  ];
-  // Full-text (subject OR body) terms. Recruiter follow-ups and calendar
-  // invites often carry a plain job-title or "First and Last" subject with no
-  // recruitment keyword and come from an arbitrary company/personal domain, so
-  // the only reliable signal lives in the body (booking links, thank-you
-  // phrasing). Keep these high-precision to avoid flooding busy inboxes.
-  const fullTextTerms = [
-    "thank you for applying",
-    "thanks for applying",
-    "book a time",
-    "book the best time",
-    "schedule a call",
-    "microsoft teams meeting",
-    "calendly.com",
-    "savvycal.com",
-  ];
-  const excludeSubjectTerms = [
-    "newsletter",
-    "webinar",
-    "course",
-    "discount",
-    "event invitation",
-    "job search council",
-    "matched new opportunities",
-  ];
-
-  const quoteTerm = (value: string) => `"${value.replace(/"/g, '\\"')}"`;
-  const subjectBlock = subjectTerms
-    .map((term) => `subject:${quoteTerm(term)}`)
-    .join(" OR ");
-  const fromBlock = fromTerms
-    .map((term) => `from:${quoteTerm(term)}`)
-    .join(" OR ");
-  const fullTextBlock = fullTextTerms
-    .map((term) => quoteTerm(term))
-    .join(" OR ");
-  const excludeClauses = excludeSubjectTerms
-    .map((term) => `-subject:${quoteTerm(term)}`)
-    .join(" ");
-
-  return `in:anywhere newer_than:${searchDays}d ((${subjectBlock}) OR (${fromBlock}) OR (${fullTextBlock})) ${excludeClauses}`.trim();
+  const days = Math.max(1, Math.floor(searchDays));
+  return `in:anywhere newer_than:${days}d`;
 }
 
 export async function listMessageIds(

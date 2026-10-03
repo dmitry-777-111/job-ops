@@ -24,12 +24,13 @@ import {
   extractBodyText,
   getMessageFull,
   getMessageMetadata,
+  isLikelyRecruitmentMetadata,
   listMessageIds,
   resolveGmailAccessToken,
 } from "./gmail-api";
 
-const DEFAULT_SEARCH_DAYS = 90;
-const DEFAULT_MAX_MESSAGES = 100;
+const DEFAULT_SEARCH_DAYS = 2;
+const DEFAULT_MAX_MESSAGES = 500;
 
 export type GmailSyncSummary = {
   discovered: number;
@@ -339,6 +340,45 @@ export async function runGmailIngestionSync(args: {
               note: "Auto-created from Smart Router.",
             });
           }
+          return;
+        }
+
+        if (
+          !isLikelyRecruitmentMetadata({
+            from,
+            subject,
+            snippet: metadata.snippet,
+          })
+        ) {
+          await upsertPostApplicationMessage({
+            provider: "gmail",
+            accountKey: args.accountKey,
+            integrationId: integration.id,
+            syncRunId: syncRun.id,
+            externalMessageId: metadata.id,
+            externalThreadId: metadata.threadId,
+            fromAddress,
+            fromDomain,
+            senderName,
+            subject,
+            receivedAt,
+            snippet: metadata.snippet,
+            classificationLabel: "noise",
+            classificationConfidence: 1,
+            classificationPayload: {
+              method: "metadata_prefilter",
+              reason: "No recruitment signal in sender, subject, or snippet.",
+            },
+            relevanceLlmScore: null,
+            relevanceDecision: "not_relevant",
+            matchedJobId: null,
+            matchConfidence: 0,
+            stageTarget: "no_change",
+            messageType: "other",
+            stageEventPayload: null,
+            processingStatus: "ignored",
+          });
+          classified += 1;
           return;
         }
 
