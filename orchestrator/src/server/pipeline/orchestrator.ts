@@ -352,6 +352,7 @@ export async function runPipeline(
       await persistResultSummary({ stage: "discovery" });
       let { discoveredJobs, sourceErrors, pendingChallenges } =
         await discoverJobsStep({
+          pipelineRunId: pipelineRun.id,
           mergedConfig,
           watchlistSelectedSourceIds: mergedConfig.watchlistSelectedSourceIds,
           shouldCancel: () =>
@@ -399,6 +400,7 @@ export async function runPipeline(
 
         const retryConfig = { ...mergedConfig, sources: challengedSources };
         const retryResult = await discoverJobsStep({
+          pipelineRunId: pipelineRun.id,
           mergedConfig: retryConfig,
           includeWatchlist: false,
           preserveFanout: true,

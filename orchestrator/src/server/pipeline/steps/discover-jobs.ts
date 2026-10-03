@@ -3,6 +3,7 @@ import { sanitizeUnknown } from "@infra/sanitize";
 import { getExtractorRegistry } from "@server/extractors/registry";
 import { getUserId } from "@server/infra/request-context";
 import { getAllJobUrls } from "@server/repositories/jobs";
+import { createSourceRun, getSourceRun, recordPipelineIssue, updateSourceRun } from "@server/repositories/pipeline-reliability";
 import * as settingsRepo from "@server/repositories/settings";
 import { withHostedUsageReservation } from "@server/services/hosted-usage";
 import { resolveNearbyPlaceNames } from "@server/services/proximity-search";
@@ -43,6 +44,15 @@ type DiscoveryTaskResult = {
   challenge?: PendingChallenge;
   fatal?: boolean;
 };
+
+async function getSourceRunForSettle(pipelineRunId: string, source: string, outcome: { status: "fulfilled"; result: DiscoveryTaskResult } | { status: "rejected"; error: unknown }) {
+  const row = await getSourceRun(pipelineRunId, source);
+  if (!row) return;
+  const failed = outcome.status === "rejected" || (outcome.status === "fulfilled" && outcome.result.fatal === true);
+  const errorMessage = outcome.status === "rejected" ? (outcome.error instanceof Error ? outcome.error.message : "unknown error") : outcome.result.sourceErrors.join("; ") || null;
+  await updateSourceRun(row.id, { status: failed ? "failed" : "complete", errorMessage });
+  if (failed) await recordPipelineIssue({ issueSignature: `discovery:${source}:${errorMessage ?? "failed"}`, source, issueType: "discovery_failure", pipelineRunId, sourceRunId: row.id, stage: "discovery", errorMessage });
+}
 
 type DiscoverySourceTask = {
   source: CrawlSource;
@@ -149,6 +159,7 @@ function buildLocationEvidence(args: {
 }
 
 export async function discoverJobsStep(args: {
+  pipelineRunId?: string;
   mergedConfig: PipelineConfig;
   includeWatchlist?: boolean;
   preserveFanout?: boolean;
@@ -559,9 +570,18 @@ export async function discoverJobsStep(args: {
           }
         },
         task: async (sourceTask) => {
+          let sourceRunId: string | null = null;
+          if (args.pipelineRunId) {
+            const row = await createSourceRun({ pipelineRunId: args.pipelineRunId, source: sourceTask.source });
+            sourceRunId = row?.id ?? null;
+            if (sourceRunId) await updateSourceRun(sourceRunId, { status: "running", incrementAttempt: true });
+          }
           try {
-            return await sourceTask.run();
+            const result = await sourceTask.run();
+            if (args.pipelineRunId && sourceRunId) await getSourceRunForSettle(args.pipelineRunId, sourceTask.source, { status: "fulfilled", result });
+            return result;
           } catch (error) {
+            if (args.pipelineRunId && sourceRunId) await getSourceRunForSettle(args.pipelineRunId, sourceTask.source, { status: "rejected", error });
             logger.warn("Discovery source task failed", {
               sourceTask: sourceTask.source,
               error: sanitizeUnknown(error),

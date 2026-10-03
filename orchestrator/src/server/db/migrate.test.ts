@@ -501,3 +501,28 @@ describe.sequential("database migrations", () => {
     );
   });
 });
+
+  it("creates CAREER OS v2 reliability ledger tables with foreign keys", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "job-ops-reliability-"));
+    const script = `
+      import { join } from "node:path";
+      import { pathToFileURL } from "node:url";
+      import Database from "better-sqlite3";
+      const dbPath = join(process.env.DATA_DIR, "jobs.db");
+      await import(pathToFileURL(join(process.cwd(), "src/server/db/migrate.ts")).href);
+      const sqlite = new Database(dbPath, { readonly: true });
+      const required = ["pipeline_source_runs", "pipeline_issues", "pipeline_issue_occurrences"];
+      for (const name of required) {
+        const row = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name);
+        if (!row) throw new Error(name + " table missing");
+      }
+      const sourceFks = sqlite.prepare("PRAGMA foreign_key_list(pipeline_source_runs)").all();
+      if (!sourceFks.some((fk) => fk.from === "pipeline_run_id" && fk.table === "pipeline_runs")) throw new Error("source run FK missing");
+      const occurrenceFks = sqlite.prepare("PRAGMA foreign_key_list(pipeline_issue_occurrences)").all();
+      if (!occurrenceFks.some((fk) => fk.from === "issue_id" && fk.table === "pipeline_issues")) throw new Error("issue occurrence FK missing");
+      sqlite.close();
+    `;
+    execFileSync(process.execPath, ["--import", "tsx", "--input-type=module", "-e", script], {
+      env: { ...process.env, DATA_DIR: tempDir }, stdio: "pipe",
+    });
+  });
