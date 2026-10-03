@@ -105,7 +105,9 @@ describe("gmail sync http behavior", () => {
 
     const requestedUrl = String(vi.mocked(fetch).mock.calls[0]?.[0] ?? "");
     expect(requestedUrl).toContain("includeSpamTrash=true");
-    expect(decodeURIComponent(requestedUrl)).toContain("q=in:anywhere newer_than:1d");
+    expect(decodeURIComponent(requestedUrl)).toContain(
+      "q=in:anywhere newer_than:1d",
+    );
   });
 
   it("returns gmail API payload on success", async () => {
