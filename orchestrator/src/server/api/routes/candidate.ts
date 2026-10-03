@@ -1,4 +1,4 @@
-import { toAppError } from "@infra/errors";
+import { notFound, toAppError } from "@infra/errors";
 import { fail, ok } from "@infra/http";
 import {
   activateMasterCareerProfileVersion,
@@ -120,8 +120,7 @@ candidateRouter.post(
         String(req.params.versionId),
       );
       if (!activated) {
-        res.status(404).json({ error: "Candidate profile version not found." });
-        return;
+        throw notFound("Candidate profile version not found.");
       }
       ok(res, activated);
     } catch (error) {
