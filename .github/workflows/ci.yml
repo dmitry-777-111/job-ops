@@ -103,3 +103,19 @@ jobs:
       - name: Build documentation site
         run: npm run check:docs
         working-directory: .
+
+  v2-fix-artifact:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: biomejs/setup-biome@v2
+        with:
+          version: 2.3.12
+      - run: biome check --write orchestrator/src/server/repositories/pipeline-reliability.ts orchestrator/src/server/services/legacy-career-os-migration.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v2-biome-fixed
+          path: |
+            orchestrator/src/server/repositories/pipeline-reliability.ts
+            orchestrator/src/server/services/legacy-career-os-migration.ts
