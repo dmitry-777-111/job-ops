@@ -1627,6 +1627,61 @@ export const jobDocuments = sqliteTable(
   }),
 );
 
+export const externalConnections = sqliteTable(
+  "external_connections",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    providerId: text("provider_id").notNull(),
+    kind: text("kind", {
+      enum: [
+        "email",
+        "job_board",
+        "professional_profile",
+        "cloud_storage",
+        "calendar",
+        "other",
+      ],
+    }).notNull(),
+    accountKey: text("account_key").notNull().default("default"),
+    displayName: text("display_name"),
+    status: text("status", {
+      enum: ["disconnected", "connected", "requires_action", "error"],
+    })
+      .notNull()
+      .default("disconnected"),
+    scopes: text("scopes", { mode: "json" }).notNull().default(sql`'[]'`),
+    capabilities: text("capabilities", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    metadata: text("metadata", { mode: "json" }).notNull().default(sql`'{}'`),
+    lastConnectedAt: text("last_connected_at"),
+    lastSyncedAt: text("last_synced_at"),
+    lastError: text("last_error"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    ownerProviderAccountUnique: uniqueIndex(
+      "idx_external_connections_owner_provider_account_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.providerId,
+      table.accountKey,
+    ),
+    ownerStatusIndex: index("idx_external_connections_owner_status").on(
+      table.tenantId,
+      table.userId,
+      table.status,
+    ),
+  }),
+);
+
 export const credentialSecrets = sqliteTable(
   "credential_secrets",
   {
@@ -1991,6 +2046,8 @@ export type NewDesignResumeDocumentRow =
   typeof designResumeDocuments.$inferInsert;
 export type DesignResumeAssetRow = typeof designResumeAssets.$inferSelect;
 export type NewDesignResumeAssetRow = typeof designResumeAssets.$inferInsert;
+export type ExternalConnectionRow = typeof externalConnections.$inferSelect;
+export type NewExternalConnectionRow = typeof externalConnections.$inferInsert;
 export type CredentialSecretRow = typeof credentialSecrets.$inferSelect;
 export type NewCredentialSecretRow = typeof credentialSecrets.$inferInsert;
 export type PostApplicationIntegrationRow =

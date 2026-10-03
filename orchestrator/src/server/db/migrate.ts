@@ -2035,6 +2035,35 @@ function ensureMarketInventoryTables(): void {
   `);
 }
 
+function ensureExternalConnectionsTable(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS external_connections (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      provider_id TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('email','job_board','professional_profile','cloud_storage','calendar','other')),
+      account_key TEXT NOT NULL DEFAULT 'default',
+      display_name TEXT,
+      status TEXT NOT NULL DEFAULT 'disconnected' CHECK(status IN ('disconnected','connected','requires_action','error')),
+      scopes TEXT NOT NULL DEFAULT '[]',
+      capabilities TEXT NOT NULL DEFAULT '[]',
+      metadata TEXT NOT NULL DEFAULT '{}',
+      last_connected_at TEXT,
+      last_synced_at TEXT,
+      last_error TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_external_connections_owner_provider_account_unique
+      ON external_connections(tenant_id, coalesce(user_id, ''), provider_id, account_key);
+    CREATE INDEX IF NOT EXISTS idx_external_connections_owner_status
+      ON external_connections(tenant_id, user_id, status);
+  `);
+}
+
 function ensureCredentialSecretsTable(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS credential_secrets (
@@ -2269,6 +2298,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensureExternalConnectionsTable();
 ensureMarketInventoryTables();
 ensureCredentialSecretsTable();
 ensureCandidateProfileAndStrategyTables();
