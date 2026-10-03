@@ -457,6 +457,7 @@ export async function runPipeline(
       }
       const { created, skipped, fuzzyMerged } = await importJobsStep({
         discoveredJobs,
+        pipelineRunId: pipelineRun.id,
       });
 
       await persistResultSummary({ stage: "import" });
@@ -475,6 +476,7 @@ export async function runPipeline(
             scoringInstructions: mergedConfig.scoringInstructions,
             visaSponsorCountryKey: mergedConfig.locationIntent?.selectedCountry,
             hostedUsageReserved: true,
+            pipelineRunId: pipelineRun.id,
             shouldCancel: () =>
               getPipelineState(scopeKey).cancelRequestedAt !== null,
           }));

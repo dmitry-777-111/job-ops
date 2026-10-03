@@ -12,6 +12,7 @@ vi.mock("@infra/logger", () => ({
 
 vi.mock("@server/repositories/jobs", () => ({
   getUnscoredDiscoveredJobs: vi.fn(),
+  getDiscoveredJobsForPipelineRun: vi.fn(),
   updateJob: vi.fn(),
 }));
 
@@ -72,6 +73,32 @@ describe("scoreJobsStep auto-skip behavior", () => {
       sponsorMatchScore: 0,
       sponsorMatchNames: null,
     });
+  });
+
+  it("uses explicit run membership when a pipeline run id is provided", async () => {
+    const jobsRepo = await import("@server/repositories/jobs");
+    vi.mocked(jobsRepo.getDiscoveredJobsForPipelineRun).mockResolvedValue([
+      createJob({
+        id: "run-job",
+        title: "Maintenance Supervisor",
+        employer: "Run Employer",
+        status: "discovered",
+        suitabilityScore: 72,
+        suitabilityReason: "cached",
+      }),
+    ]);
+
+    const result = await scoreJobsStep({
+      profile: {},
+      pipelineRunId: "run-123",
+    });
+
+    expect(jobsRepo.getDiscoveredJobsForPipelineRun).toHaveBeenCalledWith(
+      "run-123",
+    );
+    expect(jobsRepo.getUnscoredDiscoveredJobs).not.toHaveBeenCalled();
+    expect(result.scoredJobs).toHaveLength(1);
+    expect(result.scoredJobs[0]?.id).toBe("run-job");
   });
 
   it("auto-skips jobs when score is below threshold", async () => {

@@ -663,6 +663,70 @@ export const pipelineSourceRuns = sqliteTable(
   }),
 );
 
+export const pipelineRunItems = sqliteTable(
+  "pipeline_run_items",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    pipelineRunId: text("pipeline_run_id")
+      .notNull()
+      .references(() => pipelineRuns.id, { onDelete: "cascade" }),
+    jobId: text("job_id")
+      .notNull()
+      .references(() => jobs.id, { onDelete: "cascade" }),
+    sourceRunId: text("source_run_id").references(() => pipelineSourceRuns.id, {
+      onDelete: "set null",
+    }),
+    stage: text("stage", {
+      enum: [
+        "discovered",
+        "imported",
+        "prefiltered",
+        "scored",
+        "selected",
+        "processed",
+      ],
+    })
+      .notNull()
+      .default("discovered"),
+    status: text("status", {
+      enum: [
+        "pending",
+        "running",
+        "complete",
+        "skipped",
+        "failed_retryable",
+        "failed_terminal",
+      ],
+    })
+      .notNull()
+      .default("pending"),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    errorMessage: text("error_message"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    runJobUnique: uniqueIndex("idx_pipeline_run_items_run_job_unique").on(
+      table.tenantId,
+      table.pipelineRunId,
+      table.jobId,
+    ),
+    runStageStatusIndex: index("idx_pipeline_run_items_run_stage_status").on(
+      table.pipelineRunId,
+      table.stage,
+      table.status,
+    ),
+    jobIndex: index("idx_pipeline_run_items_job").on(table.jobId),
+  }),
+);
+
 export const pipelineIssues = sqliteTable(
   "pipeline_issues",
   {
@@ -1496,6 +1560,8 @@ export type InterviewRow = typeof interviews.$inferSelect;
 export type NewInterviewRow = typeof interviews.$inferInsert;
 export type PipelineRunRow = typeof pipelineRuns.$inferSelect;
 export type NewPipelineRunRow = typeof pipelineRuns.$inferInsert;
+export type PipelineRunItemRow = typeof pipelineRunItems.$inferSelect;
+export type NewPipelineRunItemRow = typeof pipelineRunItems.$inferInsert;
 export type PipelineSourceRunRow = typeof pipelineSourceRuns.$inferSelect;
 export type NewPipelineSourceRunRow = typeof pipelineSourceRuns.$inferInsert;
 export type PipelineIssueRow = typeof pipelineIssues.$inferSelect;

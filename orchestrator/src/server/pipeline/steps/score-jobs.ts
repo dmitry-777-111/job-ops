@@ -30,9 +30,12 @@ export async function scoreJobsStep(args: {
   visaSponsorCountryKey?: string | null;
   shouldCancel?: () => boolean;
   hostedUsageReserved?: boolean;
+  pipelineRunId?: string;
 }): Promise<{ unprocessedJobs: Job[]; scoredJobs: ScoredJob[] }> {
   logger.info("Running scoring step");
-  const unprocessedJobs = await jobsRepo.getUnscoredDiscoveredJobs();
+  const unprocessedJobs = args.pipelineRunId
+    ? await jobsRepo.getDiscoveredJobsForPipelineRun(args.pipelineRunId)
+    : await jobsRepo.getUnscoredDiscoveredJobs();
 
   // Check if auto-skip threshold is configured
   const autoSkipThresholdRaw = await settingsRepo.getSetting(

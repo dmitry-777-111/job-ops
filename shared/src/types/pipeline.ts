@@ -123,6 +123,47 @@ export interface PipelineRun {
   configSnapshot?: PipelineRunConfigSnapshot | null;
 }
 
+export const PIPELINE_RUN_ITEM_STAGES = [
+  "discovered",
+  "imported",
+  "prefiltered",
+  "scored",
+  "selected",
+  "processed",
+] as const;
+
+export type PipelineRunItemStage = (typeof PIPELINE_RUN_ITEM_STAGES)[number];
+
+export const PIPELINE_RUN_ITEM_STATUSES = [
+  "pending",
+  "running",
+  "complete",
+  "skipped",
+  "failed_retryable",
+  "failed_terminal",
+] as const;
+
+export type PipelineRunItemStatus =
+  (typeof PIPELINE_RUN_ITEM_STATUSES)[number];
+
+/**
+ * Explicit membership of a candidate job in one pipeline run. This prevents
+ * scoring/recovery from falling back to a tenant-wide "all unscored jobs"
+ * query and makes interrupted runs exactly resumable.
+ */
+export interface PipelineRunItem {
+  id: string;
+  pipelineRunId: string;
+  jobId: string;
+  sourceRunId: string | null;
+  stage: PipelineRunItemStage;
+  status: PipelineRunItemStatus;
+  attemptCount: number;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type PipelineRunExecutionStage =
   | "started"
   | "profile_loaded"

@@ -39,7 +39,7 @@ import {
   privateDataScopeFilter,
 } from "../tenancy/private-scope";
 
-const { jobNotes, jobs } = schema;
+const { jobNotes, jobs, pipelineRunItems } = schema;
 
 function jobsScopeFilter() {
   return privateDataScopeFilter(jobs);
@@ -802,6 +802,36 @@ export async function getScoredDiscoveredJobs(): Promise<Job[]> {
     )
     .orderBy(desc(jobs.discoveredAt));
   return rows.map(mapRowToJob);
+}
+
+export async function getDiscoveredJobsForPipelineRun(
+  pipelineRunId: string,
+): Promise<Job[]> {
+  const rows = await db
+    .select({ job: jobs })
+    .from(jobs)
+    .innerJoin(pipelineRunItems, eq(pipelineRunItems.jobId, jobs.id))
+    .where(
+      and(
+        jobsScopeFilter(),
+        privateDataScopeFilter(pipelineRunItems),
+        eq(pipelineRunItems.pipelineRunId, pipelineRunId),
+        eq(jobs.status, "discovered"),
+      ),
+    )
+    .orderBy(desc(jobs.discoveredAt));
+
+  return rows.map((row) => mapRowToJob(row.job));
+}
+
+export async function getJobIdsByUrls(jobUrls: string[]): Promise<string[]> {
+  const uniqueUrls = [...new Set(jobUrls)].filter(Boolean);
+  if (uniqueUrls.length === 0) return [];
+  const rows = await db
+    .select({ id: jobs.id })
+    .from(jobs)
+    .where(and(jobsScopeFilter(), inArray(jobs.jobUrl, uniqueUrls)));
+  return rows.map((row) => row.id);
 }
 
 export async function getUnscoredDiscoveredJobs(

@@ -1,12 +1,19 @@
 import { logger } from "@infra/logger";
 import * as jobsRepo from "@server/repositories/jobs";
+import { ensurePipelineRunItems } from "@server/repositories/pipeline-run-items";
 import { deduplicateJobsByTitleAndEmployer } from "@shared/job-matching.js";
 import type { CreateJobInput } from "@shared/types";
 import { progressHelpers } from "../progress";
 
 export async function importJobsStep(args: {
   discoveredJobs: CreateJobInput[];
-}): Promise<{ created: number; skipped: number; fuzzyMerged: number }> {
+  pipelineRunId?: string;
+}): Promise<{
+  created: number;
+  skipped: number;
+  fuzzyMerged: number;
+  runItemsAttached: number;
+}> {
   logger.info("Importing discovered jobs", {
     discovered: args.discoveredJobs.length,
   });
@@ -31,14 +38,26 @@ export async function importJobsStep(args: {
         employer: job.employer,
       }),
   );
+  let runItemsAttached = 0;
+  if (args.pipelineRunId) {
+    const jobIds = await jobsRepo.getJobIdsByUrls(
+      dedupedJobs.map((job) => job.jobUrl),
+    );
+    runItemsAttached = await ensurePipelineRunItems({
+      pipelineRunId: args.pipelineRunId,
+      jobIds,
+    });
+  }
+
   logger.info("Import step complete", {
     discovered: args.discoveredJobs.length,
     fuzzyMerged,
     created,
     skipped,
+    runItemsAttached,
   });
 
   progressHelpers.importComplete(created, skipped + fuzzyMerged);
 
-  return { created, skipped, fuzzyMerged };
+  return { created, skipped, fuzzyMerged, runItemsAttached };
 }

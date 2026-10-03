@@ -1931,6 +1931,36 @@ function rebuildPostApplicationPrivateTables(): void {
   }
 }
 
+function ensurePipelineRunItemsTable(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS pipeline_run_items (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      pipeline_run_id TEXT NOT NULL,
+      job_id TEXT NOT NULL,
+      source_run_id TEXT,
+      stage TEXT NOT NULL DEFAULT 'discovered' CHECK(stage IN ('discovered','imported','prefiltered','scored','selected','processed')),
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','running','complete','skipped','failed_retryable','failed_terminal')),
+      attempt_count INTEGER NOT NULL DEFAULT 0,
+      error_message TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (pipeline_run_id) REFERENCES pipeline_runs(id) ON DELETE CASCADE,
+      FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+      FOREIGN KEY (source_run_id) REFERENCES pipeline_source_runs(id) ON DELETE SET NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pipeline_run_items_run_job_unique
+      ON pipeline_run_items(tenant_id, pipeline_run_id, job_id);
+    CREATE INDEX IF NOT EXISTS idx_pipeline_run_items_run_stage_status
+      ON pipeline_run_items(pipeline_run_id, stage, status);
+    CREATE INDEX IF NOT EXISTS idx_pipeline_run_items_job
+      ON pipeline_run_items(job_id);
+  `);
+}
+
 function seedLegacyOwnerFromBasicAuth(): void {
   const existing = sqlite
     .prepare("SELECT count(*) AS count FROM users")
@@ -2014,6 +2044,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensurePipelineRunItemsTable();
 rebuildPostApplicationPrivateTables();
 rebuildSettingsTable();
 seedLegacyOnboardingMigration();

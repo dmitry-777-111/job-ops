@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { logger } from "@infra/logger";
 import { getDataDir } from "@server/config/dataDir";
 import * as jobsRepo from "@server/repositories/jobs";
+import { listPipelineRunItems } from "@server/repositories/pipeline-run-items";
 import * as pipelineRepo from "@server/repositories/pipeline";
 import * as settingsRepo from "@server/repositories/settings";
 import { activateDynamicEmployersFromJobs } from "@server/services/dynamic-employers";
@@ -79,7 +80,14 @@ export async function recoverInterruptedPipelineRun(
     );
   }
 
-  const remainingBefore = (await jobsRepo.getUnscoredDiscoveredJobs()).length;
+  const runItems = await listPipelineRunItems({ pipelineRunId });
+  const hasRunMembership = runItems.length > 0;
+  const discoveredForRun = hasRunMembership
+    ? await jobsRepo.getDiscoveredJobsForPipelineRun(pipelineRunId)
+    : await jobsRepo.getUnscoredDiscoveredJobs();
+  const remainingBefore = discoveredForRun.filter(
+    (job) => typeof job.suitabilityScore !== "number",
+  ).length;
   const pipelineLogger = logger.child({ pipelineRunId });
   pipelineLogger.info(
     "Recovering interrupted pipeline from persisted scoring state",
@@ -105,9 +113,14 @@ export async function recoverInterruptedPipelineRun(
       scoringInstructions: settings.scoringInstructions,
       visaSponsorCountryKey: snapshot.locationIntent?.selectedCountry ?? null,
       hostedUsageReserved: false,
+      ...(hasRunMembership ? { pipelineRunId } : {}),
     });
 
-    const allScored = (await jobsRepo.getScoredDiscoveredJobs()) as ScoredJob[];
+    const allScored = (hasRunMembership
+      ? (await jobsRepo.getDiscoveredJobsForPipelineRun(pipelineRunId)).filter(
+          (job): job is ScoredJob => typeof job.suitabilityScore === "number",
+        )
+      : ((await jobsRepo.getScoredDiscoveredJobs()) as ScoredJob[]));
     const existingCheckpoint = await readRecoveryCheckpoint(pipelineRunId);
     let selectedJobIds = existingCheckpoint?.selectedJobIds ?? null;
     let selectedJobs: ScoredJob[];
@@ -176,7 +189,11 @@ export async function recoverInterruptedPipelineRun(
     return {
       success: false,
       remainingBefore,
-      totalScored: (await jobsRepo.getScoredDiscoveredJobs()).length,
+      totalScored: hasRunMembership
+        ? (await jobsRepo.getDiscoveredJobsForPipelineRun(pipelineRunId)).filter(
+            (job) => typeof job.suitabilityScore === "number",
+          ).length
+        : (await jobsRepo.getScoredDiscoveredJobs()).length,
       selected: 0,
       processed: 0,
       error: message,
