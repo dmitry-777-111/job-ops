@@ -6,22 +6,12 @@
     "outDir": "dist",
     "strict": true,
     "noUnusedLocals": false,
-    "lib": [
-      "ES2022",
-      "DOM"
-    ],
-    "types": [
-      "node"
-    ],
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@shared/*": [
-        "../../shared/src/*"
-      ]
+      "@shared/*": ["../../shared/src/*"]
     }
   },
-  "include": [
-    "./src/**/*",
-    "./tests/**/*"
-  ]
+  "include": ["./src/**/*", "./tests/**/*"]
 }
