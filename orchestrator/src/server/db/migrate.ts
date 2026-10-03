@@ -2112,6 +2112,47 @@ function ensureCandidateProfileAndStrategyTables(): void {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_strategy_versions_one_active_per_owner
       ON candidate_strategy_versions(tenant_id, coalesce(user_id, ''))
       WHERE status = 'active';
+
+    CREATE TABLE IF NOT EXISTS candidate_evaluations (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      market_posting_id TEXT NOT NULL,
+      market_posting_version_id TEXT NOT NULL,
+      profile_version_id TEXT NOT NULL,
+      strategy_version_id TEXT NOT NULL,
+      scoring_policy_version TEXT NOT NULL,
+      prefilter_disposition TEXT NOT NULL DEFAULT 'not_evaluated' CHECK(prefilter_disposition IN ('not_evaluated','pass_to_ai','safe_reject','uncertain_to_ai')),
+      prefilter_rule_version TEXT,
+      prefilter_reason TEXT,
+      hard_gate_outcome TEXT NOT NULL DEFAULT 'unknown' CHECK(hard_gate_outcome IN ('pass','fail','unknown')),
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','scored','failed_retryable','failed_terminal')),
+      suitability_score REAL,
+      suitability_reason TEXT,
+      factual_fit TEXT,
+      career_value TEXT,
+      compensation_assessment TEXT,
+      work_authorization_assessment TEXT,
+      location_travel_assessment TEXT,
+      uncertainties TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (market_posting_id) REFERENCES market_postings(id) ON DELETE CASCADE,
+      FOREIGN KEY (market_posting_version_id) REFERENCES market_posting_versions(id) ON DELETE CASCADE,
+      FOREIGN KEY (profile_version_id) REFERENCES candidate_profile_versions(id) ON DELETE CASCADE,
+      FOREIGN KEY (strategy_version_id) REFERENCES candidate_strategy_versions(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_evaluations_input_unique
+      ON candidate_evaluations(
+        tenant_id, coalesce(user_id, ''), market_posting_version_id,
+        profile_version_id, strategy_version_id, scoring_policy_version
+      );
+    CREATE INDEX IF NOT EXISTS idx_candidate_evaluations_posting
+      ON candidate_evaluations(tenant_id, user_id, market_posting_id);
+    CREATE INDEX IF NOT EXISTS idx_candidate_evaluations_status
+      ON candidate_evaluations(tenant_id, user_id, status);
   `);
 }
 

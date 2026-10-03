@@ -1473,6 +1473,82 @@ export const candidateStrategyVersions = sqliteTable(
   }),
 );
 
+export const candidateEvaluations = sqliteTable(
+  "candidate_evaluations",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    marketPostingId: text("market_posting_id")
+      .notNull()
+      .references(() => marketPostings.id, { onDelete: "cascade" }),
+    marketPostingVersionId: text("market_posting_version_id")
+      .notNull()
+      .references(() => marketPostingVersions.id, { onDelete: "cascade" }),
+    profileVersionId: text("profile_version_id")
+      .notNull()
+      .references(() => candidateProfileVersions.id, { onDelete: "cascade" }),
+    strategyVersionId: text("strategy_version_id")
+      .notNull()
+      .references(() => candidateStrategyVersions.id, { onDelete: "cascade" }),
+    scoringPolicyVersion: text("scoring_policy_version").notNull(),
+    prefilterDisposition: text("prefilter_disposition", {
+      enum: ["not_evaluated", "pass_to_ai", "safe_reject", "uncertain_to_ai"],
+    })
+      .notNull()
+      .default("not_evaluated"),
+    prefilterRuleVersion: text("prefilter_rule_version"),
+    prefilterReason: text("prefilter_reason"),
+    hardGateOutcome: text("hard_gate_outcome", {
+      enum: ["pass", "fail", "unknown"],
+    })
+      .notNull()
+      .default("unknown"),
+    status: text("status", {
+      enum: ["pending", "scored", "failed_retryable", "failed_terminal"],
+    })
+      .notNull()
+      .default("pending"),
+    suitabilityScore: real("suitability_score"),
+    suitabilityReason: text("suitability_reason"),
+    factualFit: text("factual_fit"),
+    careerValue: text("career_value"),
+    compensationAssessment: text("compensation_assessment"),
+    workAuthorizationAssessment: text("work_authorization_assessment"),
+    locationTravelAssessment: text("location_travel_assessment"),
+    uncertainties: text("uncertainties", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    evaluationInputUnique: uniqueIndex(
+      "idx_candidate_evaluations_input_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.marketPostingVersionId,
+      table.profileVersionId,
+      table.strategyVersionId,
+      table.scoringPolicyVersion,
+    ),
+    postingIndex: index("idx_candidate_evaluations_posting").on(
+      table.tenantId,
+      table.userId,
+      table.marketPostingId,
+    ),
+    statusIndex: index("idx_candidate_evaluations_status").on(
+      table.tenantId,
+      table.userId,
+      table.status,
+    ),
+  }),
+);
+
 export const designResumeDocuments = sqliteTable("design_resume_documents", {
   id: text("id").primaryKey(),
   tenantId: text("tenant_id")
@@ -1907,6 +1983,9 @@ export type CandidateStrategyVersionRow =
   typeof candidateStrategyVersions.$inferSelect;
 export type NewCandidateStrategyVersionRow =
   typeof candidateStrategyVersions.$inferInsert;
+export type CandidateEvaluationRow = typeof candidateEvaluations.$inferSelect;
+export type NewCandidateEvaluationRow =
+  typeof candidateEvaluations.$inferInsert;
 export type DesignResumeDocumentRow = typeof designResumeDocuments.$inferSelect;
 export type NewDesignResumeDocumentRow =
   typeof designResumeDocuments.$inferInsert;
