@@ -261,6 +261,33 @@ export async function recordPipelineIssue(input: {
   return issue;
 }
 
+export async function getPipelineIssueSummary(pipelineRunId: string) {
+  const tenantId = getActiveTenantId();
+  const issues = await db
+    .select({ status: pipelineIssues.status })
+    .from(pipelineIssues)
+    .where(eq(pipelineIssues.tenantId, tenantId));
+  const occurrences = await db
+    .select({ id: pipelineIssueOccurrences.id })
+    .from(pipelineIssueOccurrences)
+    .where(
+      and(
+        eq(pipelineIssueOccurrences.tenantId, tenantId),
+        eq(pipelineIssueOccurrences.pipelineRunId, pipelineRunId),
+      ),
+    );
+  const newCount = issues.filter((issue) => issue.status === "new").length;
+  const recurring = issues.filter((issue) => issue.status === "recurring").length;
+  const resolved = issues.filter((issue) => issue.status === "resolved").length;
+  return {
+    new: newCount,
+    recurring,
+    resolved,
+    unresolvedGlobal: newCount + recurring,
+    occurrencesThisRun: occurrences.length,
+  };
+}
+
 export async function resolvePipelineIssue(
   issueSignature: string,
   resolution: string,

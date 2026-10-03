@@ -208,12 +208,21 @@ export interface PipelineCoverageSummary {
   incomplete: number;
 }
 
+export interface PipelineIssueSummary {
+  new: number;
+  recurring: number;
+  resolved: number;
+  unresolvedGlobal: number;
+  occurrencesThisRun: number;
+}
+
 export interface PipelineRunResultSummary {
   stage: PipelineRunExecutionStage;
   jobsScored: number | null;
   jobsSelected: number | null;
   sourceErrors: string[];
   coverage?: PipelineCoverageSummary;
+  issues?: PipelineIssueSummary;
 }
 
 export interface PipelineRunSavedDetails {
