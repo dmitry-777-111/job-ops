@@ -180,10 +180,7 @@ candidateRouter.get(
         (version) => version.id === String(req.params.versionId),
       );
       if (!target) {
-        res
-          .status(404)
-          .json({ error: "Candidate strategy version not found." });
-        return;
+        throw notFound("Candidate strategy version not found.");
       }
       const active = await getActiveCandidateStrategy();
       ok(res, deriveCandidateStrategyDelta(active, target));
@@ -201,10 +198,7 @@ candidateRouter.post(
         String(req.params.versionId),
       );
       if (!activated) {
-        res
-          .status(404)
-          .json({ error: "Candidate strategy version not found." });
-        return;
+        throw notFound("Candidate strategy version not found.");
       }
       ok(res, activated);
     } catch (error) {
