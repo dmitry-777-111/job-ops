@@ -248,7 +248,7 @@ export function buildGmailQuery(searchDays: number): string {
     .map((term) => `-subject:${quoteTerm(term)}`)
     .join(" ");
 
-  return `newer_than:${searchDays}d ((${subjectBlock}) OR (${fromBlock}) OR (${fullTextBlock})) ${excludeClauses}`.trim();
+  return `in:anywhere newer_than:${searchDays}d ((${subjectBlock}) OR (${fromBlock}) OR (${fullTextBlock})) ${excludeClauses}`.trim();
 }
 
 export async function listMessageIds(
@@ -261,7 +261,7 @@ export async function listMessageIds(
 
   do {
     const q = encodeURIComponent(buildGmailQuery(searchDays));
-    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&maxResults=${Math.min(
+    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${q}&includeSpamTrash=true&maxResults=${Math.min(
       100,
       maxMessages,
     )}${pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : ""}`;

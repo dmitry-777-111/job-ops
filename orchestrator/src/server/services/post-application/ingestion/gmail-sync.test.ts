@@ -1,6 +1,11 @@
 import type { AppError } from "@infra/errors";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { gmailApi, resolveGmailAccessToken } from "./gmail-api";
+import {
+  buildGmailQuery,
+  gmailApi,
+  listMessageIds,
+  resolveGmailAccessToken,
+} from "./gmail-api";
 import { __test__ } from "./gmail-sync";
 
 describe("gmail sync http behavior", () => {
@@ -86,6 +91,21 @@ describe("gmail sync http behavior", () => {
     await expect(
       gmailApi("access-token", "https://gmail.googleapis.com/test"),
     ).rejects.toThrow("Gmail API request failed (502).");
+  });
+
+  it("searches all mail including Spam and Trash", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ messages: [] }),
+    } as unknown as Response);
+
+    expect(buildGmailQuery(1)).toContain("in:anywhere newer_than:1d");
+    await listMessageIds("access-token", 1, 25);
+
+    const requestedUrl = String(vi.mocked(fetch).mock.calls[0]?.[0] ?? "");
+    expect(requestedUrl).toContain("includeSpamTrash=true");
+    expect(decodeURIComponent(requestedUrl)).toContain("q=in:anywhere newer_than:1d");
   });
 
   it("returns gmail API payload on success", async () => {
