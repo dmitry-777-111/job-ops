@@ -17,6 +17,7 @@ import { getProfile } from "@server/services/profile";
 import {
   CANDIDATE_CONSTRAINT_KINDS,
   CANDIDATE_CONSTRAINT_SOURCES,
+  type CandidateConstraint,
 } from "@shared/types";
 import { type Request, type Response, Router } from "express";
 import { z } from "zod";
@@ -141,7 +142,15 @@ candidateRouter.post(
   async (req: Request, res: Response) => {
     try {
       const input = strategyDraftSchema.parse(req.body ?? {});
-      ok(res, await createCandidateStrategyDraft(input), 201);
+      const constraints = input.constraints.map((constraint) => ({
+        ...constraint,
+        value: constraint.value,
+      })) as CandidateConstraint[];
+      ok(
+        res,
+        await createCandidateStrategyDraft({ ...input, constraints }),
+        201,
+      );
     } catch (error) {
       fail(res, toAppError(error));
     }

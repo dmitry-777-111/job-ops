@@ -33,7 +33,7 @@ export const EXTERNAL_CONNECTION_PROVIDERS = [
     enabled: false,
     capabilities: ["profile_reference", "job_alert_ingestion"],
   },
-] as const satisfies readonly Array<{
+] as const satisfies ReadonlyArray<{
   id: string;
   label: string;
   kind: ExternalConnectionKind;
