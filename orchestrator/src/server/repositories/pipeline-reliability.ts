@@ -25,6 +25,41 @@ export async function getSourceRun(
   return row ?? null;
 }
 
+export function derivePipelineCoverageSummary(
+  statuses: SourceRunStatus[],
+) {
+  const expected = statuses.length;
+  const complete = statuses.filter((status) => status === "complete").length;
+  const fallback = statuses.filter(
+    (status) => status === "complete_with_fallback",
+  ).length;
+  const degraded = statuses.filter((status) => status === "degraded").length;
+  const failed = statuses.filter((status) => status === "failed").length;
+  const incomplete = expected - complete - fallback - degraded - failed;
+  const status =
+    expected === 0 || failed > 0
+      ? "failed"
+      : degraded > 0 || incomplete > 0
+        ? "degraded"
+        : fallback > 0
+          ? "complete_with_fallback"
+          : "complete";
+  return { status, expected, complete, fallback, degraded, failed, incomplete };
+}
+
+export async function getPipelineCoverageSummary(pipelineRunId: string) {
+  const rows = await db
+    .select({ status: pipelineSourceRuns.status })
+    .from(pipelineSourceRuns)
+    .where(
+      and(
+        eq(pipelineSourceRuns.tenantId, getActiveTenantId()),
+        eq(pipelineSourceRuns.pipelineRunId, pipelineRunId),
+      ),
+    );
+  return derivePipelineCoverageSummary(rows.map((row) => row.status));
+}
+
 export async function getLatestIncompleteSourceRun(
   source: string,
   scopeKey = "default",

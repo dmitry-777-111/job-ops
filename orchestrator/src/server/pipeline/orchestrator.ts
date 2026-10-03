@@ -23,6 +23,7 @@ import type {
 import { getDataDir } from "../config/dataDir";
 import * as jobsRepo from "../repositories/jobs";
 import * as pipelineRepo from "../repositories/pipeline";
+import { getPipelineCoverageSummary } from "../repositories/pipeline-reliability";
 import * as settingsRepo from "../repositories/settings";
 import {
   refundHostedUsageReservation,
@@ -517,10 +518,12 @@ export async function runPipeline(
       });
       jobsProcessed = processedCount;
 
+      const coverage = await getPipelineCoverageSummary(pipelineRun.id);
       resultSummary = updatePipelineRunResultSummary(resultSummary, {
         stage: "completed",
         jobsScored: scoredJobs.length,
         jobsSelected: jobsToProcess.length,
+        coverage,
       });
       await pipelineRepo.updatePipelineRun(pipelineRun.id, {
         status: "completed",

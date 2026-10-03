@@ -192,11 +192,28 @@ export interface PipelineRunEffectiveConfig {
   resumeProjects: PipelineRunResumeProjectsSnapshot;
 }
 
+export type PipelineCoverageStatus =
+  | "complete"
+  | "complete_with_fallback"
+  | "degraded"
+  | "failed";
+
+export interface PipelineCoverageSummary {
+  status: PipelineCoverageStatus;
+  expected: number;
+  complete: number;
+  fallback: number;
+  degraded: number;
+  failed: number;
+  incomplete: number;
+}
+
 export interface PipelineRunResultSummary {
   stage: PipelineRunExecutionStage;
   jobsScored: number | null;
   jobsSelected: number | null;
   sourceErrors: string[];
+  coverage?: PipelineCoverageSummary;
 }
 
 export interface PipelineRunSavedDetails {
