@@ -3,7 +3,7 @@ name: CI
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, freeze3-dev]
   pull_request:
     branches: [main]
 
