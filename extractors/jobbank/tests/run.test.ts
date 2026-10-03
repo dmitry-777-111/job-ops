@@ -8,7 +8,9 @@ describe("Job Bank public feed", () => {
     const url = new URL(buildJobBankFeedUrl("field service technician", 2));
     expect(url.hostname).toBe("www.jobbank.gc.ca");
     expect(url.pathname).toBe("/jobsearch/feed/jobSearchRSSfeed");
-    expect(url.searchParams.get("searchstring")).toBe("field service technician");
+    expect(url.searchParams.get("searchstring")).toBe(
+      "field service technician",
+    );
     expect(url.searchParams.get("page")).toBe("2");
     expect(url.searchParams.get("rows")).toBe("100");
   });
@@ -44,9 +46,9 @@ describe("Job Bank public feed", () => {
   });
 
   it("fails only when every term fails", async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response("unavailable", { status: 503 }),
-    );
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("unavailable", { status: 503 }));
     const result = await runJobBank({
       searchTerms: ["electromechanical", "commissioning"],
       fetchImpl,

@@ -121,9 +121,7 @@ export function parseJobBankFeed(xml: string): CreateJobInput[] {
       jobUrlDirect: jobUrl,
       applicationLink: jobUrl,
       location: location || undefined,
-      locationEvidence: location
-        ? { location, source: "jobbank" }
-        : undefined,
+      locationEvidence: location ? { location, source: "jobbank" } : undefined,
       salary: salary || undefined,
       datePosted: updated || undefined,
       jobDescription: stripTags(summary) || undefined,
@@ -164,10 +162,13 @@ export async function runJobBank(
       if (options.shouldCancel?.()) break;
       await wait(options.delayMs ?? REQUEST_DELAY_MS);
       try {
-        const response = await fetchImpl(buildJobBankFeedUrl(searchTerm, page), {
-          headers: { "user-agent": "CAREER-OS/1.0 (+Job Bank public feed)" },
-          redirect: "error",
-        });
+        const response = await fetchImpl(
+          buildJobBankFeedUrl(searchTerm, page),
+          {
+            headers: { "user-agent": "CAREER-OS/1.0 (+Job Bank public feed)" },
+            redirect: "error",
+          },
+        );
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const xml = await response.text();
         const rawCount = (xml.match(/<entry\b[^>]*>[\s\S]*?<\/entry>/gi) ?? [])
