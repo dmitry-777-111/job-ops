@@ -521,9 +521,13 @@ describe.sequential("database migrations", () => {
       if (!occurrenceFks.some((fk) => fk.from === "issue_id" && fk.table === "pipeline_issues")) throw new Error("issue occurrence FK missing");
       sqlite.close();
     `;
-    execFileSync(process.execPath, ["--import", "tsx", "--input-type=module", "-e", script], {
-      env: { ...process.env, DATA_DIR: tempDir }, stdio: "pipe",
-    });
+    execFileSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "-e", script],
+      {
+        env: { ...process.env, DATA_DIR: tempDir },
+        stdio: "pipe",
+      },
+    );
   });
-
 });

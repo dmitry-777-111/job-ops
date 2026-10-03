@@ -613,11 +613,28 @@ export const pipelineSourceRuns = sqliteTable(
   "pipeline_source_runs",
   {
     id: text("id").primaryKey(),
-    tenantId: text("tenant_id").notNull().default("tenant_default").references(() => tenants.id, { onDelete: "cascade" }),
-    pipelineRunId: text("pipeline_run_id").notNull().references(() => pipelineRuns.id, { onDelete: "cascade" }),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    pipelineRunId: text("pipeline_run_id")
+      .notNull()
+      .references(() => pipelineRuns.id, { onDelete: "cascade" }),
     source: text("source").notNull(),
     scopeKey: text("scope_key").notNull().default("default"),
-    status: text("status", { enum: ["pending", "running", "retry", "complete", "complete_with_fallback", "degraded", "failed"] }).notNull().default("pending"),
+    status: text("status", {
+      enum: [
+        "pending",
+        "running",
+        "retry",
+        "complete",
+        "complete_with_fallback",
+        "degraded",
+        "failed",
+      ],
+    })
+      .notNull()
+      .default("pending"),
     checkpoint: text("checkpoint", { mode: "json" }),
     attemptCount: integer("attempt_count").notNull().default(0),
     fallbackSource: text("fallback_source"),
@@ -630,9 +647,17 @@ export const pipelineSourceRuns = sqliteTable(
     updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
   },
   (table) => ({
-    runStatusIndex: index("idx_pipeline_source_runs_run_status").on(table.pipelineRunId, table.status),
-    sourceStatusIndex: index("idx_pipeline_source_runs_source_status").on(table.source, table.status),
-    runSourceScopeUnique: uniqueIndex("idx_pipeline_source_runs_run_source_scope_unique").on(table.tenantId, table.pipelineRunId, table.source, table.scopeKey),
+    runStatusIndex: index("idx_pipeline_source_runs_run_status").on(
+      table.pipelineRunId,
+      table.status,
+    ),
+    sourceStatusIndex: index("idx_pipeline_source_runs_source_status").on(
+      table.source,
+      table.status,
+    ),
+    runSourceScopeUnique: uniqueIndex(
+      "idx_pipeline_source_runs_run_source_scope_unique",
+    ).on(table.tenantId, table.pipelineRunId, table.source, table.scopeKey),
   }),
 );
 
@@ -640,11 +665,16 @@ export const pipelineIssues = sqliteTable(
   "pipeline_issues",
   {
     id: text("id").primaryKey(),
-    tenantId: text("tenant_id").notNull().default("tenant_default").references(() => tenants.id, { onDelete: "cascade" }),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
     issueSignature: text("issue_signature").notNull(),
     source: text("source").notNull(),
     issueType: text("issue_type").notNull(),
-    status: text("status", { enum: ["new", "recurring", "resolved"] }).notNull().default("new"),
+    status: text("status", { enum: ["new", "recurring", "resolved"] })
+      .notNull()
+      .default("new"),
     firstSeenAt: text("first_seen_at").notNull(),
     lastSeenAt: text("last_seen_at").notNull(),
     occurrenceCount: integer("occurrence_count").notNull().default(1),
@@ -655,8 +685,13 @@ export const pipelineIssues = sqliteTable(
     updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
   },
   (table) => ({
-    signatureUnique: uniqueIndex("idx_pipeline_issues_tenant_signature_unique").on(table.tenantId, table.issueSignature),
-    sourceStatusIndex: index("idx_pipeline_issues_source_status").on(table.source, table.status),
+    signatureUnique: uniqueIndex(
+      "idx_pipeline_issues_tenant_signature_unique",
+    ).on(table.tenantId, table.issueSignature),
+    sourceStatusIndex: index("idx_pipeline_issues_source_status").on(
+      table.source,
+      table.status,
+    ),
     lastSeenIndex: index("idx_pipeline_issues_last_seen").on(table.lastSeenAt),
   }),
 );
@@ -665,24 +700,40 @@ export const pipelineIssueOccurrences = sqliteTable(
   "pipeline_issue_occurrences",
   {
     id: text("id").primaryKey(),
-    tenantId: text("tenant_id").notNull().default("tenant_default").references(() => tenants.id, { onDelete: "cascade" }),
-    issueId: text("issue_id").notNull().references(() => pipelineIssues.id, { onDelete: "cascade" }),
-    pipelineRunId: text("pipeline_run_id").references(() => pipelineRuns.id, { onDelete: "set null" }),
-    sourceRunId: text("source_run_id").references(() => pipelineSourceRuns.id, { onDelete: "set null" }),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    issueId: text("issue_id")
+      .notNull()
+      .references(() => pipelineIssues.id, { onDelete: "cascade" }),
+    pipelineRunId: text("pipeline_run_id").references(() => pipelineRuns.id, {
+      onDelete: "set null",
+    }),
+    sourceRunId: text("source_run_id").references(() => pipelineSourceRuns.id, {
+      onDelete: "set null",
+    }),
     occurredAt: text("occurred_at").notNull(),
     stage: text("stage"),
     errorMessage: text("error_message"),
     attemptCount: integer("attempt_count").notNull().default(1),
     fallbackUsed: text("fallback_used"),
-    recovered: integer("recovered", { mode: "boolean" }).notNull().default(false),
+    recovered: integer("recovered", { mode: "boolean" })
+      .notNull()
+      .default(false),
     recoveryTimeMs: integer("recovery_time_ms"),
     coverageImpact: real("coverage_impact"),
     metadata: text("metadata", { mode: "json" }),
     createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   },
   (table) => ({
-    issueTimeIndex: index("idx_pipeline_issue_occurrences_issue_time").on(table.issueId, table.occurredAt),
-    runIndex: index("idx_pipeline_issue_occurrences_run").on(table.pipelineRunId),
+    issueTimeIndex: index("idx_pipeline_issue_occurrences_issue_time").on(
+      table.issueId,
+      table.occurredAt,
+    ),
+    runIndex: index("idx_pipeline_issue_occurrences_run").on(
+      table.pipelineRunId,
+    ),
   }),
 );
 
@@ -1372,8 +1423,10 @@ export type PipelineSourceRunRow = typeof pipelineSourceRuns.$inferSelect;
 export type NewPipelineSourceRunRow = typeof pipelineSourceRuns.$inferInsert;
 export type PipelineIssueRow = typeof pipelineIssues.$inferSelect;
 export type NewPipelineIssueRow = typeof pipelineIssues.$inferInsert;
-export type PipelineIssueOccurrenceRow = typeof pipelineIssueOccurrences.$inferSelect;
-export type NewPipelineIssueOccurrenceRow = typeof pipelineIssueOccurrences.$inferInsert;
+export type PipelineIssueOccurrenceRow =
+  typeof pipelineIssueOccurrences.$inferSelect;
+export type NewPipelineIssueOccurrenceRow =
+  typeof pipelineIssueOccurrences.$inferInsert;
 export type PipelineSearchPresetRow = typeof pipelineSearchPresets.$inferSelect;
 export type NewPipelineSearchPresetRow =
   typeof pipelineSearchPresets.$inferInsert;
