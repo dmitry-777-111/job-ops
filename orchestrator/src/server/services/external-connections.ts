@@ -39,7 +39,7 @@ export const EXTERNAL_CONNECTION_PROVIDERS = [
   kind: ExternalConnectionKind;
   connectMode: "oauth" | "profile_or_alerts";
   enabled: boolean;
-  capabilities: readonly string[];
+  capabilities: ReadonlyArray<string>;
 }>;
 
 export type ExternalConnectionProviderId =
