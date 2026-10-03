@@ -277,7 +277,9 @@ export async function getPipelineIssueSummary(pipelineRunId: string) {
       ),
     );
   const newCount = issues.filter((issue) => issue.status === "new").length;
-  const recurring = issues.filter((issue) => issue.status === "recurring").length;
+  const recurring = issues.filter(
+    (issue) => issue.status === "recurring",
+  ).length;
   const resolved = issues.filter((issue) => issue.status === "resolved").length;
   return {
     new: newCount,
