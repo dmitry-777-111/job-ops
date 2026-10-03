@@ -32,7 +32,11 @@ async function readRecoveryCheckpoint(
       await fs.readFile(recoveryCheckpointPath(pipelineRunId), "utf8"),
     ) as Partial<RecoveryCheckpoint>;
     return Array.isArray(parsed.selectedJobIds)
-      ? { selectedJobIds: parsed.selectedJobIds.filter((id) => typeof id === "string") }
+      ? {
+          selectedJobIds: parsed.selectedJobIds.filter(
+            (id) => typeof id === "string",
+          ),
+        }
       : null;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
