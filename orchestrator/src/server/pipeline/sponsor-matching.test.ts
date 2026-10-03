@@ -28,6 +28,11 @@ vi.mock("../repositories/jobs", () => ({
   getJobById: vi.fn(),
   createJobs: vi.fn(),
   getAllJobUrls: vi.fn(),
+  getJobIdsByUrls: vi.fn(),
+}));
+
+vi.mock("@server/repositories/pipeline-run-items", () => ({
+  ensurePipelineRunItems: vi.fn().mockResolvedValue(0),
 }));
 
 // Mock other dependencies to prevent side effects
@@ -91,6 +96,7 @@ describe("Sponsor Match Calculation", () => {
       async () => await jobsRepo.getUnscoredDiscoveredJobs(),
     );
     createJobs = jobsRepo.createJobs as ReturnType<typeof vi.fn>;
+    vi.mocked(jobsRepo.getJobIdsByUrls).mockResolvedValue([]);
 
     // Default mock implementations
     scoreJobSuitability.mockResolvedValue({

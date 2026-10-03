@@ -5,6 +5,8 @@ import { join } from "node:path";
 import type { PostApplicationMessage } from "@shared/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const TEST_CREDENTIAL_KEY = Buffer.alloc(32, 11).toString("base64url");
+
 describe.sequential("post-application job emails service", () => {
   let tempDir: string;
   let createJob: typeof import("@server/repositories/jobs").createJob;
@@ -20,6 +22,7 @@ describe.sequential("post-application job emails service", () => {
     tempDir = await mkdtemp(join(tmpdir(), "job-ops-job-emails-"));
     process.env.DATA_DIR = tempDir;
     process.env.NODE_ENV = "test";
+    process.env.CAREER_OS_CREDENTIAL_MASTER_KEY = TEST_CREDENTIAL_KEY;
 
     await import("@server/db/migrate");
     ({ createJob } = await import("@server/repositories/jobs"));
@@ -38,6 +41,7 @@ describe.sequential("post-application job emails service", () => {
     const { closeDb } = await import("@server/db");
     closeDb();
     await rm(tempDir, { recursive: true, force: true });
+    delete process.env.CAREER_OS_CREDENTIAL_MASTER_KEY;
     vi.clearAllMocks();
   });
 

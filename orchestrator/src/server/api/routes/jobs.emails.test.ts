@@ -3,6 +3,8 @@ import type { Server } from "node:http";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { startServer, stopServer } from "./test-utils";
 
+const TEST_CREDENTIAL_KEY = Buffer.alloc(32, 7).toString("base64url");
+
 describe.sequential("Jobs email routes", () => {
   let server: Server;
   let baseUrl: string;
@@ -10,11 +12,13 @@ describe.sequential("Jobs email routes", () => {
   let tempDir: string;
 
   beforeEach(async () => {
+    process.env.CAREER_OS_CREDENTIAL_MASTER_KEY = TEST_CREDENTIAL_KEY;
     ({ server, baseUrl, closeDb, tempDir } = await startServer());
   });
 
   afterEach(async () => {
     await stopServer({ server, closeDb, tempDir });
+    delete process.env.CAREER_OS_CREDENTIAL_MASTER_KEY;
   });
 
   async function seedJobEmail() {
