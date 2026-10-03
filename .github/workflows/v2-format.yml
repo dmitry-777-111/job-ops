@@ -1,0 +1,20 @@
+name: V2 Format Helper
+on:
+  workflow_dispatch:
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: biomejs/setup-biome@v2
+        with:
+          version: 2.3.11
+      - run: biome format --write orchestrator/src/server/db/migrate.test.ts orchestrator/src/server/db/schema.ts orchestrator/src/server/pipeline/steps/discover-jobs.ts orchestrator/src/server/repositories/pipeline-reliability.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v2-formatted
+          path: |
+            orchestrator/src/server/db/migrate.test.ts
+            orchestrator/src/server/db/schema.ts
+            orchestrator/src/server/pipeline/steps/discover-jobs.ts
+            orchestrator/src/server/repositories/pipeline-reliability.ts

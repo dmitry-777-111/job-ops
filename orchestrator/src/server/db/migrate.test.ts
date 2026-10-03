@@ -500,7 +500,6 @@ describe.sequential("database migrations", () => {
       },
     );
   });
-});
 
   it("creates CAREER OS v2 reliability ledger tables with foreign keys", async () => {
     tempDir = await mkdtemp(join(tmpdir(), "job-ops-reliability-"));
@@ -526,3 +525,5 @@ describe.sequential("database migrations", () => {
       env: { ...process.env, DATA_DIR: tempDir }, stdio: "pipe",
     });
   });
+
+});
