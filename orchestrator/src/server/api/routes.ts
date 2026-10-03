@@ -1,3 +1,4 @@
+import { candidateRouter } from "./routes/candidate";
 /**
  * API routes for the orchestrator.
  */
@@ -47,6 +48,7 @@ apiRouter.use("/design-resume", designResumeRouter);
 apiRouter.use("/visa-sponsors", visaSponsorsRouter);
 apiRouter.use("/onboarding", onboardingRouter);
 apiRouter.use("/connections", connectionsRouter);
+apiRouter.use("/candidate", candidateRouter);
 apiRouter.use("/backups", backupRouter);
 apiRouter.use("/tracer-links", tracerLinksRouter);
 apiRouter.use("/workspaces", workspacesRouter);
