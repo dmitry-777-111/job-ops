@@ -42,6 +42,9 @@ import { discoverWatchlistJobsForPipeline } from "./watchlist-jobs";
 
 const DISCOVERY_CONCURRENCY = 3;
 const DISCOVERY_SOURCE_TIMEOUT_MS = 10 * 60 * 1000;
+const DISCOVERY_CANCEL_GRACE_MS = 5_000;
+const DISCOVERY_MAX_ATTEMPTS = 2;
+const DISCOVERY_RETRY_DELAY_MS = 1_000;
 
 type DiscoveryTaskResult = {
   discoveredJobs: CreateJobInput[];
@@ -86,6 +89,7 @@ async function getSourceRunForSettle(
 
 type DiscoverySourceTask = {
   source: CrawlSource;
+  channels: string[];
   termsTotal?: number;
   detail: string;
   run: () => Promise<DiscoveryTaskResult>;
@@ -96,18 +100,31 @@ async function withDiscoverySourceTimeout<T>(
   onTimeout: () => void,
 ): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
-  const timeoutPromise = new Promise<never>((_, reject) => {
+  const guardedRun = run.then(
+    (value) => ({ kind: "result" as const, value }),
+    (error: unknown) => ({ kind: "error" as const, error }),
+  );
+  const timeoutPromise = new Promise<{ kind: "timeout" }>((resolve) => {
     timeout = setTimeout(() => {
       onTimeout();
-      reject(new Error("timed out after 10 minutes"));
+      resolve({ kind: "timeout" });
     }, DISCOVERY_SOURCE_TIMEOUT_MS);
   });
 
-  try {
-    return await Promise.race([run, timeoutPromise]);
-  } finally {
-    if (timeout) clearTimeout(timeout);
-  }
+  const outcome = await Promise.race([guardedRun, timeoutPromise]);
+  if (timeout) clearTimeout(timeout);
+  if (outcome.kind === "result") return outcome.value;
+  if (outcome.kind === "error") throw outcome.error;
+
+  await Promise.race([
+    guardedRun,
+    new Promise((resolve) => setTimeout(resolve, DISCOVERY_CANCEL_GRACE_MS)),
+  ]);
+  throw new Error("timed out after 10 minutes");
+}
+
+function waitForDiscoveryRetry(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, DISCOVERY_RETRY_DELAY_MS));
 }
 
 function parseBlockedCompanyKeywords(raw: string | undefined): string[] {
@@ -346,6 +363,7 @@ export async function discoverJobsStep(args: {
 
     sourceTasks.push({
       source: manifest.id,
+      channels: [...grouped.sources],
       termsTotal: grouped.termsTotal,
       detail:
         grouped.sources.length > 1
@@ -601,47 +619,96 @@ export async function discoverJobsStep(args: {
         },
         task: async (sourceTask) => {
           let sourceRunId: string | null = null;
+          const channelRunIds = new Map<string, string>();
           if (args.pipelineRunId) {
             const row = await createSourceRun({
               pipelineRunId: args.pipelineRunId,
               source: sourceTask.source,
             });
             sourceRunId = row?.id ?? null;
+            for (const channel of sourceTask.channels) {
+              const channelRow = await createSourceRun({
+                pipelineRunId: args.pipelineRunId,
+                source: channel,
+                scopeKey: "channel",
+              });
+              if (channelRow?.id) channelRunIds.set(channel, channelRow.id);
+            }
+          }
+          let lastError: unknown = null;
+          for (let attempt = 1; attempt <= DISCOVERY_MAX_ATTEMPTS; attempt += 1) {
             if (sourceRunId)
               await updateSourceRun(sourceRunId, {
-                status: "running",
+                status: attempt === 1 ? "running" : "retry",
                 incrementAttempt: true,
               });
+            for (const channelRunId of channelRunIds.values()) {
+              await updateSourceRun(channelRunId, {
+                status: attempt === 1 ? "running" : "retry",
+                incrementAttempt: true,
+              });
+            }
+            try {
+              const result = await sourceTask.run();
+              if (result.fatal && !result.challenge && attempt < DISCOVERY_MAX_ATTEMPTS) {
+                lastError = new Error(result.sourceErrors.join("; ") || "source failed");
+                await waitForDiscoveryRetry();
+                continue;
+              }
+              if (args.pipelineRunId && sourceRunId)
+                await getSourceRunForSettle(
+                  args.pipelineRunId,
+                  sourceTask.source,
+                  { status: "fulfilled", result },
+                );
+              for (const [channel, channelRunId] of channelRunIds) {
+                const channelErrors = result.sourceErrors.filter((error) =>
+                  error.toLowerCase().startsWith(`${channel.toLowerCase()}:`),
+                );
+                await updateSourceRun(channelRunId, {
+                  status: result.fatal
+                    ? "failed"
+                    : channelErrors.length > 0
+                      ? "degraded"
+                      : "complete",
+                  errorMessage: channelErrors.join("; ") || null,
+                });
+              }
+              return result;
+            } catch (error) {
+              lastError = error;
+              if (attempt < DISCOVERY_MAX_ATTEMPTS) {
+                await waitForDiscoveryRetry();
+                continue;
+              }
+            }
           }
-          try {
-            const result = await sourceTask.run();
-            if (args.pipelineRunId && sourceRunId)
-              await getSourceRunForSettle(
-                args.pipelineRunId,
-                sourceTask.source,
-                { status: "fulfilled", result },
-              );
-            return result;
-          } catch (error) {
-            if (args.pipelineRunId && sourceRunId)
-              await getSourceRunForSettle(
-                args.pipelineRunId,
-                sourceTask.source,
-                { status: "rejected", error },
-              );
-            logger.warn("Discovery source task failed", {
-              sourceTask: sourceTask.source,
-              error: sanitizeUnknown(error),
-            });
 
-            return {
-              discoveredJobs: [],
-              sourceErrors: [
-                `${sourceTask.source}: ${error instanceof Error ? error.message : "unknown error"}`,
-              ],
-              fatal: true,
-            };
+          if (args.pipelineRunId && sourceRunId)
+            await getSourceRunForSettle(
+              args.pipelineRunId,
+              sourceTask.source,
+              { status: "rejected", error: lastError },
+            );
+          for (const channelRunId of channelRunIds.values()) {
+            await updateSourceRun(channelRunId, {
+              status: "failed",
+              errorMessage:
+                lastError instanceof Error ? lastError.message : "unknown error",
+            });
           }
+          logger.warn("Discovery source task failed after bounded retry", {
+            sourceTask: sourceTask.source,
+            error: sanitizeUnknown(lastError),
+          });
+
+          return {
+            discoveredJobs: [],
+            sourceErrors: [
+              `${sourceTask.source}: ${lastError instanceof Error ? lastError.message : "unknown error"}`,
+            ],
+            fatal: true,
+          };
         },
       });
 

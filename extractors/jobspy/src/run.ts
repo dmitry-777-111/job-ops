@@ -168,6 +168,7 @@ export interface RunJobSpyOptions {
   linkedinFetchDescription?: boolean;
   isRemote?: boolean;
   onProgress?: (event: JobSpyProgressEvent) => void;
+  shouldCancel?: () => boolean;
 }
 
 export interface JobSpyResult {
@@ -362,13 +363,38 @@ export async function runJobSpy(
           stdoutRl?.on("line", (line) => handleLine(line, process.stdout));
           stderrRl?.on("line", (line) => handleLine(line, process.stderr));
 
+          let cancellationRequested = false;
+          let forceKillTimer: ReturnType<typeof setTimeout> | undefined;
+          const cancellationTimer = options.shouldCancel
+            ? setInterval(() => {
+                if (cancellationRequested || !options.shouldCancel?.()) return;
+                cancellationRequested = true;
+                child.kill("SIGTERM");
+                forceKillTimer = setTimeout(() => {
+                  if (child.exitCode === null && child.signalCode === null) {
+                    child.kill("SIGKILL");
+                  }
+                }, 2_000);
+              }, 250)
+            : undefined;
+          const cleanupCancellation = () => {
+            if (cancellationTimer) clearInterval(cancellationTimer);
+            if (forceKillTimer) clearTimeout(forceKillTimer);
+          };
+
           child.on("close", (code) => {
+            cleanupCancellation();
             stdoutRl?.close();
             stderrRl?.close();
-            if (code === 0) resolve();
+            if (cancellationRequested) {
+              reject(new Error("JobSpy cancelled"));
+            } else if (code === 0) resolve();
             else reject(new Error(`JobSpy exited with code ${code}`));
           });
-          child.on("error", reject);
+          child.on("error", (error) => {
+            cleanupCancellation();
+            reject(error);
+          });
         });
 
         const raw = await readFile(outputJson, "utf-8");

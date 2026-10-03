@@ -53,6 +53,22 @@ describe("JobSpy manifest map-radius planning", () => {
     ).not.toBe(true);
   });
 
+  it("passes cancellation through to the JobSpy child runner", async () => {
+    const shouldCancel = vi.fn(() => false);
+    await manifest.run({
+      source: "indeed",
+      selectedSources: ["indeed", "linkedin"],
+      settings: {},
+      searchTerms: ["engineer"],
+      selectedCountry: "canada",
+      shouldCancel,
+    } as ExtractorRuntimeContext);
+
+    expect(runJobSpyMock).toHaveBeenCalledWith(
+      expect.objectContaining({ shouldCancel }),
+    );
+  });
+
   it("keeps the configured allowance for manual cities", async () => {
     const locations = ["Leeds", "Bradford"];
     await manifest.run({

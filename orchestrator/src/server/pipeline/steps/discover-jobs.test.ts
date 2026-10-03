@@ -121,6 +121,43 @@ describe("discoverJobsStep", () => {
     );
   });
 
+  it("retries a fatal extractor once and keeps the recovered result", async () => {
+    vi.useFakeTimers();
+    try {
+      const settingsRepo = await import("@server/repositories/settings");
+      const registryModule = await import("@server/extractors/registry");
+      const manifest = {
+        id: "jobspy",
+        displayName: "JobSpy",
+        providesSources: ["indeed"],
+        run: vi
+          .fn()
+          .mockResolvedValueOnce({ success: false, jobs: [], error: "temporary failure" })
+          .mockResolvedValueOnce({ success: true, jobs: [] }),
+      };
+      vi.mocked(settingsRepo.getAllSettings).mockResolvedValue({
+        searchTerms: JSON.stringify(["engineer"]),
+        jobspyCountryIndeed: "canada",
+      } as any);
+      vi.mocked(registryModule.getExtractorRegistry).mockResolvedValue({
+        manifests: new Map([["jobspy", manifest as any]]),
+        manifestBySource: new Map([["indeed", manifest as any]]),
+        availableSources: ["indeed"],
+      } as any);
+
+      const resultPromise = discoverJobsStep({
+        mergedConfig: { ...baseConfig, sources: ["indeed"] },
+      });
+      await vi.runAllTimersAsync();
+      const result = await resultPromise;
+
+      expect(manifest.run).toHaveBeenCalledTimes(2);
+      expect(result.sourceErrors).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("times out a hung extractor and continues with other sources", async () => {
     vi.useFakeTimers();
     try {
