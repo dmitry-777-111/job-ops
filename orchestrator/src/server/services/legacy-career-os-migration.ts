@@ -1,26 +1,26 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
-import { z } from "zod";
-import {
-  APPLICATION_STAGES,
-  EVIDENCE_KINDS,
-  EVIDENCE_SOURCE_TYPES,
-  IMMIGRATION_EMPLOYER_SUPPORT_STATUSES,
-  VERIFIED_JOB_FACT_KEYS,
-} from "@shared/types";
-import * as jobsRepo from "@server/repositories/jobs";
-import * as factsRepo from "@server/repositories/job-verified-facts";
-import * as immigrationRepo from "@server/repositories/job-immigration-profiles";
-import * as humanBridgeRepo from "@server/repositories/human-bridge";
 import { db, schema } from "@server/db/index";
+import * as humanBridgeRepo from "@server/repositories/human-bridge";
+import * as immigrationRepo from "@server/repositories/job-immigration-profiles";
+import * as factsRepo from "@server/repositories/job-verified-facts";
+import * as jobsRepo from "@server/repositories/jobs";
+import {
+  getStageEvents,
+  transitionStage,
+} from "@server/services/applicationTracking";
 import {
   getPrivateDataScope,
   privateDataScopeFilter,
 } from "@server/tenancy/private-scope";
 import {
-  getStageEvents,
-  transitionStage,
-} from "@server/services/applicationTracking";
+  type APPLICATION_STAGES,
+  EVIDENCE_KINDS,
+  EVIDENCE_SOURCE_TYPES,
+  IMMIGRATION_EMPLOYER_SUPPORT_STATUSES,
+  VERIFIED_JOB_FACT_KEYS,
+} from "@shared/types";
+import { and, eq } from "drizzle-orm";
+import { z } from "zod";
 
 const evidenceSchema = z
   .object({

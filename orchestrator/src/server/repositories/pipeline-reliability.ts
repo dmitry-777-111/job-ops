@@ -158,42 +158,38 @@ export async function recordPipelineIssue(input: {
       })
       .where(eq(pipelineIssues.id, issueId));
   } else {
-    await db
-      .insert(pipelineIssues)
-      .values({
-        id: issueId,
-        tenantId,
-        issueSignature: input.issueSignature,
-        source: input.source,
-        issueType: input.issueType,
-        status: "new",
-        firstSeenAt: now,
-        lastSeenAt: now,
-        occurrenceCount: 1,
-        lastError: input.errorMessage ?? null,
-        createdAt: now,
-        updatedAt: now,
-      });
-  }
-  await db
-    .insert(pipelineIssueOccurrences)
-    .values({
-      id: randomUUID(),
+    await db.insert(pipelineIssues).values({
+      id: issueId,
       tenantId,
-      issueId,
-      pipelineRunId: input.pipelineRunId ?? null,
-      sourceRunId: input.sourceRunId ?? null,
-      occurredAt: now,
-      stage: input.stage ?? null,
-      errorMessage: input.errorMessage ?? null,
-      attemptCount: input.attemptCount ?? 1,
-      fallbackUsed: input.fallbackUsed ?? null,
-      recovered: input.recovered ?? false,
-      recoveryTimeMs: input.recoveryTimeMs ?? null,
-      coverageImpact: input.coverageImpact ?? null,
-      metadata: input.metadata ?? null,
+      issueSignature: input.issueSignature,
+      source: input.source,
+      issueType: input.issueType,
+      status: "new",
+      firstSeenAt: now,
+      lastSeenAt: now,
+      occurrenceCount: 1,
+      lastError: input.errorMessage ?? null,
       createdAt: now,
+      updatedAt: now,
     });
+  }
+  await db.insert(pipelineIssueOccurrences).values({
+    id: randomUUID(),
+    tenantId,
+    issueId,
+    pipelineRunId: input.pipelineRunId ?? null,
+    sourceRunId: input.sourceRunId ?? null,
+    occurredAt: now,
+    stage: input.stage ?? null,
+    errorMessage: input.errorMessage ?? null,
+    attemptCount: input.attemptCount ?? 1,
+    fallbackUsed: input.fallbackUsed ?? null,
+    recovered: input.recovered ?? false,
+    recoveryTimeMs: input.recoveryTimeMs ?? null,
+    coverageImpact: input.coverageImpact ?? null,
+    metadata: input.metadata ?? null,
+    createdAt: now,
+  });
   const [issue] = await db
     .select()
     .from(pipelineIssues)
