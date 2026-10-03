@@ -40,10 +40,13 @@ export async function recoverInterruptedPipelineRun(
 
   const remainingBefore = (await jobsRepo.getUnscoredDiscoveredJobs()).length;
   const pipelineLogger = logger.child({ pipelineRunId });
-  pipelineLogger.info("Recovering interrupted pipeline from persisted scoring state", {
-    remainingBefore,
-    jobsDiscovered: run.jobsDiscovered,
-  });
+  pipelineLogger.info(
+    "Recovering interrupted pipeline from persisted scoring state",
+    {
+      remainingBefore,
+      jobsDiscovered: run.jobsDiscovered,
+    },
+  );
 
   try {
     const profile = await loadProfileStep();
@@ -72,9 +75,12 @@ export async function recoverInterruptedPipelineRun(
     try {
       await activateDynamicEmployersFromJobs(jobsToProcess);
     } catch (error) {
-      pipelineLogger.warn("Dynamic employer activation failed during recovery", {
-        error,
-      });
+      pipelineLogger.warn(
+        "Dynamic employer activation failed during recovery",
+        {
+          error,
+        },
+      );
     }
 
     const { processedCount } = await processJobsStep({
