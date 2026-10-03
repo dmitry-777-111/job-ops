@@ -703,8 +703,7 @@ export const DYNAMIC_EMPLOYER_STATUSES = [
   "retired",
   "source_changed",
 ] as const;
-export type DynamicEmployerStatus =
-  (typeof DYNAMIC_EMPLOYER_STATUSES)[number];
+export type DynamicEmployerStatus = (typeof DYNAMIC_EMPLOYER_STATUSES)[number];
 
 export const DYNAMIC_EMPLOYER_EVENT_TYPES = [
   "observed",

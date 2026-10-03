@@ -1,10 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { parseBamboohrUrl } from "@career-boards/bamboohr";
 import { parseGreenhouseUrl } from "@career-boards/greenhouse";
-import {
-  parseWorkdayJobUrl,
-  parseWorkdayUrl,
-} from "@career-boards/workday";
+import { parseWorkdayJobUrl, parseWorkdayUrl } from "@career-boards/workday";
 import { getUserId } from "@server/infra/request-context";
 import {
   ensureWatchlistSelectedSource,
@@ -245,7 +242,9 @@ function statusFromDetection(
   return detection.supported ? "candidate" : "ats_detected";
 }
 
-function eventTypeForStatus(status: DynamicEmployerStatus): DynamicEmployerEventType {
+function eventTypeForStatus(
+  status: DynamicEmployerStatus,
+): DynamicEmployerEventType {
   switch (status) {
     case "ats_detected":
     case "candidate":

@@ -1038,9 +1038,11 @@ export const dynamicEmployers = sqliteTable(
     tenantUserNameUnique: uniqueIndex(
       "idx_dynamic_employers_tenant_user_name_unique",
     ).on(table.tenantId, table.userId, table.normalizedName),
-    tenantUserStatusIndex: index(
-      "idx_dynamic_employers_tenant_user_status",
-    ).on(table.tenantId, table.userId, table.status),
+    tenantUserStatusIndex: index("idx_dynamic_employers_tenant_user_status").on(
+      table.tenantId,
+      table.userId,
+      table.status,
+    ),
   }),
 );
 
@@ -1056,7 +1058,9 @@ export const dynamicEmployerEvents = sqliteTable(
     employerId: text("employer_id")
       .notNull()
       .references(() => dynamicEmployers.id, { onDelete: "cascade" }),
-    eventType: text("event_type", { enum: DYNAMIC_EMPLOYER_EVENT_TYPES }).notNull(),
+    eventType: text("event_type", {
+      enum: DYNAMIC_EMPLOYER_EVENT_TYPES,
+    }).notNull(),
     fromStatus: text("from_status", { enum: DYNAMIC_EMPLOYER_STATUSES }),
     toStatus: text("to_status", { enum: DYNAMIC_EMPLOYER_STATUSES }).notNull(),
     discoverySource: text("discovery_source"),
@@ -1070,9 +1074,10 @@ export const dynamicEmployerEvents = sqliteTable(
     employerCreatedIndex: index(
       "idx_dynamic_employer_events_employer_created",
     ).on(table.employerId, table.createdAt),
-    tenantUserIndex: index(
-      "idx_dynamic_employer_events_tenant_user",
-    ).on(table.tenantId, table.userId),
+    tenantUserIndex: index("idx_dynamic_employer_events_tenant_user").on(
+      table.tenantId,
+      table.userId,
+    ),
   }),
 );
 

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { getUserId } from "@server/infra/request-context";
-import { MAX_WATCHLIST_SOURCES } from "@shared/types";
 import type {
   UpdateWatchlistSelectionsInput,
   WatchlistCheckInput,
@@ -8,7 +7,8 @@ import type {
   WatchlistJobState,
   WatchlistSelectedSource,
 } from "@shared/types";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { MAX_WATCHLIST_SOURCES} from "@shared/types";
+import { and, asc, eq, inArray} from "drizzle-orm";
 import { db, schema } from "../db/index";
 import { getActiveTenantId } from "../tenancy/context";
 
