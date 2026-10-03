@@ -29,10 +29,19 @@ vi.mock("../repositories/jobs", () => ({
   createJobs: vi.fn(),
   getAllJobUrls: vi.fn(),
   getJobIdsByUrls: vi.fn(),
+  getJobIdMapByUrls: vi.fn(),
 }));
 
 vi.mock("@server/repositories/pipeline-run-items", () => ({
   ensurePipelineRunItems: vi.fn().mockResolvedValue(0),
+}));
+
+vi.mock("@server/repositories/market-inventory", () => ({
+  recordMarketPostingObservation: vi.fn(async () => ({
+    posting: { id: "market-1" },
+    canonicalContentChanged: true,
+  })),
+  attachMarketPostingToCandidate: vi.fn(async () => "candidate-market-1"),
 }));
 
 // Mock other dependencies to prevent side effects
@@ -97,6 +106,7 @@ describe("Sponsor Match Calculation", () => {
     );
     createJobs = jobsRepo.createJobs as ReturnType<typeof vi.fn>;
     vi.mocked(jobsRepo.getJobIdsByUrls).mockResolvedValue([]);
+    vi.mocked(jobsRepo.getJobIdMapByUrls).mockResolvedValue(new Map());
 
     // Default mock implementations
     scoreJobSuitability.mockResolvedValue({
