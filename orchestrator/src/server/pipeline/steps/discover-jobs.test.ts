@@ -132,7 +132,11 @@ describe("discoverJobsStep", () => {
         providesSources: ["indeed"],
         run: vi
           .fn()
-          .mockResolvedValueOnce({ success: false, jobs: [], error: "temporary failure" })
+          .mockResolvedValueOnce({
+            success: false,
+            jobs: [],
+            error: "temporary failure",
+          })
           .mockResolvedValueOnce({ success: true, jobs: [] }),
       };
       vi.mocked(settingsRepo.getAllSettings).mockResolvedValue({
