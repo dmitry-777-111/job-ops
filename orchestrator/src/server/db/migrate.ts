@@ -1931,6 +1931,61 @@ function rebuildPostApplicationPrivateTables(): void {
   }
 }
 
+function ensureCandidateProfileAndStrategyTables(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS candidate_profile_versions (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      version INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','active','superseded')),
+      profile_json TEXT NOT NULL,
+      source TEXT NOT NULL CHECK(source IN ('design_resume','rxresume','upload','connected_profile','manual','ai_normalized')),
+      source_ref TEXT,
+      provenance TEXT,
+      activated_at TEXT,
+      superseded_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_profile_versions_tenant_user_version_unique
+      ON candidate_profile_versions(tenant_id, coalesce(user_id, ''), version);
+    CREATE INDEX IF NOT EXISTS idx_candidate_profile_versions_tenant_user_status
+      ON candidate_profile_versions(tenant_id, user_id, status);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_profile_versions_one_active_per_owner
+      ON candidate_profile_versions(tenant_id, coalesce(user_id, ''))
+      WHERE status = 'active';
+
+    CREATE TABLE IF NOT EXISTS candidate_strategy_versions (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      version INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','active','superseded')),
+      target_markets TEXT NOT NULL DEFAULT '[]',
+      target_role_families TEXT NOT NULL DEFAULT '[]',
+      excluded_role_families TEXT NOT NULL DEFAULT '[]',
+      constraints TEXT NOT NULL DEFAULT '[]',
+      freeform_notes TEXT,
+      activated_at TEXT,
+      superseded_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_strategy_versions_tenant_user_version_unique
+      ON candidate_strategy_versions(tenant_id, coalesce(user_id, ''), version);
+    CREATE INDEX IF NOT EXISTS idx_candidate_strategy_versions_tenant_user_status
+      ON candidate_strategy_versions(tenant_id, user_id, status);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_strategy_versions_one_active_per_owner
+      ON candidate_strategy_versions(tenant_id, coalesce(user_id, ''))
+      WHERE status = 'active';
+  `);
+}
+
 function ensurePipelineRunItemsTable(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS pipeline_run_items (
@@ -2044,6 +2099,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensureCandidateProfileAndStrategyTables();
 ensurePipelineRunItemsTable();
 rebuildPostApplicationPrivateTables();
 rebuildSettingsTable();

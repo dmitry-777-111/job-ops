@@ -49,3 +49,35 @@ export interface CandidateStrategyDelta {
   }>;
   likelySearchImpact: string[];
 }
+
+export const CANDIDATE_PROFILE_VERSION_STATUSES = [
+  "draft",
+  "active",
+  "superseded",
+] as const;
+export type CandidateProfileVersionStatus =
+  (typeof CANDIDATE_PROFILE_VERSION_STATUSES)[number];
+
+export const CANDIDATE_PROFILE_SOURCES = [
+  "design_resume",
+  "rxresume",
+  "upload",
+  "connected_profile",
+  "manual",
+  "ai_normalized",
+] as const;
+export type CandidateProfileSource =
+  (typeof CANDIDATE_PROFILE_SOURCES)[number];
+
+export interface MasterCareerProfileVersion {
+  id: string;
+  version: number;
+  status: CandidateProfileVersionStatus;
+  profile: import("./settings").ResumeProfile;
+  source: CandidateProfileSource;
+  sourceRef?: string | null;
+  provenance?: Record<string, unknown> | null;
+  createdAt: string;
+  activatedAt?: string | null;
+  supersededAt?: string | null;
+}

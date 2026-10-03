@@ -1216,6 +1216,106 @@ export const authSessions = sqliteTable(
   }),
 );
 
+export const candidateProfileVersions = sqliteTable(
+  "candidate_profile_versions",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    status: text("status", { enum: ["draft", "active", "superseded"] })
+      .notNull()
+      .default("draft"),
+    profileJson: text("profile_json", { mode: "json" }).notNull(),
+    source: text("source", {
+      enum: [
+        "design_resume",
+        "rxresume",
+        "upload",
+        "connected_profile",
+        "manual",
+        "ai_normalized",
+      ],
+    }).notNull(),
+    sourceRef: text("source_ref"),
+    provenance: text("provenance", { mode: "json" }),
+    activatedAt: text("activated_at"),
+    supersededAt: text("superseded_at"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserVersionUnique: uniqueIndex(
+      "idx_candidate_profile_versions_tenant_user_version_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.version,
+    ),
+    tenantUserStatusIndex: index(
+      "idx_candidate_profile_versions_tenant_user_status",
+    ).on(table.tenantId, table.userId, table.status),
+    oneActivePerOwner: uniqueIndex(
+      "idx_candidate_profile_versions_one_active_per_owner",
+    )
+      .on(table.tenantId, sql`coalesce(${table.userId}, '')`)
+      .where(sql`${table.status} = 'active'`),
+  }),
+);
+
+export const candidateStrategyVersions = sqliteTable(
+  "candidate_strategy_versions",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    status: text("status", { enum: ["draft", "active", "superseded"] })
+      .notNull()
+      .default("draft"),
+    targetMarkets: text("target_markets", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    targetRoleFamilies: text("target_role_families", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    excludedRoleFamilies: text("excluded_role_families", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    constraints: text("constraints", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    freeformNotes: text("freeform_notes"),
+    activatedAt: text("activated_at"),
+    supersededAt: text("superseded_at"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserVersionUnique: uniqueIndex(
+      "idx_candidate_strategy_versions_tenant_user_version_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.version,
+    ),
+    tenantUserStatusIndex: index(
+      "idx_candidate_strategy_versions_tenant_user_status",
+    ).on(table.tenantId, table.userId, table.status),
+    oneActivePerOwner: uniqueIndex(
+      "idx_candidate_strategy_versions_one_active_per_owner",
+    )
+      .on(table.tenantId, sql`coalesce(${table.userId}, '')`)
+      .where(sql`${table.status} = 'active'`),
+  }),
+);
+
 export const designResumeDocuments = sqliteTable("design_resume_documents", {
   id: text("id").primaryKey(),
   tenantId: text("tenant_id")
@@ -1591,6 +1691,14 @@ export type AnalyticsServerEventReplayRow =
   typeof analyticsServerEventReplays.$inferSelect;
 export type NewAnalyticsServerEventReplayRow =
   typeof analyticsServerEventReplays.$inferInsert;
+export type CandidateProfileVersionRow =
+  typeof candidateProfileVersions.$inferSelect;
+export type NewCandidateProfileVersionRow =
+  typeof candidateProfileVersions.$inferInsert;
+export type CandidateStrategyVersionRow =
+  typeof candidateStrategyVersions.$inferSelect;
+export type NewCandidateStrategyVersionRow =
+  typeof candidateStrategyVersions.$inferInsert;
 export type DesignResumeDocumentRow = typeof designResumeDocuments.$inferSelect;
 export type NewDesignResumeDocumentRow =
   typeof designResumeDocuments.$inferInsert;
