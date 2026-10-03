@@ -3,11 +3,23 @@ import { describe, expect, it, vi } from "vitest";
 import { importJobsStep } from "./import-jobs";
 
 vi.mock("@infra/logger", () => ({
-  logger: { info: vi.fn() },
+  logger: { info: vi.fn(), warn: vi.fn() },
 }));
 
 vi.mock("@server/repositories/jobs", () => ({
   createJobs: vi.fn(async () => ({ created: 1, skipped: 0 })),
+  getJobIdMapByUrls: vi.fn(
+    async (urls: string[]) =>
+      new Map(urls.map((url, index) => [url, `job-${index + 1}`])),
+  ),
+}));
+
+vi.mock("@server/repositories/market-inventory", () => ({
+  recordMarketPostingObservation: vi.fn(async () => ({
+    posting: { id: "market-1" },
+    canonicalContentChanged: true,
+  })),
+  attachMarketPostingToCandidate: vi.fn(async () => "candidate-market-1"),
 }));
 
 vi.mock("../progress", () => ({

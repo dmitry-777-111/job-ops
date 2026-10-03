@@ -1,5 +1,11 @@
 import { logger } from "@infra/logger";
+import { sanitizeUnknown } from "@infra/sanitize";
+import { marketPostingInputFromJob } from "@server/market-inventory/from-job";
 import * as jobsRepo from "@server/repositories/jobs";
+import {
+  attachMarketPostingToCandidate,
+  recordMarketPostingObservation,
+} from "@server/repositories/market-inventory";
 import { ensurePipelineRunItems } from "@server/repositories/pipeline-run-items";
 import { deduplicateJobsByTitleAndEmployer } from "@shared/job-matching.js";
 import type { CreateJobInput } from "@shared/types";
@@ -13,6 +19,8 @@ export async function importJobsStep(args: {
   skipped: number;
   fuzzyMerged: number;
   runItemsAttached: number;
+  marketInventoryRecorded: number;
+  marketInventoryErrors: number;
 }> {
   logger.info("Importing discovered jobs", {
     discovered: args.discoveredJobs.length,
@@ -38,14 +46,37 @@ export async function importJobsStep(args: {
         employer: job.employer,
       }),
   );
+  const jobIdByUrl = await jobsRepo.getJobIdMapByUrls(
+    dedupedJobs.map((job) => job.jobUrl),
+  );
+  let marketInventoryRecorded = 0;
+  let marketInventoryErrors = 0;
+  for (const job of dedupedJobs) {
+    try {
+      const { posting } = await recordMarketPostingObservation(
+        marketPostingInputFromJob(job),
+      );
+      await attachMarketPostingToCandidate({
+        marketPostingId: posting.id,
+        legacyJobId: jobIdByUrl.get(job.jobUrl) ?? null,
+      });
+      marketInventoryRecorded += 1;
+    } catch (error) {
+      marketInventoryErrors += 1;
+      logger.warn("Market inventory shadow write failed", {
+        source: job.source,
+        sourceJobId: job.sourceJobId ?? null,
+        jobUrl: job.jobUrl,
+        error: sanitizeUnknown(error),
+      });
+    }
+  }
+
   let runItemsAttached = 0;
   if (args.pipelineRunId) {
-    const jobIds = await jobsRepo.getJobIdsByUrls(
-      dedupedJobs.map((job) => job.jobUrl),
-    );
     runItemsAttached = await ensurePipelineRunItems({
       pipelineRunId: args.pipelineRunId,
-      jobIds,
+      jobIds: [...jobIdByUrl.values()],
     });
   }
 
@@ -55,9 +86,18 @@ export async function importJobsStep(args: {
     created,
     skipped,
     runItemsAttached,
+    marketInventoryRecorded,
+    marketInventoryErrors,
   });
 
   progressHelpers.importComplete(created, skipped + fuzzyMerged);
 
-  return { created, skipped, fuzzyMerged, runItemsAttached };
+  return {
+    created,
+    skipped,
+    fuzzyMerged,
+    runItemsAttached,
+    marketInventoryRecorded,
+    marketInventoryErrors,
+  };
 }

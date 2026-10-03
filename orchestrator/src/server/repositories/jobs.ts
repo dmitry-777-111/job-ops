@@ -845,14 +845,25 @@ export async function getUnscoredDiscoveredJobsForPipelineRun(
   return rows.map((row) => mapRowToJob(row.job));
 }
 
-export async function getJobIdsByUrls(jobUrls: string[]): Promise<string[]> {
+export async function getJobIdMapByUrls(
+  jobUrls: string[],
+): Promise<Map<string, string>> {
   const uniqueUrls = [...new Set(jobUrls)].filter(Boolean);
-  if (uniqueUrls.length === 0) return [];
-  const rows = await db
-    .select({ id: jobs.id })
-    .from(jobs)
-    .where(and(jobsScopeFilter(), inArray(jobs.jobUrl, uniqueUrls)));
-  return rows.map((row) => row.id);
+  const result = new Map<string, string>();
+  const chunkSize = 500;
+  for (let index = 0; index < uniqueUrls.length; index += chunkSize) {
+    const chunk = uniqueUrls.slice(index, index + chunkSize);
+    const rows = await db
+      .select({ id: jobs.id, jobUrl: jobs.jobUrl })
+      .from(jobs)
+      .where(and(jobsScopeFilter(), inArray(jobs.jobUrl, chunk)));
+    for (const row of rows) result.set(row.jobUrl, row.id);
+  }
+  return result;
+}
+
+export async function getJobIdsByUrls(jobUrls: string[]): Promise<string[]> {
+  return [...(await getJobIdMapByUrls(jobUrls)).values()];
 }
 
 export async function getUnscoredDiscoveredJobs(
