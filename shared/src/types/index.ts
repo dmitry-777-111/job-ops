@@ -1,3 +1,4 @@
+export * from "./candidate-strategy";
 export * from "./api";
 export * from "./app";
 export * from "./billing";
