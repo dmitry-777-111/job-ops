@@ -85,10 +85,6 @@ describe("Sponsor Match Calculation", () => {
     updateJob = jobsRepo.updateJob as ReturnType<typeof vi.fn>;
     getUnscoredDiscoveredJobs =
       jobsRepo.getUnscoredDiscoveredJobs as ReturnType<typeof vi.fn>;
-    getUnscoredDiscoveredJobsForPipelineRun =
-      jobsRepo.getUnscoredDiscoveredJobsForPipelineRun as ReturnType<
-        typeof vi.fn
-      >;
     vi.mocked(
       jobsRepo.getUnscoredDiscoveredJobsForPipelineRun,
     ).mockImplementation(
