@@ -324,6 +324,7 @@ describe("discoverJobsStep", () => {
   });
 
   it("throws when all enabled sources fail", async () => {
+    vi.useFakeTimers();
     const settingsRepo = await import("@server/repositories/settings");
     const registryModule = await import("@server/extractors/registry");
 
@@ -349,16 +350,17 @@ describe("discoverJobsStep", () => {
       availableSources: ["ukvisajobs"],
     } as any);
 
-    await expect(
-      discoverJobsStep({
-        mergedConfig: {
-          ...baseConfig,
-          sources: ["ukvisajobs"],
-        },
-      }),
-    ).rejects.toThrow(
+    const resultPromise = discoverJobsStep({
+      mergedConfig: {
+        ...baseConfig,
+        sources: ["ukvisajobs"],
+      },
+    });
+    await vi.runAllTimersAsync();
+    await expect(resultPromise).rejects.toThrow(
       "All sources failed: UK Visa Jobs: boom (sources: ukvisajobs)",
     );
+    vi.useRealTimers();
   });
 
   it("keeps non-fatal source errors when an extractor succeeds with no jobs", async () => {

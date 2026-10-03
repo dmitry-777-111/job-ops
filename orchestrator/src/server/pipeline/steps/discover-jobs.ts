@@ -120,7 +120,9 @@ async function withDiscoverySourceTimeout<T>(
     guardedRun,
     new Promise((resolve) => setTimeout(resolve, DISCOVERY_CANCEL_GRACE_MS)),
   ]);
-  throw new Error("timed out after 10 minutes");
+  const error = new Error("timed out after 10 minutes");
+  error.name = "DiscoveryTimeoutError";
+  throw error;
 }
 
 function waitForDiscoveryRetry(): Promise<void> {
@@ -689,9 +691,13 @@ export async function discoverJobsStep(args: {
               }
             } catch (error) {
               lastError = error;
-              if (attempt < DISCOVERY_MAX_ATTEMPTS) {
+              const retryable =
+                !(error instanceof Error && error.name === "DiscoveryTimeoutError") &&
+                attempt < DISCOVERY_MAX_ATTEMPTS;
+              if (retryable) {
                 await waitForDiscoveryRetry();
-                continue;
+              } else {
+                break;
               }
             }
           }
