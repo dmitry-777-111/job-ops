@@ -150,6 +150,7 @@ Self-hosted will always be free and open source.
 - [Orchestrator Pipeline](https://jobops.dakheera47.com/docs/features/orchestrator)
 - [Extractor System](https://jobops.dakheera47.com/docs/extractors/overview)
 - [Troubleshooting](https://jobops.dakheera47.com/docs/troubleshooting/common-problems)
+- [JobOps Recovery & Checkpoint Protocol](./docs/career-os/RECOVERY_CHECKPOINT_PROTOCOL.md)
 
 ---
 

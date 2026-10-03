@@ -23,3 +23,12 @@ Not valid reasons:
 - we can optimize this too
 
 One gate at a time. Do not begin the next gate before the current gate passes.
+
+## Execution and Recovery Protocol
+
+All long ChatGPT-driven implementation work in CAREER OS NEXT must follow
+[RECOVERY_CHECKPOINT_PROTOCOL.md](./RECOVERY_CHECKPOINT_PROTOCOL.md).
+
+This protocol is an execution-safety rule, not a new v1 feature domain. It may
+be applied during any gate to prevent duplicate work, uncertain recovery, or
+loss of verified progress after a client/stream interruption.
