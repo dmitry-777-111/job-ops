@@ -99,7 +99,8 @@ describe("gmail sync http behavior", () => {
       isLikelyRecruitmentMetadata({
         from: "Alex Person <alex@example.com>",
         subject: "Quick question",
-        snippet: "I saw your profile and would like to discuss a service manager role.",
+        snippet:
+          "I saw your profile and would like to discuss a service manager role.",
       }),
     ).toBe(true);
 
