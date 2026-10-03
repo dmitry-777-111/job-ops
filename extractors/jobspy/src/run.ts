@@ -169,6 +169,8 @@ export interface RunJobSpyOptions {
   isRemote?: boolean;
   onProgress?: (event: JobSpyProgressEvent) => void;
   shouldCancel?: () => boolean;
+  completedUnitKeys?: string[];
+  onUnitComplete?: (unit: { key: string; completed: number; total: number }) => void | Promise<void>;
 }
 
 export interface JobSpyResult {
@@ -195,6 +197,13 @@ export function resolveJobSpyLocations(args: {
     env: process.env.JOBSPY_LOCATION,
   });
   return locations.length > 0 ? locations : [null];
+}
+
+export function buildJobSpyUnitKey(
+  searchTerm: string,
+  locationToken: string,
+): string {
+  return `${searchTerm}\u0000${locationToken}`;
 }
 
 export function resolveJobSpyCountryIndeed(args: {
@@ -261,11 +270,14 @@ export async function runJobSpy(
     const seenJobUrls = new Set<string>();
     const totalRuns = searchTerms.length * runLocations.length;
     let runIndex = 0;
+    const completedUnitKeys = new Set(options.completedUnitKeys ?? []);
 
     for (const searchTerm of searchTerms) {
       for (const location of runLocations) {
         runIndex += 1;
         const locationToken = location ?? countryIndeed ?? "anywhere";
+        const unitKey = buildJobSpyUnitKey(searchTerm, locationToken);
+        if (completedUnitKeys.has(unitKey)) continue;
         const suffix = `${runIndex}_${slugForFilename(searchTerm)}_${slugForFilename(locationToken)}`;
         const outputCsv = join(OUTPUT_DIR, `jobspy_jobs_${suffix}.csv`);
         const outputJson = join(OUTPUT_DIR, `jobspy_jobs_${suffix}.json`);
@@ -406,6 +418,12 @@ export async function runJobSpy(
           seenJobUrls.add(job.jobUrl);
           jobs.push(job);
         }
+        completedUnitKeys.add(unitKey);
+        await options.onUnitComplete?.({
+          key: unitKey,
+          completed: completedUnitKeys.size,
+          total: totalRuns,
+        });
 
         try {
           await unlink(outputJson);

@@ -5,6 +5,7 @@ import { getUserId } from "@server/infra/request-context";
 import { getAllJobUrls } from "@server/repositories/jobs";
 import {
   createSourceRun,
+  getLatestIncompleteSourceRun,
   getSourceRun,
   recordPipelineIssue,
   updateSourceRun,
@@ -383,6 +384,17 @@ export async function discoverJobsStep(args: {
 
         let timedOut = false;
         const shouldCancel = () => timedOut || args.shouldCancel?.() === true;
+        const sourceRun = args.pipelineRunId
+          ? await getSourceRun(args.pipelineRunId, manifest.id)
+          : null;
+        const recoverySourceRun =
+          args.pipelineRunId && !sourceRun?.checkpoint
+            ? await getLatestIncompleteSourceRun(
+                manifest.id,
+                "default",
+                args.pipelineRunId,
+              )
+            : null;
         const run = manifest.run({
           source: grouped.sources[0],
           selectedSources: grouped.sources,
@@ -399,6 +411,20 @@ export async function discoverJobsStep(args: {
           ),
           getExistingJobUrls,
           shouldCancel,
+          resumeCheckpoint:
+            sourceRun?.checkpoint ?? recoverySourceRun?.checkpoint ?? undefined,
+          onCheckpoint: async (checkpoint) => {
+            if (!sourceRun) return;
+            const coverage =
+              checkpoint && typeof checkpoint === "object"
+                ? (checkpoint as { coverageCompleted?: unknown }).coverageCompleted
+                : undefined;
+            await updateSourceRun(sourceRun.id, {
+              checkpoint,
+              coverageCompleted:
+                typeof coverage === "number" ? coverage : undefined,
+            });
+          },
           onProgress: (event) => {
             if (shouldCancel()) return;
             const role =

@@ -53,6 +53,49 @@ describe("JobSpy manifest map-radius planning", () => {
     ).not.toBe(true);
   });
 
+  it("passes persisted checkpoint units and writes completed units back", async () => {
+    const onCheckpoint = vi.fn();
+    runJobSpyMock.mockImplementation(async (options) => {
+      expect(options.completedUnitKeys).toEqual(["engineer\u0000Toronto, ON"]);
+      await options.onUnitComplete({
+        key: "engineer\u0000Calgary, AB",
+        completed: 2,
+        total: 3,
+      });
+      return { success: true, jobs: [] };
+    });
+
+    await manifest.run({
+      source: "indeed",
+      selectedSources: ["indeed", "linkedin"],
+      settings: {},
+      searchTerms: ["engineer"],
+      selectedCountry: "canada",
+      resumeCheckpoint: {
+        version: 1,
+        planFingerprint: JSON.stringify({
+          sites: ["indeed", "linkedin"],
+          searchTerms: ["engineer"],
+          locations: [null],
+          countryIndeed: null,
+        }),
+        completedUnitKeys: ["engineer\u0000Toronto, ON"],
+      },
+      onCheckpoint,
+    } as ExtractorRuntimeContext);
+
+    expect(onCheckpoint).toHaveBeenCalledWith({
+      version: 1,
+      planFingerprint: expect.any(String),
+      completedUnitKeys: [
+        "engineer\u0000Toronto, ON",
+        "engineer\u0000Calgary, AB",
+      ],
+      coverageCompleted: 2,
+      coverageExpected: 3,
+    });
+  });
+
   it("passes cancellation through to the JobSpy child runner", async () => {
     const shouldCancel = vi.fn(() => false);
     await manifest.run({

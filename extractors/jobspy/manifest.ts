@@ -49,6 +49,27 @@ export const manifest: ExtractorManifest = {
           )
         : configuredResultsWanted;
 
+    const planFingerprint = JSON.stringify({
+      sites,
+      searchTerms: context.searchTerms,
+      locations: locations ?? [context.settings.searchCities ?? context.settings.jobspyLocation ?? null],
+      countryIndeed: context.settings.jobspyCountryIndeed ?? null,
+    });
+    const resumeCheckpoint =
+      context.resumeCheckpoint && typeof context.resumeCheckpoint === "object"
+        ? (context.resumeCheckpoint as {
+            planFingerprint?: unknown;
+            completedUnitKeys?: unknown;
+          })
+        : undefined;
+    const completedUnitKeys =
+      resumeCheckpoint?.planFingerprint === planFingerprint &&
+      Array.isArray(resumeCheckpoint.completedUnitKeys)
+        ? resumeCheckpoint.completedUnitKeys.filter(
+            (key): key is string => typeof key === "string",
+          )
+        : [];
+
     const result = await runJobSpy({
       sites,
       searchTerms: context.searchTerms,
@@ -61,6 +82,17 @@ export const manifest: ExtractorManifest = {
         ? JSON.parse(context.settings.workplaceTypes)
         : undefined,
       shouldCancel: context.shouldCancel,
+      completedUnitKeys,
+      onUnitComplete: async (unit) => {
+        if (!completedUnitKeys.includes(unit.key)) completedUnitKeys.push(unit.key);
+        await context.onCheckpoint?.({
+          version: 1,
+          planFingerprint,
+          completedUnitKeys: [...completedUnitKeys],
+          coverageCompleted: unit.completed,
+          coverageExpected: unit.total,
+        });
+      },
       onProgress: (event) => {
         if (context.shouldCancel?.()) return;
 

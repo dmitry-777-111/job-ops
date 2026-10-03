@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db, schema } from "../db/index";
 import { getActiveTenantId } from "../tenancy/context";
 
@@ -23,6 +23,34 @@ export async function getSourceRun(
       ),
     );
   return row ?? null;
+}
+
+export async function getLatestIncompleteSourceRun(
+  source: string,
+  scopeKey = "default",
+  excludePipelineRunId?: string,
+) {
+  const predicates = [
+    eq(pipelineSourceRuns.tenantId, getActiveTenantId()),
+    eq(pipelineSourceRuns.source, source),
+    eq(pipelineSourceRuns.scopeKey, scopeKey),
+  ];
+  if (excludePipelineRunId) {
+    predicates.push(ne(pipelineSourceRuns.pipelineRunId, excludePipelineRunId));
+  }
+  const rows = await db
+    .select()
+    .from(pipelineSourceRuns)
+    .where(and(...predicates))
+    .orderBy(desc(pipelineSourceRuns.updatedAt));
+  return (
+    rows.find(
+      (row) =>
+        row.checkpoint &&
+        row.coverageExpected !== null &&
+        row.coverageCompleted < row.coverageExpected,
+    ) ?? null
+  );
 }
 
 export async function createSourceRun(input: {

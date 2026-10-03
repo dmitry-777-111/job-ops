@@ -38,6 +38,8 @@ export interface ExtractorRuntimeContext {
   sourceLocationPlan?: SourceLocationPlan;
   getExistingJobUrls?: () => Promise<string[]>;
   shouldCancel?: () => boolean;
+  resumeCheckpoint?: unknown;
+  onCheckpoint?: (checkpoint: unknown) => void | Promise<void>;
   onProgress?: (event: ExtractorProgressEvent) => void;
 }
 

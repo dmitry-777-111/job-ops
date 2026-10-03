@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildJobSpyUnitKey,
   deriveIsRemoteFlag,
   parseJobSpyProgressLine,
   resolveJobSpyCountryIndeed,
@@ -66,6 +67,12 @@ describe("parseJobSpyProgressLine", () => {
     expect(deriveIsRemoteFlag(["onsite"])).toBeUndefined();
     expect(deriveIsRemoteFlag(["remote", "hybrid"])).toBeUndefined();
     expect(deriveIsRemoteFlag(["remote", "hybrid", "onsite"])).toBeUndefined();
+  });
+
+  it("builds stable term-location checkpoint keys", () => {
+    expect(buildJobSpyUnitKey("field service engineer", "Toronto, ON")).toBe(
+      "field service engineer\u0000Toronto, ON",
+    );
   });
 
   it("runs a country-only search when no city locations are configured", () => {
