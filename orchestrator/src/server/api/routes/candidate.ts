@@ -98,7 +98,7 @@ candidateRouter.post(
       const currentProfile = await getProfile();
       const draft = await createMasterCareerProfileDraft({
         profile: currentProfile,
-        source: "ai_normalized",
+        source: "legacy_current_profile",
         sourceRef: "legacy-current-profile",
         provenance: {
           migration: "freeze3-bootstrap-current-profile",

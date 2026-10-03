@@ -69,6 +69,7 @@ export const CANDIDATE_PROFILE_SOURCES = [
   "upload",
   "connected_profile",
   "manual",
+  "legacy_current_profile",
   "ai_normalized",
 ] as const;
 export type CandidateProfileSource = (typeof CANDIDATE_PROFILE_SOURCES)[number];

@@ -2098,7 +2098,7 @@ function ensureCandidateProfileAndStrategyTables(): void {
       version INTEGER NOT NULL,
       status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','active','superseded')),
       profile_json TEXT NOT NULL,
-      source TEXT NOT NULL CHECK(source IN ('design_resume','rxresume','upload','connected_profile','manual','ai_normalized')),
+      source TEXT NOT NULL CHECK(source IN ('design_resume','rxresume','upload','connected_profile','manual','legacy_current_profile','ai_normalized')),
       source_ref TEXT,
       provenance TEXT,
       activated_at TEXT,

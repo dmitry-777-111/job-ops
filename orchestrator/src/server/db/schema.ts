@@ -1402,6 +1402,7 @@ export const candidateProfileVersions = sqliteTable(
         "upload",
         "connected_profile",
         "manual",
+        "legacy_current_profile",
         "ai_normalized",
       ],
     }).notNull(),
