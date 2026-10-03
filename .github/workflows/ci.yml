@@ -54,6 +54,7 @@ jobs:
           - orchestrator
           - adzuna-extractor
           - hiringcafe-extractor
+          - jobbank-extractor
           - gradcracker-extractor
           - startupjobs-extractor
           - workingnomads-extractor

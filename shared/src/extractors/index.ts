@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const EXTRACTOR_SOURCE_IDS = [
   "gradcracker",
+  "jobbank",
   "indeed",
   "linkedin",
   "glassdoor",
@@ -40,6 +41,7 @@ export const EXTRACTOR_SOURCE_METADATA: Record<
     category: "pipeline",
     ukOnly: true,
   },
+  jobbank: { label: "Job Bank Canada", order: 15, category: "pipeline" },
   indeed: { label: "Indeed", order: 20, category: "pipeline" },
   linkedin: { label: "LinkedIn", order: 30, category: "pipeline" },
   glassdoor: { label: "Glassdoor", order: 40, category: "pipeline" },
