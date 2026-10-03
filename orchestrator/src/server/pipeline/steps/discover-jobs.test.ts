@@ -220,7 +220,8 @@ describe("discoverJobsStep", () => {
       await vi.advanceTimersByTimeAsync(0);
 
       expect(hungContext?.shouldCancel?.()).toBe(false);
-      await vi.runOnlyPendingTimersAsync();
+      await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+      await vi.advanceTimersByTimeAsync(2_000);
 
       await expect(resultPromise).resolves.toMatchObject({
         discoveredJobs: [expect.objectContaining({ title: "Engineer" })],
@@ -356,10 +357,11 @@ describe("discoverJobsStep", () => {
         sources: ["ukvisajobs"],
       },
     });
-    await vi.runAllTimersAsync();
-    await expect(resultPromise).rejects.toThrow(
+    const rejection = expect(resultPromise).rejects.toThrow(
       "All sources failed: UK Visa Jobs: boom (sources: ukvisajobs)",
     );
+    await vi.runAllTimersAsync();
+    await rejection;
     vi.useRealTimers();
   });
 
