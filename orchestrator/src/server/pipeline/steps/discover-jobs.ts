@@ -692,8 +692,10 @@ export async function discoverJobsStep(args: {
             } catch (error) {
               lastError = error;
               const retryable =
-                !(error instanceof Error && error.name === "DiscoveryTimeoutError") &&
-                attempt < DISCOVERY_MAX_ATTEMPTS;
+                !(
+                  error instanceof Error &&
+                  error.name === "DiscoveryTimeoutError"
+                ) && attempt < DISCOVERY_MAX_ATTEMPTS;
               if (retryable) {
                 await waitForDiscoveryRetry();
               } else {
