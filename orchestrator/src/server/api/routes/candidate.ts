@@ -12,6 +12,8 @@ import {
   getActiveCandidateStrategy,
   listCandidateStrategyVersions,
 } from "@server/repositories/candidate-strategy";
+import { listExternalConnections } from "@server/repositories/external-connections";
+import { deriveCandidateReadiness } from "@server/services/candidate-readiness";
 import { deriveCandidateStrategyDelta } from "@server/services/candidate-strategy-delta";
 import { getProfile } from "@server/services/profile";
 import {
@@ -49,6 +51,19 @@ const strategyDraftSchema = z.object({
     .default([]),
   constraints: z.array(constraintSchema).max(300).default([]),
   freeformNotes: z.string().trim().max(20_000).nullable().optional(),
+});
+
+candidateRouter.get("/readiness", async (_req: Request, res: Response) => {
+  try {
+    const [profile, strategy, connections] = await Promise.all([
+      getActiveMasterCareerProfile(),
+      getActiveCandidateStrategy(),
+      listExternalConnections(),
+    ]);
+    ok(res, deriveCandidateReadiness({ profile, strategy, connections }));
+  } catch (error) {
+    fail(res, toAppError(error));
+  }
 });
 
 candidateRouter.get("/profile/active", async (_req: Request, res: Response) => {
