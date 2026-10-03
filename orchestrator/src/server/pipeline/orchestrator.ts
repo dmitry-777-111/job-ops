@@ -29,6 +29,11 @@ import {
 } from "../repositories/pipeline-reliability";
 import * as settingsRepo from "../repositories/settings";
 import {
+  activateDynamicEmployersFromJobs,
+  observeDynamicEmployersFromJobs,
+  syncWatchlistSeedsToDynamicEmployers,
+} from "../services/dynamic-employers";
+import {
   refundHostedUsageReservation,
   reserveHostedUsage,
   settleHostedUsageReservation,
@@ -444,6 +449,12 @@ export async function runPipeline(
 
       ensureNotCancelled(scopeKey);
       jobsDiscovered = discoveredJobs.length;
+      try {
+        await syncWatchlistSeedsToDynamicEmployers();
+        await observeDynamicEmployersFromJobs(discoveredJobs);
+      } catch (error) {
+        pipelineLogger.warn("Dynamic employer observation failed", error);
+      }
       const { created, skipped, fuzzyMerged } = await importJobsStep({
         discoveredJobs,
       });
@@ -507,6 +518,11 @@ export async function runPipeline(
       pipelineLogger.info("Selected jobs for processing", {
         candidates: jobsToProcess.length,
       });
+      try {
+        await activateDynamicEmployersFromJobs(jobsToProcess);
+      } catch (error) {
+        pipelineLogger.warn("Dynamic employer activation failed", error);
+      }
 
       await persistResultSummary({
         stage: "processing",

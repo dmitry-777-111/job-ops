@@ -501,6 +501,39 @@ describe.sequential("database migrations", () => {
     );
   });
 
+  it("creates dynamic employer lifecycle tables with provenance indexes", async () => {
+    tempDir = await mkdtemp(join(tmpdir(), "job-ops-dynamic-employers-"));
+    const script = `
+      import { join } from "node:path";
+      import { pathToFileURL } from "node:url";
+      import Database from "better-sqlite3";
+      const dbPath = join(process.env.DATA_DIR, "jobs.db");
+      await import(pathToFileURL(join(process.cwd(), "src/server/db/migrate.ts")).href);
+      const sqlite = new Database(dbPath, { readonly: true });
+      for (const name of ["dynamic_employers", "dynamic_employer_events"]) {
+        const row = sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(name);
+        if (!row) throw new Error(name + " table missing");
+      }
+      const employerIndexes = sqlite.prepare("PRAGMA index_list(dynamic_employers)").all();
+      if (!employerIndexes.some((index) => index.name === "idx_dynamic_employers_tenant_user_name_unique" && index.unique)) {
+        throw new Error("dynamic employer identity index missing");
+      }
+      const eventFks = sqlite.prepare("PRAGMA foreign_key_list(dynamic_employer_events)").all();
+      if (!eventFks.some((fk) => fk.from === "employer_id" && fk.table === "dynamic_employers")) {
+        throw new Error("dynamic employer event FK missing");
+      }
+      sqlite.close();
+    `;
+    execFileSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "-e", script],
+      {
+        env: { ...process.env, DATA_DIR: tempDir },
+        stdio: "pipe",
+      },
+    );
+  });
+
   it("creates CAREER OS v2 reliability ledger tables with foreign keys", async () => {
     tempDir = await mkdtemp(join(tmpdir(), "job-ops-reliability-"));
     const script = `

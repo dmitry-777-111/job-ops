@@ -6,6 +6,8 @@ import {
   APPLICATION_OUTCOMES,
   APPLICATION_STAGES,
   APPLICATION_TASK_TYPES,
+  DYNAMIC_EMPLOYER_EVENT_TYPES,
+  DYNAMIC_EMPLOYER_STATUSES,
   HOSTED_USAGE_ACTIONS,
   HUMAN_BRIDGE_LEVELS,
   IMMIGRATION_EMPLOYER_SUPPORT_STATUSES,
@@ -1001,6 +1003,76 @@ export const watchlistSelectedSources = sqliteTable(
       table.tenantId,
       table.userId,
     ),
+  }),
+);
+
+export const dynamicEmployers = sqliteTable(
+  "dynamic_employers",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    normalizedName: text("normalized_name").notNull(),
+    displayName: text("display_name").notNull(),
+    status: text("status", { enum: DYNAMIC_EMPLOYER_STATUSES })
+      .notNull()
+      .default("discovered"),
+    sourceType: text("source_type"),
+    careersUrl: text("careers_url"),
+    firstSeenSource: text("first_seen_source"),
+    firstSeenJobUrl: text("first_seen_job_url"),
+    lastSeenSource: text("last_seen_source"),
+    lastSeenJobUrl: text("last_seen_job_url"),
+    observationCount: integer("observation_count").notNull().default(1),
+    firstSeenAt: text("first_seen_at").notNull(),
+    lastSeenAt: text("last_seen_at").notNull(),
+    activatedAt: text("activated_at"),
+    retiredAt: text("retired_at"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    tenantUserNameUnique: uniqueIndex(
+      "idx_dynamic_employers_tenant_user_name_unique",
+    ).on(table.tenantId, table.userId, table.normalizedName),
+    tenantUserStatusIndex: index(
+      "idx_dynamic_employers_tenant_user_status",
+    ).on(table.tenantId, table.userId, table.status),
+  }),
+);
+
+export const dynamicEmployerEvents = sqliteTable(
+  "dynamic_employer_events",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    employerId: text("employer_id")
+      .notNull()
+      .references(() => dynamicEmployers.id, { onDelete: "cascade" }),
+    eventType: text("event_type", { enum: DYNAMIC_EMPLOYER_EVENT_TYPES }).notNull(),
+    fromStatus: text("from_status", { enum: DYNAMIC_EMPLOYER_STATUSES }),
+    toStatus: text("to_status", { enum: DYNAMIC_EMPLOYER_STATUSES }).notNull(),
+    discoverySource: text("discovery_source"),
+    jobUrl: text("job_url"),
+    sourceType: text("source_type"),
+    careersUrl: text("careers_url"),
+    note: text("note"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    employerCreatedIndex: index(
+      "idx_dynamic_employer_events_employer_created",
+    ).on(table.employerId, table.createdAt),
+    tenantUserIndex: index(
+      "idx_dynamic_employer_events_tenant_user",
+    ).on(table.tenantId, table.userId),
   }),
 );
 

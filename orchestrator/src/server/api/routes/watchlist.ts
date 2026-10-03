@@ -1,7 +1,17 @@
-import { badRequest, toAppError, unprocessableEntity } from "@infra/errors";
+import {
+  badRequest,
+  notFound,
+  toAppError,
+  unprocessableEntity,
+} from "@infra/errors";
 import { asyncRoute, fail, ok } from "@infra/http";
 import { listCareerBoardSources } from "@server/config/career-boards";
 import * as watchlistRepo from "@server/repositories/watchlist";
+import {
+  listDynamicEmployerEvents,
+  listDynamicEmployers,
+  retireDynamicEmployer,
+} from "@server/services/dynamic-employers";
 import { getWatchlistSourceAdapter } from "@server/watchlist/adapters";
 import {
   getCurrentWatchlistResults,
@@ -77,6 +87,31 @@ function getWatchlistSourcesPayload(
     availableSourceTypes: getWatchlistSourceTypeDescriptors(),
   };
 }
+
+watchlistRouter.get(
+  "/employers",
+  asyncRoute(async (_req: Request, res: Response) => {
+    ok(res, { employers: await listDynamicEmployers() });
+  }),
+);
+
+watchlistRouter.get(
+  "/employers/:id/events",
+  asyncRoute(async (req: Request, res: Response) => {
+    ok(res, { events: await listDynamicEmployerEvents(req.params.id) });
+  }),
+);
+
+watchlistRouter.post(
+  "/employers/:id/retire",
+  asyncRoute(async (req: Request, res: Response) => {
+    const employer = await retireDynamicEmployer(req.params.id);
+    if (!employer) {
+      return fail(res, notFound("Dynamic employer was not found"));
+    }
+    ok(res, { employer });
+  }),
+);
 
 watchlistRouter.get(
   "/states",

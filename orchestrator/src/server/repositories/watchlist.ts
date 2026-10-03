@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getUserId } from "@server/infra/request-context";
+import { MAX_WATCHLIST_SOURCES } from "@shared/types";
 import type {
   UpdateWatchlistSelectionsInput,
   WatchlistCheckInput,
@@ -72,6 +73,79 @@ export async function listWatchlistSelectedSources(): Promise<
     .orderBy(asc(watchlistSelectedSources.sortOrder));
 
   return rows.map(mapRowToWatchlistSelectedSource);
+}
+
+export async function ensureWatchlistSelectedSource(input: {
+  sourceType: string;
+  label: string;
+  careersUrl: string;
+}): Promise<WatchlistSelectedSource> {
+  const existingSources = await listWatchlistSelectedSources();
+  const existing = existingSources.find(
+    (source) => source.careersUrl === input.careersUrl,
+  );
+  if (existing) return existing;
+
+  if (existingSources.length >= MAX_WATCHLIST_SOURCES) {
+    throw new Error(
+      `Cannot activate dynamic employer source: watchlist limit ${MAX_WATCHLIST_SOURCES} reached.`,
+    );
+  }
+
+  const tenantId = getActiveTenantId();
+  const userId = requireActiveUserId();
+  const now = new Date().toISOString();
+  const sortOrder =
+    existingSources.reduce(
+      (highest, source) => Math.max(highest, source.sortOrder),
+      -1,
+    ) + 1;
+  const id = randomUUID();
+
+  await db.insert(watchlistSelectedSources).values({
+    id,
+    tenantId,
+    userId,
+    catalogSourceId: null,
+    label: input.label.trim() || input.careersUrl,
+    careersUrl: input.careersUrl,
+    cxsJobsUrl: null,
+    sourceType: input.sourceType,
+    isCustom: true,
+    sortOrder,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const [row] = await db
+    .select()
+    .from(watchlistSelectedSources)
+    .where(
+      and(
+        eq(watchlistSelectedSources.tenantId, tenantId),
+        eq(watchlistSelectedSources.userId, userId),
+        eq(watchlistSelectedSources.id, id),
+      ),
+    );
+  if (!row) {
+    throw new Error("Failed to load activated dynamic employer source.");
+  }
+  return mapRowToWatchlistSelectedSource(row);
+}
+
+export async function removeWatchlistSelectedSourceByCareersUrl(
+  careersUrl: string,
+): Promise<boolean> {
+  const result = await db
+    .delete(watchlistSelectedSources)
+    .where(
+      and(
+        eq(watchlistSelectedSources.tenantId, getActiveTenantId()),
+        eq(watchlistSelectedSources.userId, requireActiveUserId()),
+        eq(watchlistSelectedSources.careersUrl, careersUrl),
+      ),
+    );
+  return result.changes > 0;
 }
 
 export async function replaceWatchlistSelectedSources(

@@ -695,6 +695,62 @@ export interface UpdateWatchlistSelectionsInput {
   }>;
 }
 
+export const DYNAMIC_EMPLOYER_STATUSES = [
+  "discovered",
+  "ats_detected",
+  "candidate",
+  "active",
+  "retired",
+  "source_changed",
+] as const;
+export type DynamicEmployerStatus =
+  (typeof DYNAMIC_EMPLOYER_STATUSES)[number];
+
+export const DYNAMIC_EMPLOYER_EVENT_TYPES = [
+  "observed",
+  "ats_detected",
+  "candidate",
+  "active",
+  "retired",
+  "source_changed",
+] as const;
+export type DynamicEmployerEventType =
+  (typeof DYNAMIC_EMPLOYER_EVENT_TYPES)[number];
+
+export interface DynamicEmployer {
+  id: string;
+  normalizedName: string;
+  displayName: string;
+  status: DynamicEmployerStatus;
+  sourceType: WatchedSourceType | null;
+  careersUrl: string | null;
+  firstSeenSource: JobSource | null;
+  firstSeenJobUrl: string | null;
+  lastSeenSource: JobSource | null;
+  lastSeenJobUrl: string | null;
+  observationCount: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  activatedAt: string | null;
+  retiredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DynamicEmployerEvent {
+  id: string;
+  employerId: string;
+  eventType: DynamicEmployerEventType;
+  fromStatus: DynamicEmployerStatus | null;
+  toStatus: DynamicEmployerStatus;
+  discoverySource: JobSource | null;
+  jobUrl: string | null;
+  sourceType: WatchedSourceType | null;
+  careersUrl: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
 export interface UpdateJobInput {
   title?: string;
   employer?: string;
