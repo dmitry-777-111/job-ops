@@ -656,36 +656,37 @@ export async function discoverJobsStep(args: {
             }
             try {
               const result = await sourceTask.run();
-              if (
+              const shouldRetry =
                 result.fatal &&
                 !result.challenge &&
-                attempt < DISCOVERY_MAX_ATTEMPTS
-              ) {
+                attempt < DISCOVERY_MAX_ATTEMPTS;
+              if (shouldRetry) {
                 lastError = new Error(
                   result.sourceErrors.join("; ") || "source failed",
                 );
                 await waitForDiscoveryRetry();
+              } else {
+                if (args.pipelineRunId && sourceRunId)
+                  await getSourceRunForSettle(
+                    args.pipelineRunId,
+                    sourceTask.source,
+                    { status: "fulfilled", result },
+                  );
+                for (const [channel, channelRunId] of channelRunIds) {
+                  const channelErrors = result.sourceErrors.filter((error) =>
+                    error.toLowerCase().startsWith(`${channel.toLowerCase()}:`),
+                  );
+                  await updateSourceRun(channelRunId, {
+                    status: result.fatal
+                      ? "failed"
+                      : channelErrors.length > 0
+                        ? "degraded"
+                        : "complete",
+                    errorMessage: channelErrors.join("; ") || null,
+                  });
+                }
+                return result;
               }
-              if (args.pipelineRunId && sourceRunId)
-                await getSourceRunForSettle(
-                  args.pipelineRunId,
-                  sourceTask.source,
-                  { status: "fulfilled", result },
-                );
-              for (const [channel, channelRunId] of channelRunIds) {
-                const channelErrors = result.sourceErrors.filter((error) =>
-                  error.toLowerCase().startsWith(`${channel.toLowerCase()}:`),
-                );
-                await updateSourceRun(channelRunId, {
-                  status: result.fatal
-                    ? "failed"
-                    : channelErrors.length > 0
-                      ? "degraded"
-                      : "complete",
-                  errorMessage: channelErrors.join("; ") || null,
-                });
-              }
-              return result;
             } catch (error) {
               lastError = error;
               if (attempt < DISCOVERY_MAX_ATTEMPTS) {
