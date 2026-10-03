@@ -11,6 +11,8 @@ const { spawnMock } = vi.hoisted(() => ({
   spawnMock: vi.fn(),
 }));
 
+let latestStdin: PassThrough | null = null;
+
 vi.mock("node:child_process", () => ({
   spawn: spawnMock,
   default: {
@@ -36,6 +38,7 @@ function mockSpawn(
 ): void {
   vi.mocked(spawn).mockImplementation(() => {
     const stdin = new PassThrough();
+    latestStdin = stdin;
     const stdout = new PassThrough();
     const stderr = new PassThrough();
 
@@ -94,6 +97,7 @@ function mockSpawn(
 describe("CodexClient", () => {
   afterEach(async () => {
     await __resetCodexSharedSessionForTests();
+    latestStdin = null;
     vi.restoreAllMocks();
   });
 
@@ -174,6 +178,40 @@ describe("CodexClient", () => {
     expect(response.text).toContain('"score":99');
     expect(response.turnId).toBe("turn-1");
     expect(threadReadCalls).toBe(0);
+  });
+
+  it("turns stdin EPIPE into a request failure instead of crashing the process", async () => {
+    mockSpawn((request, helpers) => {
+      if (request.method === "initialize") {
+        helpers.respond({
+          userAgent: "test",
+          codexHome: "/tmp/codex",
+          platformFamily: "unix",
+          platformOs: "linux",
+        });
+        return;
+      }
+      if (request.method === "thread/start") {
+        const error = Object.assign(new Error("write EPIPE"), {
+          code: "EPIPE",
+        });
+        setImmediate(() => latestStdin?.emit("error", error));
+        return;
+      }
+      helpers.respond({});
+    });
+
+    const client = new CodexClient();
+    await expect(
+      client.callJson({
+        model: "",
+        messages: [{ role: "user", content: "Score this job." }],
+        jsonSchema: {
+          name: "score_result",
+          schema: { type: "object" },
+        },
+      } as LlmRequestOptions<unknown>),
+    ).rejects.toThrow(/EPIPE/i);
   });
 
   it("reports missing auth as an invalid credential state", async () => {

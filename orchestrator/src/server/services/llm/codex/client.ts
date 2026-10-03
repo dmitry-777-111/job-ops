@@ -270,6 +270,10 @@ class CodexAppServerSession {
       this.handleStdoutLine(line);
     });
 
+    this.proc.stdin.on("error", (error) => {
+      this.shutdownWithError(error);
+    });
+
     this.proc.stderr.on("data", (chunk: Buffer | string) => {
       const text = typeof chunk === "string" ? chunk : chunk.toString("utf8");
       for (const line of text.split(/\r?\n/)) {
@@ -626,7 +630,12 @@ class CodexAppServerSession {
     if (this.closedError) {
       throw this.closedError;
     }
-    this.proc.stdin.write(`${JSON.stringify(payload)}\n`);
+    try {
+      this.proc.stdin.write(`${JSON.stringify(payload)}\n`);
+    } catch (error) {
+      this.shutdownWithError(error);
+      throw this.closedError ?? new Error(buildCodexErrorMessage(error));
+    }
   }
 
   private shutdownWithError(error: unknown): void {
