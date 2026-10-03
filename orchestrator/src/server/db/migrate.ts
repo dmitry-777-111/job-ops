@@ -2224,6 +2224,31 @@ function ensureCandidateProfileAndStrategyTables(): void {
   `);
 }
 
+function ensurePipelineRunLeasesTable(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS pipeline_run_leases (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      pipeline_run_id TEXT NOT NULL,
+      acquired_at TEXT NOT NULL,
+      heartbeat_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (pipeline_run_id) REFERENCES pipeline_runs(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pipeline_run_leases_owner_unique
+      ON pipeline_run_leases(tenant_id, coalesce(user_id, ''));
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pipeline_run_leases_run_unique
+      ON pipeline_run_leases(pipeline_run_id);
+    CREATE INDEX IF NOT EXISTS idx_pipeline_run_leases_expiry
+      ON pipeline_run_leases(expires_at);
+  `);
+}
+
 function ensurePipelineRunItemsTable(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS pipeline_run_items (
@@ -2337,6 +2362,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensurePipelineRunLeasesTable();
 ensureApplicationPackagesTable();
 ensureExternalConnectionsTable();
 ensureMarketInventoryTables();

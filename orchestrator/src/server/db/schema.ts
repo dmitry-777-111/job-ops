@@ -776,6 +776,36 @@ export const pipelineRuns = sqliteTable("pipeline_runs", {
   resultSummary: text("result_summary", { mode: "json" }),
 });
 
+export const pipelineRunLeases = sqliteTable(
+  "pipeline_run_leases",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    pipelineRunId: text("pipeline_run_id")
+      .notNull()
+      .references(() => pipelineRuns.id, { onDelete: "cascade" }),
+    acquiredAt: text("acquired_at").notNull(),
+    heartbeatAt: text("heartbeat_at").notNull(),
+    expiresAt: text("expires_at").notNull(),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    ownerUnique: uniqueIndex("idx_pipeline_run_leases_owner_unique").on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+    ),
+    runUnique: uniqueIndex("idx_pipeline_run_leases_run_unique").on(
+      table.pipelineRunId,
+    ),
+    expiryIndex: index("idx_pipeline_run_leases_expiry").on(table.expiresAt),
+  }),
+);
+
 export const pipelineSourceRuns = sqliteTable(
   "pipeline_source_runs",
   {
@@ -2064,6 +2094,8 @@ export type NewJobDocumentRow = typeof jobDocuments.$inferInsert;
 export type InterviewRow = typeof interviews.$inferSelect;
 export type NewInterviewRow = typeof interviews.$inferInsert;
 export type PipelineRunRow = typeof pipelineRuns.$inferSelect;
+export type PipelineRunLeaseRow = typeof pipelineRunLeases.$inferSelect;
+export type NewPipelineRunLeaseRow = typeof pipelineRunLeases.$inferInsert;
 export type NewPipelineRunRow = typeof pipelineRuns.$inferInsert;
 export type PipelineRunItemRow = typeof pipelineRunItems.$inferSelect;
 export type NewPipelineRunItemRow = typeof pipelineRunItems.$inferInsert;
