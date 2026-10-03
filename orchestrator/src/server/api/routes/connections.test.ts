@@ -27,7 +27,7 @@ describe.sequential("External connections API", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.providers).toEqual(
+    expect(body.data.providers).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: "gmail", enabled: true }),
         expect.objectContaining({ id: "linkedin", enabled: false }),
@@ -64,7 +64,7 @@ describe.sequential("External connections API", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.connections).toHaveLength(1);
+    expect(body.data.connections).toHaveLength(1);
     expect(JSON.stringify(body)).not.toMatch(
       /refreshToken|accessToken|password|cookie/i,
     );
