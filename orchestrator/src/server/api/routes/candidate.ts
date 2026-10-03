@@ -12,6 +12,7 @@ import {
   getActiveCandidateStrategy,
   listCandidateStrategyVersions,
 } from "@server/repositories/candidate-strategy";
+import { deriveCandidateStrategyDelta } from "@server/services/candidate-strategy-delta";
 import { getProfile } from "@server/services/profile";
 import {
   CANDIDATE_CONSTRAINT_KINDS,
@@ -141,6 +142,28 @@ candidateRouter.post(
     try {
       const input = strategyDraftSchema.parse(req.body ?? {});
       ok(res, await createCandidateStrategyDraft(input), 201);
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+candidateRouter.get(
+  "/strategy/versions/:versionId/delta",
+  async (req: Request, res: Response) => {
+    try {
+      const versions = await listCandidateStrategyVersions();
+      const target = versions.find(
+        (version) => version.id === String(req.params.versionId),
+      );
+      if (!target) {
+        res
+          .status(404)
+          .json({ error: "Candidate strategy version not found." });
+        return;
+      }
+      const active = await getActiveCandidateStrategy();
+      ok(res, deriveCandidateStrategyDelta(active, target));
     } catch (error) {
       fail(res, toAppError(error));
     }
