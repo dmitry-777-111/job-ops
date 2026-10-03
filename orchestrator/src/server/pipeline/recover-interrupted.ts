@@ -1,4 +1,7 @@
+import { promises as fs } from "node:fs";
+import { join } from "node:path";
 import { logger } from "@infra/logger";
+import { getDataDir } from "@server/config/dataDir";
 import * as jobsRepo from "@server/repositories/jobs";
 import * as pipelineRepo from "@server/repositories/pipeline";
 import * as settingsRepo from "@server/repositories/settings";
@@ -12,6 +15,40 @@ import {
   selectJobsStep,
 } from "./steps";
 import type { ScoredJob } from "./steps/types";
+
+type RecoveryCheckpoint = {
+  selectedJobIds: string[];
+};
+
+function recoveryCheckpointPath(pipelineRunId: string): string {
+  return join(getDataDir(), `pipeline-recovery-${pipelineRunId}.json`);
+}
+
+async function readRecoveryCheckpoint(
+  pipelineRunId: string,
+): Promise<RecoveryCheckpoint | null> {
+  try {
+    const parsed = JSON.parse(
+      await fs.readFile(recoveryCheckpointPath(pipelineRunId), "utf8"),
+    ) as Partial<RecoveryCheckpoint>;
+    return Array.isArray(parsed.selectedJobIds)
+      ? { selectedJobIds: parsed.selectedJobIds.filter((id) => typeof id === "string") }
+      : null;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+async function writeRecoveryCheckpoint(
+  pipelineRunId: string,
+  checkpoint: RecoveryCheckpoint,
+): Promise<void> {
+  const path = recoveryCheckpointPath(pipelineRunId);
+  const tempPath = `${path}.tmp`;
+  await fs.writeFile(tempPath, JSON.stringify(checkpoint), "utf8");
+  await fs.rename(tempPath, path);
+}
 
 export async function recoverInterruptedPipelineRun(
   pipelineRunId: string,
@@ -67,13 +104,31 @@ export async function recoverInterruptedPipelineRun(
     });
 
     const allScored = (await jobsRepo.getScoredDiscoveredJobs()) as ScoredJob[];
-    const jobsToProcess = await selectJobsStep({
-      scoredJobs: allScored,
-      mergedConfig,
-    });
+    const existingCheckpoint = await readRecoveryCheckpoint(pipelineRunId);
+    let selectedJobIds = existingCheckpoint?.selectedJobIds ?? null;
+    let selectedJobs: ScoredJob[];
+
+    if (selectedJobIds) {
+      const selectedRows = await Promise.all(
+        selectedJobIds.map((jobId) => jobsRepo.getJobById(jobId)),
+      );
+      selectedJobs = selectedRows.filter(
+        (job): job is ScoredJob =>
+          Boolean(job) && typeof job?.suitabilityScore === "number",
+      );
+    } else {
+      selectedJobs = await selectJobsStep({
+        scoredJobs: allScored,
+        mergedConfig,
+      });
+      selectedJobIds = selectedJobs.map((job) => job.id);
+      await writeRecoveryCheckpoint(pipelineRunId, { selectedJobIds });
+    }
+
+    const jobsToProcess = selectedJobs.filter((job) => job.status !== "ready");
 
     try {
-      await activateDynamicEmployersFromJobs(jobsToProcess);
+      await activateDynamicEmployersFromJobs(selectedJobs);
     } catch (error) {
       pipelineLogger.warn(
         "Dynamic employer activation failed during recovery",
@@ -97,7 +152,7 @@ export async function recoverInterruptedPipelineRun(
     pipelineLogger.info("Interrupted pipeline recovery completed", {
       remainingBefore,
       totalScored: allScored.length,
-      selected: jobsToProcess.length,
+      selected: selectedJobIds.length,
       processed: processedCount,
     });
 
@@ -105,7 +160,7 @@ export async function recoverInterruptedPipelineRun(
       success: true,
       remainingBefore,
       totalScored: allScored.length,
-      selected: jobsToProcess.length,
+      selected: selectedJobIds.length,
       processed: processedCount,
     };
   } catch (error) {
