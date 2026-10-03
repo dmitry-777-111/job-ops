@@ -12,13 +12,13 @@ describe.sequential("Jobs email routes", () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    process.env.CAREER_OS_CREDENTIAL_MASTER_KEY = TEST_CREDENTIAL_KEY;
-    ({ server, baseUrl, closeDb, tempDir } = await startServer());
+    ({ server, baseUrl, closeDb, tempDir } = await startServer({
+      env: { CAREER_OS_CREDENTIAL_MASTER_KEY: TEST_CREDENTIAL_KEY },
+    }));
   });
 
   afterEach(async () => {
     await stopServer({ server, closeDb, tempDir });
-    delete process.env.CAREER_OS_CREDENTIAL_MASTER_KEY;
   });
 
   async function seedJobEmail() {
