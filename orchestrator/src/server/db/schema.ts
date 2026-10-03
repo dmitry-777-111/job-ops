@@ -200,6 +200,137 @@ export const hostedUsageReservations = sqliteTable(
   }),
 );
 
+export const marketPostings = sqliteTable(
+  "market_postings",
+  {
+    id: text("id").primaryKey(),
+    identityKey: text("identity_key").notNull(),
+    canonicalUrl: text("canonical_url"),
+    officialRequisitionId: text("official_requisition_id"),
+    employer: text("employer").notNull(),
+    title: text("title").notNull(),
+    location: text("location"),
+    description: text("description"),
+    datePosted: text("date_posted"),
+    deadline: text("deadline"),
+    salaryText: text("salary_text"),
+    salaryCurrency: text("salary_currency"),
+    contentFingerprint: text("content_fingerprint").notNull(),
+    canonicalAuthority: text("canonical_authority", {
+      enum: ["unknown", "aggregator", "board", "manual", "official"],
+    })
+      .notNull()
+      .default("unknown"),
+    status: text("status", { enum: ["unknown", "live", "closed", "stale"] })
+      .notNull()
+      .default("unknown"),
+    firstObservedAt: text("first_observed_at").notNull(),
+    lastObservedAt: text("last_observed_at").notNull(),
+    lastLiveCheckedAt: text("last_live_checked_at"),
+    closedAt: text("closed_at"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    identityUnique: uniqueIndex("idx_market_postings_identity_unique").on(
+      table.identityKey,
+    ),
+    lastObservedIndex: index("idx_market_postings_last_observed").on(
+      table.lastObservedAt,
+    ),
+    statusIndex: index("idx_market_postings_status").on(table.status),
+  }),
+);
+
+export const marketPostingIdentities = sqliteTable(
+  "market_posting_identities",
+  {
+    id: text("id").primaryKey(),
+    marketPostingId: text("market_posting_id")
+      .notNull()
+      .references(() => marketPostings.id, { onDelete: "cascade" }),
+    kind: text("kind", {
+      enum: [
+        "requisition",
+        "source",
+        "canonical_url",
+        "source_url",
+        "fallback",
+      ],
+    }).notNull(),
+    identityKey: text("identity_key").notNull(),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    identityUnique: uniqueIndex("idx_market_posting_identities_key_unique").on(
+      table.identityKey,
+    ),
+    postingIndex: index("idx_market_posting_identities_posting").on(
+      table.marketPostingId,
+    ),
+  }),
+);
+
+export const marketPostingVersions = sqliteTable(
+  "market_posting_versions",
+  {
+    id: text("id").primaryKey(),
+    marketPostingId: text("market_posting_id")
+      .notNull()
+      .references(() => marketPostings.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    contentFingerprint: text("content_fingerprint").notNull(),
+    snapshot: text("snapshot", { mode: "json" }).notNull(),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    postingVersionUnique: uniqueIndex(
+      "idx_market_posting_versions_posting_version_unique",
+    ).on(table.marketPostingId, table.version),
+    postingFingerprintUnique: uniqueIndex(
+      "idx_market_posting_versions_posting_fingerprint_unique",
+    ).on(table.marketPostingId, table.contentFingerprint),
+  }),
+);
+
+export const marketPostingObservations = sqliteTable(
+  "market_posting_observations",
+  {
+    id: text("id").primaryKey(),
+    marketPostingId: text("market_posting_id")
+      .notNull()
+      .references(() => marketPostings.id, { onDelete: "cascade" }),
+    source: text("source").notNull(),
+    authority: text("authority", {
+      enum: ["unknown", "aggregator", "board", "manual", "official"],
+    })
+      .notNull()
+      .default("unknown"),
+    sourceJobId: text("source_job_id"),
+    sourceUrl: text("source_url").notNull(),
+    observationKey: text("observation_key").notNull(),
+    observedAt: text("observed_at").notNull(),
+    sourceUpdatedAt: text("source_updated_at"),
+    isLive: integer("is_live", { mode: "boolean" }),
+    payloadFingerprint: text("payload_fingerprint").notNull(),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    observationUnique: uniqueIndex(
+      "idx_market_posting_observations_key_unique",
+    ).on(table.observationKey),
+    postingIndex: index("idx_market_posting_observations_posting").on(
+      table.marketPostingId,
+      table.observedAt,
+    ),
+    sourceIndex: index("idx_market_posting_observations_source").on(
+      table.source,
+      table.sourceJobId,
+    ),
+  }),
+);
+
 export const jobs = sqliteTable(
   "jobs",
   {
@@ -315,6 +446,40 @@ export const jobs = sqliteTable(
     tenantDiscoveredAtIndex: index("idx_jobs_tenant_discovered_at").on(
       table.tenantId,
       table.discoveredAt,
+    ),
+  }),
+);
+
+export const candidateMarketPostings = sqliteTable(
+  "candidate_market_postings",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    marketPostingId: text("market_posting_id")
+      .notNull()
+      .references(() => marketPostings.id, { onDelete: "cascade" }),
+    legacyJobId: text("legacy_job_id").references(() => jobs.id, {
+      onDelete: "set null",
+    }),
+    firstSeenAt: text("first_seen_at").notNull(),
+    lastSeenAt: text("last_seen_at").notNull(),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    ownerPostingUnique: uniqueIndex(
+      "idx_candidate_market_postings_owner_posting_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.marketPostingId,
+    ),
+    legacyJobIndex: index("idx_candidate_market_postings_legacy_job").on(
+      table.legacyJobId,
     ),
   }),
 );
@@ -1666,6 +1831,23 @@ export type HostedUsageReservationRow =
   typeof hostedUsageReservations.$inferSelect;
 export type NewHostedUsageReservationRow =
   typeof hostedUsageReservations.$inferInsert;
+export type MarketPostingRow = typeof marketPostings.$inferSelect;
+export type NewMarketPostingRow = typeof marketPostings.$inferInsert;
+export type MarketPostingIdentityRow =
+  typeof marketPostingIdentities.$inferSelect;
+export type NewMarketPostingIdentityRow =
+  typeof marketPostingIdentities.$inferInsert;
+export type MarketPostingVersionRow = typeof marketPostingVersions.$inferSelect;
+export type NewMarketPostingVersionRow =
+  typeof marketPostingVersions.$inferInsert;
+export type MarketPostingObservationRow =
+  typeof marketPostingObservations.$inferSelect;
+export type NewMarketPostingObservationRow =
+  typeof marketPostingObservations.$inferInsert;
+export type CandidateMarketPostingRow =
+  typeof candidateMarketPostings.$inferSelect;
+export type NewCandidateMarketPostingRow =
+  typeof candidateMarketPostings.$inferInsert;
 export type JobRow = typeof jobs.$inferSelect;
 export type NewJobRow = typeof jobs.$inferInsert;
 export type JobVerifiedFactRow = typeof jobVerifiedFacts.$inferSelect;

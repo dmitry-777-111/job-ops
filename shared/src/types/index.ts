@@ -7,6 +7,7 @@ export * from "./design-resume";
 export * from "./design-resume-jake";
 export * from "./extractors";
 export * from "./jobs";
+export * from "./market-inventory";
 export * from "./pipeline";
 export * from "./post-application";
 export * from "./settings";

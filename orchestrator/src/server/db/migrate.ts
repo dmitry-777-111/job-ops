@@ -1931,6 +1931,110 @@ function rebuildPostApplicationPrivateTables(): void {
   }
 }
 
+function ensureMarketInventoryTables(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS market_postings (
+      id TEXT PRIMARY KEY,
+      identity_key TEXT NOT NULL,
+      canonical_url TEXT,
+      official_requisition_id TEXT,
+      employer TEXT NOT NULL,
+      title TEXT NOT NULL,
+      location TEXT,
+      description TEXT,
+      date_posted TEXT,
+      deadline TEXT,
+      salary_text TEXT,
+      salary_currency TEXT,
+      content_fingerprint TEXT NOT NULL,
+      canonical_authority TEXT NOT NULL DEFAULT 'unknown' CHECK(canonical_authority IN ('unknown','aggregator','board','manual','official')),
+      status TEXT NOT NULL DEFAULT 'unknown' CHECK(status IN ('unknown','live','closed','stale')),
+      first_observed_at TEXT NOT NULL,
+      last_observed_at TEXT NOT NULL,
+      last_live_checked_at TEXT,
+      closed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_market_postings_identity_unique
+      ON market_postings(identity_key);
+    CREATE INDEX IF NOT EXISTS idx_market_postings_last_observed
+      ON market_postings(last_observed_at);
+    CREATE INDEX IF NOT EXISTS idx_market_postings_status
+      ON market_postings(status);
+
+    CREATE TABLE IF NOT EXISTS market_posting_identities (
+      id TEXT PRIMARY KEY,
+      market_posting_id TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('requisition','source','canonical_url','source_url','fallback')),
+      identity_key TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (market_posting_id) REFERENCES market_postings(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_market_posting_identities_key_unique
+      ON market_posting_identities(identity_key);
+    CREATE INDEX IF NOT EXISTS idx_market_posting_identities_posting
+      ON market_posting_identities(market_posting_id);
+
+    CREATE TABLE IF NOT EXISTS market_posting_versions (
+      id TEXT PRIMARY KEY,
+      market_posting_id TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      content_fingerprint TEXT NOT NULL,
+      snapshot TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (market_posting_id) REFERENCES market_postings(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_market_posting_versions_posting_version_unique
+      ON market_posting_versions(market_posting_id, version);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_market_posting_versions_posting_fingerprint_unique
+      ON market_posting_versions(market_posting_id, content_fingerprint);
+
+    CREATE TABLE IF NOT EXISTS market_posting_observations (
+      id TEXT PRIMARY KEY,
+      market_posting_id TEXT NOT NULL,
+      source TEXT NOT NULL,
+      authority TEXT NOT NULL DEFAULT 'unknown' CHECK(authority IN ('unknown','aggregator','board','manual','official')),
+      source_job_id TEXT,
+      source_url TEXT NOT NULL,
+      observation_key TEXT NOT NULL,
+      observed_at TEXT NOT NULL,
+      source_updated_at TEXT,
+      is_live INTEGER,
+      payload_fingerprint TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (market_posting_id) REFERENCES market_postings(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_market_posting_observations_key_unique
+      ON market_posting_observations(observation_key);
+    CREATE INDEX IF NOT EXISTS idx_market_posting_observations_posting
+      ON market_posting_observations(market_posting_id, observed_at);
+    CREATE INDEX IF NOT EXISTS idx_market_posting_observations_source
+      ON market_posting_observations(source, source_job_id);
+
+    CREATE TABLE IF NOT EXISTS candidate_market_postings (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      market_posting_id TEXT NOT NULL,
+      legacy_job_id TEXT,
+      first_seen_at TEXT NOT NULL,
+      last_seen_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (market_posting_id) REFERENCES market_postings(id) ON DELETE CASCADE,
+      FOREIGN KEY (legacy_job_id) REFERENCES jobs(id) ON DELETE SET NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_candidate_market_postings_owner_posting_unique
+      ON candidate_market_postings(tenant_id, coalesce(user_id, ''), market_posting_id);
+    CREATE INDEX IF NOT EXISTS idx_candidate_market_postings_legacy_job
+      ON candidate_market_postings(legacy_job_id);
+  `);
+}
+
 function ensureCredentialSecretsTable(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS credential_secrets (
@@ -2124,6 +2228,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensureMarketInventoryTables();
 ensureCredentialSecretsTable();
 ensureCandidateProfileAndStrategyTables();
 ensurePipelineRunItemsTable();
