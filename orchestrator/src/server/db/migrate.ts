@@ -2089,6 +2089,45 @@ function ensureCredentialSecretsTable(): void {
   `);
 }
 
+function ensureApplicationPackagesTable(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS application_packages (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      version INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','review','approved','exported','stale')),
+      market_posting_id TEXT NOT NULL,
+      market_posting_version_id TEXT NOT NULL,
+      profile_version_id TEXT NOT NULL,
+      strategy_version_id TEXT,
+      generation_policy_version TEXT NOT NULL,
+      evidence_map TEXT NOT NULL DEFAULT '[]',
+      gaps TEXT NOT NULL DEFAULT '[]',
+      targeted_cv_json TEXT,
+      cover_letter TEXT,
+      form_answers TEXT NOT NULL DEFAULT '{}',
+      approved_at TEXT,
+      exported_at TEXT,
+      stale_reason TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (market_posting_id) REFERENCES market_postings(id) ON DELETE CASCADE,
+      FOREIGN KEY (market_posting_version_id) REFERENCES market_posting_versions(id) ON DELETE CASCADE,
+      FOREIGN KEY (profile_version_id) REFERENCES candidate_profile_versions(id) ON DELETE CASCADE,
+      FOREIGN KEY (strategy_version_id) REFERENCES candidate_strategy_versions(id) ON DELETE SET NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_application_packages_owner_posting_version_unique
+      ON application_packages(tenant_id, coalesce(user_id, ''), market_posting_id, version);
+    CREATE INDEX IF NOT EXISTS idx_application_packages_owner_status
+      ON application_packages(tenant_id, user_id, status);
+    CREATE INDEX IF NOT EXISTS idx_application_packages_posting
+      ON application_packages(market_posting_id, market_posting_version_id);
+  `);
+}
+
 function ensureCandidateProfileAndStrategyTables(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS candidate_profile_versions (
@@ -2298,6 +2337,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensureApplicationPackagesTable();
 ensureExternalConnectionsTable();
 ensureMarketInventoryTables();
 ensureCredentialSecretsTable();

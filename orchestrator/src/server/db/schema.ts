@@ -1550,6 +1550,71 @@ export const candidateEvaluations = sqliteTable(
   }),
 );
 
+export const applicationPackages = sqliteTable(
+  "application_packages",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    status: text("status", {
+      enum: ["draft", "review", "approved", "exported", "stale"],
+    })
+      .notNull()
+      .default("draft"),
+    marketPostingId: text("market_posting_id")
+      .notNull()
+      .references(() => marketPostings.id, { onDelete: "cascade" }),
+    marketPostingVersionId: text("market_posting_version_id")
+      .notNull()
+      .references(() => marketPostingVersions.id, { onDelete: "cascade" }),
+    profileVersionId: text("profile_version_id")
+      .notNull()
+      .references(() => candidateProfileVersions.id, { onDelete: "cascade" }),
+    strategyVersionId: text("strategy_version_id").references(
+      () => candidateStrategyVersions.id,
+      { onDelete: "set null" },
+    ),
+    generationPolicyVersion: text("generation_policy_version").notNull(),
+    evidenceMap: text("evidence_map", { mode: "json" })
+      .notNull()
+      .default(sql`'[]'`),
+    gaps: text("gaps", { mode: "json" }).notNull().default(sql`'[]'`),
+    targetedCvJson: text("targeted_cv_json", { mode: "json" }),
+    coverLetter: text("cover_letter"),
+    formAnswers: text("form_answers", { mode: "json" })
+      .notNull()
+      .default(sql`'{}'`),
+    approvedAt: text("approved_at"),
+    exportedAt: text("exported_at"),
+    staleReason: text("stale_reason"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    ownerPostingVersionUnique: uniqueIndex(
+      "idx_application_packages_owner_posting_version_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.marketPostingId,
+      table.version,
+    ),
+    ownerStatusIndex: index("idx_application_packages_owner_status").on(
+      table.tenantId,
+      table.userId,
+      table.status,
+    ),
+    postingIndex: index("idx_application_packages_posting").on(
+      table.marketPostingId,
+      table.marketPostingVersionId,
+    ),
+  }),
+);
+
 export const designResumeDocuments = sqliteTable("design_resume_documents", {
   id: text("id").primaryKey(),
   tenantId: text("tenant_id")
@@ -2042,6 +2107,8 @@ export type NewCandidateStrategyVersionRow =
 export type CandidateEvaluationRow = typeof candidateEvaluations.$inferSelect;
 export type NewCandidateEvaluationRow =
   typeof candidateEvaluations.$inferInsert;
+export type ApplicationPackageRow = typeof applicationPackages.$inferSelect;
+export type NewApplicationPackageRow = typeof applicationPackages.$inferInsert;
 export type DesignResumeDocumentRow = typeof designResumeDocuments.$inferSelect;
 export type NewDesignResumeDocumentRow =
   typeof designResumeDocuments.$inferInsert;
