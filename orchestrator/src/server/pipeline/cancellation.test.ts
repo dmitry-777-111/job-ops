@@ -30,6 +30,31 @@ const stepState = vi.hoisted(() => {
   };
 });
 
+vi.mock("../repositories/pipeline-run-leases", () => ({
+  acquirePipelineRunLease: vi.fn(
+    async ({ pipelineRunId }: { pipelineRunId: string }) => ({
+      acquired: true,
+      lease: {
+        id: "lease-test",
+        pipelineRunId,
+        acquiredAt: new Date().toISOString(),
+        heartbeatAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 120_000).toISOString(),
+      },
+    }),
+  ),
+  heartbeatPipelineRunLease: vi.fn(
+    async ({ pipelineRunId }: { pipelineRunId: string }) => ({
+      id: "lease-test",
+      pipelineRunId,
+      acquiredAt: new Date().toISOString(),
+      heartbeatAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 120_000).toISOString(),
+    }),
+  ),
+  releasePipelineRunLease: vi.fn(async () => undefined),
+}));
+
 vi.mock("../repositories/pipeline", () => ({
   createPipelineRun: vi.fn(async () => ({
     id: "run-cancel-1",
@@ -83,6 +108,33 @@ describe.sequential("pipeline cancellation", () => {
     const { closeDb } = await import("../db/index");
     closeDb();
     await rm(tempDir, { recursive: true, force: true });
+  });
+
+  it("refuses a second cross-process run when the candidate lease is held", async () => {
+    const leases = await import("../repositories/pipeline-run-leases");
+    const pipelineRepo = await import("../repositories/pipeline");
+    const pipeline = await import("./orchestrator");
+
+    vi.mocked(leases.acquirePipelineRunLease).mockResolvedValueOnce({
+      acquired: false,
+      lease: {
+        id: "lease-existing",
+        pipelineRunId: "run-existing",
+        acquiredAt: new Date().toISOString(),
+        heartbeatAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 120_000).toISOString(),
+      },
+    });
+
+    const result = await pipeline.runPipeline({ sources: [] });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("already running");
+    expect(vi.mocked(pipelineRepo.updatePipelineRun)).toHaveBeenCalledWith(
+      "run-cancel-1",
+      expect.objectContaining({ status: "cancelled" }),
+    );
+    expect(pipeline.getPipelineStatus().isRunning).toBe(false);
   });
 
   it("marks run as cancelled at checkpoint and resets running state", async () => {

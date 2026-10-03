@@ -27,6 +27,11 @@ import {
   getPipelineCoverageSummary,
   getPipelineIssueSummary,
 } from "../repositories/pipeline-reliability";
+import {
+  acquirePipelineRunLease,
+  heartbeatPipelineRunLease,
+  releasePipelineRunLease,
+} from "../repositories/pipeline-run-leases";
 import * as settingsRepo from "../repositories/settings";
 import {
   activateDynamicEmployersFromJobs,
@@ -322,6 +327,34 @@ export async function runPipeline(
     configSnapshot,
     savedDetails,
   });
+  const leaseResult = await acquirePipelineRunLease({
+    pipelineRunId: pipelineRun.id,
+  });
+  if (!leaseResult.acquired) {
+    const message = `Pipeline is already running (${
+      leaseResult.lease?.pipelineRunId ?? "active lease"
+    })`;
+    await pipelineRepo.updatePipelineRun(pipelineRun.id, {
+      status: "cancelled",
+      completedAt: new Date().toISOString(),
+      errorMessage: message,
+    });
+    tenantState.isRunning = false;
+    tenantState.activePipelineRunId = null;
+    tenantState.cancelRequestedAt = null;
+    if (options?.hostedUsageReservationId) {
+      await settleHostedUsageReservation({
+        reservationId: options.hostedUsageReservationId,
+        usedUnits: 0,
+      });
+    }
+    return {
+      success: false,
+      jobsDiscovered: 0,
+      jobsProcessed: 0,
+      error: message,
+    };
+  }
   tenantState.activePipelineRunId = pipelineRun.id;
 
   return runWithRequestContext({ pipelineRunId: pipelineRun.id }, async () => {
@@ -331,6 +364,25 @@ export async function runPipeline(
     let pipelineUsageUnits = 0;
     let resultSummary =
       savedDetails?.resultSummary ?? createPipelineRunResultSummary();
+    let leaseLost = false;
+    const heartbeatTimer = setInterval(() => {
+      void heartbeatPipelineRunLease({ pipelineRunId: pipelineRun.id })
+        .then((lease) => {
+          if (!lease) leaseLost = true;
+        })
+        .catch((error) => {
+          pipelineLogger.warn("Pipeline lease heartbeat failed", { error });
+        });
+    }, 30_000);
+    heartbeatTimer.unref?.();
+    const ensureRunCanContinue = () => {
+      ensureNotCancelled(scopeKey);
+      if (leaseLost) {
+        throw new Error(
+          "Pipeline run lease was lost; stopping to avoid overlap.",
+        );
+      }
+    };
     const persistResultSummary = async (
       update: Parameters<typeof updatePipelineRunResultSummary>[1],
     ) => {
@@ -352,12 +404,12 @@ export async function runPipeline(
     });
 
     try {
-      ensureNotCancelled(scopeKey);
+      ensureRunCanContinue();
       await persistResultSummary({ stage: "started" });
       const profile = await loadProfileStep();
       await persistResultSummary({ stage: "profile_loaded" });
 
-      ensureNotCancelled(scopeKey);
+      ensureRunCanContinue();
       await persistResultSummary({ stage: "discovery" });
       let { discoveredJobs, sourceErrors, pendingChallenges } =
         await discoverJobsStep({
@@ -400,7 +452,7 @@ export async function runPipeline(
         });
         tenantState.activeChallengeState = null;
 
-        ensureNotCancelled(scopeKey);
+        ensureRunCanContinue();
 
         // Re-run only the extractors that had challenges
         pipelineLogger.info("Challenges resolved, re-running extractors", {
@@ -447,7 +499,7 @@ export async function runPipeline(
         progressHelpers.crawlingComplete(discoveredJobs.length);
       }
 
-      ensureNotCancelled(scopeKey);
+      ensureRunCanContinue();
       jobsDiscovered = discoveredJobs.length;
       try {
         await syncWatchlistSeedsToDynamicEmployers();
@@ -467,7 +519,7 @@ export async function runPipeline(
 
       let scoredJobs: import("./steps/types").ScoredJob[] = [];
 
-      ensureNotCancelled(scopeKey);
+      ensureRunCanContinue();
       await persistResultSummary({ stage: "scoring" });
       while (true) {
         try {
@@ -495,7 +547,7 @@ export async function runPipeline(
           });
           tenantState.activeLlmConfigState = null;
 
-          ensureNotCancelled(scopeKey);
+          ensureRunCanContinue();
 
           pipelineLogger.info("LLM configured, resuming scoring");
         }
@@ -505,7 +557,7 @@ export async function runPipeline(
         jobsScored: scoredJobs.length,
       });
 
-      ensureNotCancelled(scopeKey);
+      ensureRunCanContinue();
       await persistResultSummary({ stage: "selection" });
       const jobsToProcess = await selectJobsStep({
         scoredJobs,
@@ -627,6 +679,12 @@ export async function runPipeline(
         error: message,
       };
     } finally {
+      clearInterval(heartbeatTimer);
+      try {
+        await releasePipelineRunLease(pipelineRun.id);
+      } catch (error) {
+        pipelineLogger.warn("Failed to release pipeline run lease", { error });
+      }
       tenantState.isRunning = false;
       tenantState.activePipelineRunId = null;
       tenantState.cancelRequestedAt = null;

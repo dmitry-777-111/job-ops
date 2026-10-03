@@ -10,6 +10,31 @@ import type { Job } from "@shared/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the visa-sponsors module
+vi.mock("../repositories/pipeline-run-leases", () => ({
+  acquirePipelineRunLease: vi.fn(
+    async ({ pipelineRunId }: { pipelineRunId: string }) => ({
+      acquired: true,
+      lease: {
+        id: "lease-test",
+        pipelineRunId,
+        acquiredAt: new Date().toISOString(),
+        heartbeatAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 120_000).toISOString(),
+      },
+    }),
+  ),
+  heartbeatPipelineRunLease: vi.fn(
+    async ({ pipelineRunId }: { pipelineRunId: string }) => ({
+      id: "lease-test",
+      pipelineRunId,
+      acquiredAt: new Date().toISOString(),
+      heartbeatAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 120_000).toISOString(),
+    }),
+  ),
+  releasePipelineRunLease: vi.fn(async () => undefined),
+}));
+
 vi.mock("../services/visa-sponsors/index", () => ({
   searchSponsors: vi.fn(),
   calculateSponsorMatchSummary: vi.fn(),

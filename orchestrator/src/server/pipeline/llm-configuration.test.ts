@@ -3,6 +3,31 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../repositories/pipeline-run-leases", () => ({
+  acquirePipelineRunLease: vi.fn(
+    async ({ pipelineRunId }: { pipelineRunId: string }) => ({
+      acquired: true,
+      lease: {
+        id: "lease-test",
+        pipelineRunId,
+        acquiredAt: new Date().toISOString(),
+        heartbeatAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 120_000).toISOString(),
+      },
+    }),
+  ),
+  heartbeatPipelineRunLease: vi.fn(
+    async ({ pipelineRunId }: { pipelineRunId: string }) => ({
+      id: "lease-test",
+      pipelineRunId,
+      acquiredAt: new Date().toISOString(),
+      heartbeatAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 120_000).toISOString(),
+    }),
+  ),
+  releasePipelineRunLease: vi.fn(async () => undefined),
+}));
+
 vi.mock("../repositories/pipeline", () => ({
   createPipelineRun: vi.fn(async () => ({
     id: "run-llm-config-1",
