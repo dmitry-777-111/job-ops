@@ -7,8 +7,8 @@ import type {
   WatchlistJobState,
   WatchlistSelectedSource,
 } from "@shared/types";
-import { MAX_WATCHLIST_SOURCES} from "@shared/types";
-import { and, asc, eq, inArray} from "drizzle-orm";
+import { MAX_WATCHLIST_SOURCES } from "@shared/types";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "../db/index";
 import { getActiveTenantId } from "../tenancy/context";
 
