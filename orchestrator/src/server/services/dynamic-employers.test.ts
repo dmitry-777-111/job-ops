@@ -77,7 +77,7 @@ describe.sequential("dynamic employer discovery", () => {
       normalizedName: "acme industrial",
       status: "candidate",
       sourceType: "workday",
-      careersUrl: "https://acme.wd1.myworkdayjobs.com/External",
+      careersUrl: "https://acme.wd1.myworkdayjobs.com/en-US/External",
       observationCount: 1,
     });
 
@@ -87,7 +87,7 @@ describe.sequential("dynamic employer discovery", () => {
     expect(active).toMatchObject({
       status: "active",
       sourceType: "workday",
-      careersUrl: "https://acme.wd1.myworkdayjobs.com/External",
+      careersUrl: "https://acme.wd1.myworkdayjobs.com/en-US/External",
       observationCount: 2,
     });
 
@@ -98,7 +98,7 @@ describe.sequential("dynamic employer discovery", () => {
       expect.objectContaining({
         label: "Acme Industrial Inc.",
         sourceType: "workday",
-        careersUrl: "https://acme.wd1.myworkdayjobs.com/External",
+        careersUrl: "https://acme.wd1.myworkdayjobs.com/en-US/External",
         isCustom: true,
       }),
     ]);
@@ -230,7 +230,7 @@ describe.sequential("dynamic employer discovery", () => {
         status: "active",
         sourceType: "bamboohr",
         careersUrl: "https://seedmfg.bamboohr.com/careers",
-        observationCount: 0,
+        observationCount: 1,
       }),
     ]);
   });
