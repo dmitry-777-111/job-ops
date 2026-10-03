@@ -143,8 +143,7 @@ export const PIPELINE_RUN_ITEM_STATUSES = [
   "failed_terminal",
 ] as const;
 
-export type PipelineRunItemStatus =
-  (typeof PIPELINE_RUN_ITEM_STATUSES)[number];
+export type PipelineRunItemStatus = (typeof PIPELINE_RUN_ITEM_STATUSES)[number];
 
 /**
  * Explicit membership of a candidate job in one pipeline run. This prevents

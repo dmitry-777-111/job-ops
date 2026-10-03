@@ -1250,11 +1250,7 @@ export const candidateProfileVersions = sqliteTable(
   (table) => ({
     tenantUserVersionUnique: uniqueIndex(
       "idx_candidate_profile_versions_tenant_user_version_unique",
-    ).on(
-      table.tenantId,
-      sql`coalesce(${table.userId}, '')`,
-      table.version,
-    ),
+    ).on(table.tenantId, sql`coalesce(${table.userId}, '')`, table.version),
     tenantUserStatusIndex: index(
       "idx_candidate_profile_versions_tenant_user_status",
     ).on(table.tenantId, table.userId, table.status),
@@ -1300,11 +1296,7 @@ export const candidateStrategyVersions = sqliteTable(
   (table) => ({
     tenantUserVersionUnique: uniqueIndex(
       "idx_candidate_strategy_versions_tenant_user_version_unique",
-    ).on(
-      table.tenantId,
-      sql`coalesce(${table.userId}, '')`,
-      table.version,
-    ),
+    ).on(table.tenantId, sql`coalesce(${table.userId}, '')`, table.version),
     tenantUserStatusIndex: index(
       "idx_candidate_strategy_versions_tenant_user_status",
     ).on(table.tenantId, table.userId, table.status),
@@ -1414,9 +1406,7 @@ export const credentialSecrets = sqliteTable(
     updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
   },
   (table) => ({
-    ownerSecretUnique: uniqueIndex(
-      "idx_credential_secrets_owner_unique",
-    ).on(
+    ownerSecretUnique: uniqueIndex("idx_credential_secrets_owner_unique").on(
       table.tenantId,
       sql`coalesce(${table.userId}, '')`,
       table.ownerType,

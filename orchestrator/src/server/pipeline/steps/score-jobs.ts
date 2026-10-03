@@ -34,7 +34,7 @@ export async function scoreJobsStep(args: {
 }): Promise<{ unprocessedJobs: Job[]; scoredJobs: ScoredJob[] }> {
   logger.info("Running scoring step");
   const unprocessedJobs = args.pipelineRunId
-    ? await jobsRepo.getDiscoveredJobsForPipelineRun(args.pipelineRunId)
+    ? await jobsRepo.getUnscoredDiscoveredJobsForPipelineRun(args.pipelineRunId)
     : await jobsRepo.getUnscoredDiscoveredJobs();
 
   // Check if auto-skip threshold is configured

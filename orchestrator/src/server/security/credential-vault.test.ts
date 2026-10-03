@@ -23,7 +23,8 @@ afterEach(() => {
 
 describe("credential vault", () => {
   it("round-trips credentials without storing plaintext", () => {
-    process.env[CREDENTIAL_VAULT_KEY_ENV] = randomBytes(32).toString("base64url");
+    process.env[CREDENTIAL_VAULT_KEY_ENV] =
+      randomBytes(32).toString("base64url");
     const payload = { refreshToken: "secret-token", email: "a@example.com" };
     const sealed = sealCredentialPayload(payload, scope);
     expect(sealed.ciphertext).not.toContain("secret-token");
@@ -31,13 +32,18 @@ describe("credential vault", () => {
   });
 
   it("binds ciphertext to tenant/user/owner through authenticated data", () => {
-    process.env[CREDENTIAL_VAULT_KEY_ENV] = randomBytes(32).toString("base64url");
+    process.env[CREDENTIAL_VAULT_KEY_ENV] =
+      randomBytes(32).toString("base64url");
     const sealed = sealCredentialPayload({ refreshToken: "secret" }, scope);
-    expect(() => openCredentialPayload(sealed, { ...scope, userId: "other-user" })).toThrow();
+    expect(() =>
+      openCredentialPayload(sealed, { ...scope, userId: "other-user" }),
+    ).toThrow();
   });
 
   it("requires a server-held master key", () => {
     delete process.env[CREDENTIAL_VAULT_KEY_ENV];
-    expect(() => sealCredentialPayload({ token: "secret" }, scope)).toThrow(CredentialVaultConfigurationError);
+    expect(() => sealCredentialPayload({ token: "secret" }, scope)).toThrow(
+      CredentialVaultConfigurationError,
+    );
   });
 });

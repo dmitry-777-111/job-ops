@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { logger } from "@infra/logger";
 import { getDataDir } from "@server/config/dataDir";
 import * as jobsRepo from "@server/repositories/jobs";
-import { listPipelineRunItems } from "@server/repositories/pipeline-run-items";
 import * as pipelineRepo from "@server/repositories/pipeline";
+import { listPipelineRunItems } from "@server/repositories/pipeline-run-items";
 import * as settingsRepo from "@server/repositories/settings";
 import { activateDynamicEmployersFromJobs } from "@server/services/dynamic-employers";
 import type { PipelineConfig } from "@shared/types";
@@ -116,11 +116,11 @@ export async function recoverInterruptedPipelineRun(
       ...(hasRunMembership ? { pipelineRunId } : {}),
     });
 
-    const allScored = (hasRunMembership
+    const allScored = hasRunMembership
       ? (await jobsRepo.getDiscoveredJobsForPipelineRun(pipelineRunId)).filter(
           (job): job is ScoredJob => typeof job.suitabilityScore === "number",
         )
-      : ((await jobsRepo.getScoredDiscoveredJobs()) as ScoredJob[]));
+      : ((await jobsRepo.getScoredDiscoveredJobs()) as ScoredJob[]);
     const existingCheckpoint = await readRecoveryCheckpoint(pipelineRunId);
     let selectedJobIds = existingCheckpoint?.selectedJobIds ?? null;
     let selectedJobs: ScoredJob[];
@@ -190,9 +190,9 @@ export async function recoverInterruptedPipelineRun(
       success: false,
       remainingBefore,
       totalScored: hasRunMembership
-        ? (await jobsRepo.getDiscoveredJobsForPipelineRun(pipelineRunId)).filter(
-            (job) => typeof job.suitabilityScore === "number",
-          ).length
+        ? (
+            await jobsRepo.getDiscoveredJobsForPipelineRun(pipelineRunId)
+          ).filter((job) => typeof job.suitabilityScore === "number").length
         : (await jobsRepo.getScoredDiscoveredJobs()).length,
       selected: 0,
       processed: 0,

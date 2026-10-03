@@ -824,6 +824,27 @@ export async function getDiscoveredJobsForPipelineRun(
   return rows.map((row) => mapRowToJob(row.job));
 }
 
+export async function getUnscoredDiscoveredJobsForPipelineRun(
+  pipelineRunId: string,
+): Promise<Job[]> {
+  const rows = await db
+    .select({ job: jobs })
+    .from(jobs)
+    .innerJoin(pipelineRunItems, eq(pipelineRunItems.jobId, jobs.id))
+    .where(
+      and(
+        jobsScopeFilter(),
+        privateDataScopeFilter(pipelineRunItems),
+        eq(pipelineRunItems.pipelineRunId, pipelineRunId),
+        eq(jobs.status, "discovered"),
+        isNull(jobs.suitabilityScore),
+      ),
+    )
+    .orderBy(desc(jobs.discoveredAt));
+
+  return rows.map((row) => mapRowToJob(row.job));
+}
+
 export async function getJobIdsByUrls(jobUrls: string[]): Promise<string[]> {
   const uniqueUrls = [...new Set(jobUrls)].filter(Boolean);
   if (uniqueUrls.length === 0) return [];

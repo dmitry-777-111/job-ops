@@ -24,7 +24,7 @@ vi.mock("../services/scorer", () => ({
 vi.mock("../repositories/jobs", () => ({
   updateJob: vi.fn(),
   getUnscoredDiscoveredJobs: vi.fn(),
-  getDiscoveredJobsForPipelineRun: vi.fn(),
+  getUnscoredDiscoveredJobsForPipelineRun: vi.fn(),
   getJobById: vi.fn(),
   createJobs: vi.fn(),
   getAllJobUrls: vi.fn(),
@@ -66,7 +66,6 @@ describe("Sponsor Match Calculation", () => {
   let scoreJobSuitability: ReturnType<typeof vi.fn>;
   let updateJob: ReturnType<typeof vi.fn>;
   let getUnscoredDiscoveredJobs: ReturnType<typeof vi.fn>;
-  let getDiscoveredJobsForPipelineRun: ReturnType<typeof vi.fn>;
   let createJobs: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
@@ -86,10 +85,14 @@ describe("Sponsor Match Calculation", () => {
     updateJob = jobsRepo.updateJob as ReturnType<typeof vi.fn>;
     getUnscoredDiscoveredJobs =
       jobsRepo.getUnscoredDiscoveredJobs as ReturnType<typeof vi.fn>;
-    getDiscoveredJobsForPipelineRun =
-      jobsRepo.getDiscoveredJobsForPipelineRun as ReturnType<typeof vi.fn>;
-    getDiscoveredJobsForPipelineRun.mockImplementation(() =>
-      getUnscoredDiscoveredJobs(),
+    getUnscoredDiscoveredJobsForPipelineRun =
+      jobsRepo.getUnscoredDiscoveredJobsForPipelineRun as ReturnType<
+        typeof vi.fn
+      >;
+    vi.mocked(
+      jobsRepo.getUnscoredDiscoveredJobsForPipelineRun,
+    ).mockImplementation(
+      async () => await jobsRepo.getUnscoredDiscoveredJobs(),
     );
     createJobs = jobsRepo.createJobs as ReturnType<typeof vi.fn>;
 

@@ -98,7 +98,9 @@ export async function getActiveMasterCareerProfile(): Promise<MasterCareerProfil
   return row ? mapRow(row) : null;
 }
 
-export async function listMasterCareerProfileVersions(): Promise<MasterCareerProfileVersion[]> {
+export async function listMasterCareerProfileVersions(): Promise<
+  MasterCareerProfileVersion[]
+> {
   const rows = await db
     .select()
     .from(candidateProfileVersions)

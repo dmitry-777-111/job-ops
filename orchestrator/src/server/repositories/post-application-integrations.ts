@@ -7,14 +7,14 @@ import type {
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
+  getPrivateDataScope,
+  privateDataScopeFilter,
+} from "../tenancy/private-scope";
+import {
   deleteCredentialSecret,
   getCredentialSecret,
   putCredentialSecret,
 } from "./credential-secrets";
-import {
-  getPrivateDataScope,
-  privateDataScopeFilter,
-} from "../tenancy/private-scope";
 
 const { postApplicationIntegrations } = schema;
 const CREDENTIAL_OWNER_TYPE = "post_application_integration";
@@ -159,7 +159,9 @@ export async function upsertConnectedPostApplicationIntegration(
   } catch (error) {
     await db
       .delete(postApplicationIntegrations)
-      .where(and(integrationsScopeFilter(), eq(postApplicationIntegrations.id, id)));
+      .where(
+        and(integrationsScopeFilter(), eq(postApplicationIntegrations.id, id)),
+      );
     throw error;
   }
 

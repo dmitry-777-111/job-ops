@@ -73,7 +73,8 @@ export async function createCandidateStrategyDraft(input: {
   });
 
   const row = await getCandidateStrategyVersion(id);
-  if (!row) throw new Error("Failed to load created candidate strategy version");
+  if (!row)
+    throw new Error("Failed to load created candidate strategy version");
   return row;
 }
 
@@ -98,7 +99,9 @@ export async function getActiveCandidateStrategy(): Promise<CandidateStrategyPro
   return row ? mapRow(row) : null;
 }
 
-export async function listCandidateStrategyVersions(): Promise<CandidateStrategyProfile[]> {
+export async function listCandidateStrategyVersions(): Promise<
+  CandidateStrategyProfile[]
+> {
   const rows = await db
     .select()
     .from(candidateStrategyVersions)

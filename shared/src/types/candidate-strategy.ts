@@ -1,5 +1,10 @@
-export const CANDIDATE_CONSTRAINT_KINDS = ["hard", "soft", "contextual"] as const;
-export type CandidateConstraintKind = (typeof CANDIDATE_CONSTRAINT_KINDS)[number];
+export const CANDIDATE_CONSTRAINT_KINDS = [
+  "hard",
+  "soft",
+  "contextual",
+] as const;
+export type CandidateConstraintKind =
+  (typeof CANDIDATE_CONSTRAINT_KINDS)[number];
 
 export const CANDIDATE_CONSTRAINT_SOURCES = [
   "candidate",
@@ -66,8 +71,7 @@ export const CANDIDATE_PROFILE_SOURCES = [
   "manual",
   "ai_normalized",
 ] as const;
-export type CandidateProfileSource =
-  (typeof CANDIDATE_PROFILE_SOURCES)[number];
+export type CandidateProfileSource = (typeof CANDIDATE_PROFILE_SOURCES)[number];
 
 export interface MasterCareerProfileVersion {
   id: string;

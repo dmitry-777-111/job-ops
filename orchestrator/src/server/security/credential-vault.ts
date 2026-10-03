@@ -23,9 +23,14 @@ export type SealedCredentialPayload = {
 function decodeMasterKey(rawValue: string): Buffer {
   const value = rawValue.trim();
   const candidates: Buffer[] = [];
-  if (/^[a-fA-F0-9]{64}$/.test(value)) candidates.push(Buffer.from(value, "hex"));
-  try { candidates.push(Buffer.from(value, "base64url")); } catch {}
-  try { candidates.push(Buffer.from(value, "base64")); } catch {}
+  if (/^[a-fA-F0-9]{64}$/.test(value))
+    candidates.push(Buffer.from(value, "hex"));
+  try {
+    candidates.push(Buffer.from(value, "base64url"));
+  } catch {}
+  try {
+    candidates.push(Buffer.from(value, "base64"));
+  } catch {}
   const key = candidates.find((candidate) => candidate.length === KEY_BYTES);
   if (!key) {
     throw new CredentialVaultConfigurationError(
@@ -52,20 +57,29 @@ function buildAad(args: {
   ownerId: string;
   secretName: string;
 }): Buffer {
-  return Buffer.from([
-    "career-os-credential-vault",
-    CREDENTIAL_VAULT_KEY_VERSION,
-    args.tenantId,
-    args.userId ?? "",
-    args.ownerType,
-    args.ownerId,
-    args.secretName,
-  ].join("\u001f"), "utf8");
+  return Buffer.from(
+    [
+      "career-os-credential-vault",
+      CREDENTIAL_VAULT_KEY_VERSION,
+      args.tenantId,
+      args.userId ?? "",
+      args.ownerType,
+      args.ownerId,
+      args.secretName,
+    ].join("\u001f"),
+    "utf8",
+  );
 }
 
 export function sealCredentialPayload(
   payload: Record<string, unknown>,
-  scope: { tenantId: string; userId: string | null; ownerType: string; ownerId: string; secretName: string },
+  scope: {
+    tenantId: string;
+    userId: string | null;
+    ownerType: string;
+    ownerId: string;
+    secretName: string;
+  },
 ): SealedCredentialPayload {
   const key = getCredentialVaultMasterKey();
   const iv = randomBytes(IV_BYTES);
@@ -83,12 +97,24 @@ export function sealCredentialPayload(
 
 export function openCredentialPayload(
   sealed: SealedCredentialPayload,
-  scope: { tenantId: string; userId: string | null; ownerType: string; ownerId: string; secretName: string },
+  scope: {
+    tenantId: string;
+    userId: string | null;
+    ownerType: string;
+    ownerId: string;
+    secretName: string;
+  },
 ): Record<string, unknown> {
   if (sealed.keyVersion !== CREDENTIAL_VAULT_KEY_VERSION) {
-    throw new CredentialVaultConfigurationError(`Unsupported credential vault key version '${sealed.keyVersion}'.`);
+    throw new CredentialVaultConfigurationError(
+      `Unsupported credential vault key version '${sealed.keyVersion}'.`,
+    );
   }
-  const decipher = createDecipheriv(ALGORITHM, getCredentialVaultMasterKey(), Buffer.from(sealed.iv, "base64url"));
+  const decipher = createDecipheriv(
+    ALGORITHM,
+    getCredentialVaultMasterKey(),
+    Buffer.from(sealed.iv, "base64url"),
+  );
   decipher.setAAD(buildAad(scope));
   decipher.setAuthTag(Buffer.from(sealed.authTag, "base64url"));
   const plaintext = Buffer.concat([
