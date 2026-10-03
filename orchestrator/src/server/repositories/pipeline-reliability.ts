@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { PipelineCoverageSummary } from "@shared/types/pipeline";
 import { and, desc, eq, ne } from "drizzle-orm";
 import { db, schema } from "../db/index";
 import { getActiveTenantId } from "../tenancy/context";
@@ -27,7 +28,7 @@ export async function getSourceRun(
 
 export function derivePipelineCoverageSummary(
   statuses: SourceRunStatus[],
-) {
+): PipelineCoverageSummary {
   const expected = statuses.length;
   const complete = statuses.filter((status) => status === "complete").length;
   const fallback = statuses.filter(
