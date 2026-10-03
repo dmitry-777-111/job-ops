@@ -10,6 +10,10 @@ on:
         description: Exact commit/tag to build
         required: true
         type: string
+      image_tag:
+        description: GHCR tag for this manual build
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -51,7 +55,7 @@ jobs:
             type=sha
             # Optional: also publish :latest for version tags
             type=raw,value=latest,enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=raw,value=career-os-v1-freeze,enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=${{ inputs.image_tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
