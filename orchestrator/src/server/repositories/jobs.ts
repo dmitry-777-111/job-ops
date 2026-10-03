@@ -789,6 +789,21 @@ export async function getReadyJobsWithGeneratedPdfs(
 /**
  * Get discovered jobs missing a suitability score.
  */
+export async function getScoredDiscoveredJobs(): Promise<Job[]> {
+  const rows = await db
+    .select()
+    .from(jobs)
+    .where(
+      and(
+        jobsScopeFilter(),
+        eq(jobs.status, "discovered"),
+        isNotNull(jobs.suitabilityScore),
+      ),
+    )
+    .orderBy(desc(jobs.discoveredAt));
+  return rows.map(mapRowToJob);
+}
+
 export async function getUnscoredDiscoveredJobs(
   limit?: number,
 ): Promise<Job[]> {
