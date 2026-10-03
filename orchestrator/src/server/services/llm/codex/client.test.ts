@@ -61,6 +61,11 @@ function mockSpawn(
       input: stdin,
       crlfDelay: Number.POSITIVE_INFINITY,
     });
+    reader.on("error", () => {
+      // The fake server reads the same stream the client writes to. Swallow the
+      // mirrored readline error so the client-side stdin error handler is what
+      // the test exercises.
+    });
 
     reader.on("line", (line) => {
       const message = JSON.parse(line) as Partial<JsonRpcRequest>;
