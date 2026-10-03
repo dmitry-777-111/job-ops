@@ -16,6 +16,7 @@ import {
   startBackupScheduler,
 } from "./services/backup/index";
 import { attachChallengeViewerUpgradeProxy } from "./services/challenge-viewer";
+import { migrateLegacyIntegrationCredentialsToVault } from "./services/credential-vault-migration";
 import { initializeDemoModeServices } from "./services/demo-mode";
 import { applyStoredEnvOverrides } from "./services/envSettings";
 import { initializeHistoricalServerEventReplaySafely } from "./services/historical-product-analytics";
@@ -37,6 +38,7 @@ async function cleanupAuthSessions(trigger: "startup" | "interval") {
 
 async function startServer() {
   await applyStoredEnvOverrides();
+  await migrateLegacyIntegrationCredentialsToVault();
   try {
     await initializeExtractorRegistry();
   } catch (error) {
