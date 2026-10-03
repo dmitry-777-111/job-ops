@@ -170,7 +170,11 @@ export interface RunJobSpyOptions {
   onProgress?: (event: JobSpyProgressEvent) => void;
   shouldCancel?: () => boolean;
   completedUnitKeys?: string[];
-  onUnitComplete?: (unit: { key: string; completed: number; total: number }) => void | Promise<void>;
+  onUnitComplete?: (unit: {
+    key: string;
+    completed: number;
+    total: number;
+  }) => void | Promise<void>;
 }
 
 export interface JobSpyResult {

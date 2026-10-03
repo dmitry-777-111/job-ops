@@ -52,7 +52,11 @@ export const manifest: ExtractorManifest = {
     const planFingerprint = JSON.stringify({
       sites,
       searchTerms: context.searchTerms,
-      locations: locations ?? [context.settings.searchCities ?? context.settings.jobspyLocation ?? null],
+      locations: locations ?? [
+        context.settings.searchCities ??
+          context.settings.jobspyLocation ??
+          null,
+      ],
       countryIndeed: context.settings.jobspyCountryIndeed ?? null,
     });
     const resumeCheckpoint =
@@ -84,7 +88,8 @@ export const manifest: ExtractorManifest = {
       shouldCancel: context.shouldCancel,
       completedUnitKeys,
       onUnitComplete: async (unit) => {
-        if (!completedUnitKeys.includes(unit.key)) completedUnitKeys.push(unit.key);
+        if (!completedUnitKeys.includes(unit.key))
+          completedUnitKeys.push(unit.key);
         await context.onCheckpoint?.({
           version: 1,
           planFingerprint,

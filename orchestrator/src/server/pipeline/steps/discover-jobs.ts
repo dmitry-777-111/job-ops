@@ -417,7 +417,8 @@ export async function discoverJobsStep(args: {
             if (!sourceRun) return;
             const coverage =
               checkpoint && typeof checkpoint === "object"
-                ? (checkpoint as { coverageCompleted?: unknown }).coverageCompleted
+                ? (checkpoint as { coverageCompleted?: unknown })
+                    .coverageCompleted
                 : undefined;
             await updateSourceRun(sourceRun.id, {
               checkpoint,
