@@ -23,7 +23,8 @@ Updated: 2026-10-03 21:30 EDT
 - `e19bb90` passed full CI (`37174790740`): generic work-authorization framing is excluded from the citizen/PR-only hard signal. Final deterministic result is exactly 10 SAFE_REJECT cases, max historical score 38, zero `ready` rejects, zero score>=50 rejects, and 10/10 manual audit coverage.
 - `63eeaa6` passed full CI (`37175005471`): F3-3 acceptance record is durable. F3-3 Safe Prefilter is PASS/CLOSED for shadow/audit readiness; production enforcement remains disabled pending a separate explicit activation approval.
 - `6936ca4` passed full CI (`37175486379`): hosted two-candidate private-domain isolation is green for profile, strategy, connection status, encrypted credentials, and cross-user activation attempts.
-- Current prepared unit is `FREEZE3_F3_4_GAP_AUDIT.md`, documenting the only remaining F3-4 gate gap: duplicate heavy public discovery across shareable candidate runs.
+- `03167bd` passed full CI (`37175728984`): the remaining F3-4 shared-discovery gap and safety boundary are durably documented.
+- Current prepared unit adds a bounded shared-discovery coordinator: exact opaque fingerprinting, clean-result single-flight/cache reuse, LRU-style bounded retention, cloned outputs, and no propagation/cache of challenged/degraded/failed source results.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -41,10 +42,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the F3-4 gap audit once.
+1. Commit/push the prepared shared-discovery coordinator + focused tests once.
 2. Read its single automatic CI run; do not redispatch.
-3. If PASS, implement the bounded shared-discovery coordinator and its exact-fingerprint/single-flight tests.
-4. Then integrate it only into the safe public-extractor path and prove two candidates cause one heavy discovery call while downstream candidate state remains isolated.
+3. If PASS, integrate it only into the safe public-extractor path with a conservative exact fingerprint (including settings and existing-job state) and Watchlist/recovery/challenge exclusions.
+4. Prove two candidates cause one heavy discovery call while downstream candidate state remains isolated.
 5. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Safety / no-repeat rules
