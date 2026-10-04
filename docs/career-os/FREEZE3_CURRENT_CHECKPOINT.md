@@ -27,7 +27,8 @@ Updated: 2026-10-03 21:30 EDT
 - `932f07f` passed full CI (`37175911187`): bounded shared-discovery coordinator is green with exact opaque fingerprinting, clean-result single-flight/cache reuse, bounded retention, cloned outputs, and no propagation/cache of challenged/degraded/failed source results.
 - `7f7bf7f` passed full CI (`37176478379`): safe public discovery reuse is integrated behind explicit extractor opt-in (initially JobSpy), and the two-candidate regression proves one heavy extractor execution for identical shareable discovery.
 - `06922d7` passed full CI (`37176824585`): F3-4 Multi-user <=5 acceptance and the anti-interruption protocol/tooling are durable. F3-4 is PASS/CLOSED.
-- Current prepared unit is the F3-5 Product onboarding + UX gap audit. Resume upload/import and basic search onboarding already exist; adaptive strategy questions, candidate strategy confirmation, simplified candidate navigation, and hiding advanced diagnostics are the remaining product gaps.
+- `f3342f0` passed full CI (`37177075551`): the F3-5 Product onboarding + UX gap audit is durable.
+- Current prepared F3-5 unit starts the strategy-onboarding domain: deterministic missing-dimension questions plus draft derivation from explicit candidate answers and current search settings. It creates a draft only; activation remains an explicit later confirmation step.
 - Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
@@ -46,11 +47,12 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the F3-5 gap audit once.
-2. Read its single automatic CI run with `compact-ci.sh`; do not redispatch.
-3. If PASS, implement the F3-5 strategy-onboarding domain step first: adaptive missing-dimension questions, text input, draft creation, confirmation, and explicit activation.
-4. Then simplify candidate navigation while preserving technical screens under Advanced/Admin; voice remains optional/capability-gated.
-5. Keep prefilter enforcement disabled until a later explicit activation approval.
+1. Commit/push the prepared strategy-onboarding domain service + focused tests once.
+2. Read its single automatic CI run with compact status only; do not redispatch.
+3. If PASS, wire the onboarding strategy requirement/actions and candidate-facing text step with draft preview + explicit activation.
+4. Then add AI-assisted adaptive question enrichment, keeping deterministic fallback and UNKNOWN semantics; voice remains optional/capability-gated.
+5. After strategy onboarding is green, simplify candidate navigation while preserving technical screens under Advanced/Admin.
+6. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Compact diagnostics / anti-limit rules
 
