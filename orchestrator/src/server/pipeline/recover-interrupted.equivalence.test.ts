@@ -30,7 +30,7 @@ vi.mock("node:fs", async (importOriginal) => {
   };
   return {
     ...actual,
-    default: { ...actual.default, promises },
+    default: { ...actual, promises },
     promises,
   };
 });
