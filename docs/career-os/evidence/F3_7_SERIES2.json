@@ -1,0 +1,142 @@
+{
+  "baselineCodeSha": "bf68d750d82fe2b711d879c291bc62b95077cc5d",
+  "startupRestart": {
+    "runtime": "bf68d75 sources over Freeze 2 dependency image, no immutable Freeze 3 candidate image yet",
+    "cycles": [
+      {
+        "cycle": 1,
+        "health": true,
+        "elapsed_seconds": 63.753
+      },
+      {
+        "cycle": 2,
+        "health": true,
+        "elapsed_seconds": 55.453
+      }
+    ]
+  },
+  "unchangedOverlapReplay": {
+    "scope": "Controlled unchanged overlap replay through production importJobsStep and scoreJobsStep; excludes live source fetch and new/changed AI evaluation latency",
+    "historicalJobs": 1275,
+    "replayedScoredJobs": 1267,
+    "excludedUnscoredHistoricalJobs": 8,
+    "historicalJobsDigestBefore": "f7ffc6d5aea154f9c77200a92548d495187eb79310d1b231d671af076996492e",
+    "historicalJobsDigestAfter": "f7ffc6d5aea154f9c77200a92548d495187eb79310d1b231d671af076996492e",
+    "passes": [
+      {
+        "pass": 1,
+        "importedMs": 51876.165933,
+        "scoringMs": 8.373381000004883,
+        "totalMs": 53237.835793000006,
+        "imported": {
+          "created": 0,
+          "skipped": 1267,
+          "fuzzyMerged": 0,
+          "runItemsAttached": 1267,
+          "marketInventoryRecorded": 1267,
+          "marketInventoryErrors": 0
+        },
+        "eligibleScoringJobs": 0,
+        "scoredJobs": 0,
+        "initial": {
+          "jobs": 1275,
+          "market_postings": 0,
+          "market_posting_versions": 0,
+          "candidate_evaluations": 0
+        },
+        "final": {
+          "jobs": 1275,
+          "market_postings": 1266,
+          "market_posting_versions": 1267,
+          "candidate_evaluations": 0
+        }
+      },
+      {
+        "pass": 2,
+        "importedMs": 44960.922891,
+        "scoringMs": 4.346229000002495,
+        "totalMs": 46460.774907000006,
+        "imported": {
+          "created": 0,
+          "skipped": 1267,
+          "fuzzyMerged": 0,
+          "runItemsAttached": 1267,
+          "marketInventoryRecorded": 1267,
+          "marketInventoryErrors": 0
+        },
+        "eligibleScoringJobs": 0,
+        "scoredJobs": 0,
+        "initial": {
+          "jobs": 1275,
+          "market_postings": 1266,
+          "market_posting_versions": 1267,
+          "candidate_evaluations": 0
+        },
+        "final": {
+          "jobs": 1275,
+          "market_postings": 1266,
+          "market_posting_versions": 1267,
+          "candidate_evaluations": 0
+        }
+      }
+    ],
+    "vault": {
+      "rows": 1,
+      "plaintextRemaining": 0,
+      "exactPayloadMatches": 1,
+      "wrongTenantRejected": 1
+    },
+    "elapsedMs": 103513.218824,
+    "peakRssKiB": 264688,
+    "limitations": [
+      "Not a live daily end-to-end run",
+      "candidate-evaluations ensure function has no ordinary pipeline caller; version invalidation acceptance remains open",
+      "Final immutable Freeze 3 image still required"
+    ]
+  },
+  "changedPostingProbe": {
+    "scope": "Single materially changed posting observation at same URL; no AI calls invoked",
+    "existingJobHadScore": true,
+    "existingJobStatus": "discovered",
+    "imported": {
+      "created": 0,
+      "skipped": 1,
+      "fuzzyMerged": 0,
+      "runItemsAttached": 1,
+      "marketInventoryRecorded": 1,
+      "marketInventoryErrors": 0
+    },
+    "postingVersionsBefore": 1267,
+    "postingVersionsAfter": 1268,
+    "eligibleForOrdinaryScoring": 0,
+    "historicalJobsDigestUnchanged": true,
+    "candidateEvaluations": 0,
+    "elapsedMs": 1279.6597090000014,
+    "gate": "FAIL: changed posting version not selected for ordinary reevaluation"
+  },
+  "databaseChecks": {
+    "startup": {
+      "integrity": [
+        "ok"
+      ],
+      "fkViolations": 0
+    },
+    "working": {
+      "integrity": [
+        "ok"
+      ],
+      "fkViolations": 0
+    }
+  },
+  "protectedBaselineUnchanged": true,
+  "resources": {
+    "totalBytes": 35838836736,
+    "usedBytes": 31475499008,
+    "freeBytes": 2521399296,
+    "usedPercent": 87.83,
+    "minimumTotalBytesForUnder80PercentAtCurrentUsage": 39344373761,
+    "swap": "4GiB /root/career-os-next/swapfile is active, about 3.6GiB used; not a cleanup candidate",
+    "decision": "No cleanup. No dependency install/image build/pull. Capacity choice pending user response; no paid change performed."
+  },
+  "acceptance": "FAIL/OPEN: version invalidation integration and resource gate; no cutover/tag"
+}

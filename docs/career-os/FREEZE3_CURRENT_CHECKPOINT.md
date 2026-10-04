@@ -74,10 +74,11 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-F3-6 PASS/CLOSED at bf68d75 (full CI 37222619720 success).
-F3-7 partial: snapshot, migration, integrity/counts and actual backup/restore PASS. See FREEZE3_F3_7_AUDIT.md and evidence/F3_7_SERIES1.json.
-Freeze 3 startup NOT PASS/INCONCLUSIVE; daily-delta NOT RUN; resource acceptance FAIL (93% disk). Explicit rollback: PASS: restored pre-migration DB and Freeze 2 image reached HTTP health in 60.03 seconds.
-Reuse /opt/career-os-next/f3-7-acceptance-20261004; do not recopy production or repeat green phases. Resolve capacity safely, complete remaining runtime/delta/resource gates, then final acceptance only on full PASS. No cutover/tag and no production prefilter activation.
+F3-6 PASS/CLOSED at bf68d75 (full CI 37222619720 success). Application code unchanged.
+F3-7 remains OPEN / NOT ACCEPTED. Snapshot/migration/integrity/counts/backup-restore/Freeze 2 rollback PASS from Series 1. Source-overlay Freeze 3 startup+restart and migrated credential invariants PASS from Series 2.
+Measured unchanged-overlap replay PASS within stated scope: 1267 rows, second pass 46.461s, 0 scoring, historical jobs hash unchanged. Full daily-delta gate FAILS on a new integration finding: material same-URL posting change creates a new version but schedules no reevaluation. Resource gate still FAIL (~93% disk).
+Read FREEZE3_F3_7_DELTA_GAP.md and evidence/F3_7_SERIES2.json. Next unit is versioned-delta runtime integration with focused acceptance. Preserve /opt/career-os-next/f3-7-acceptance-20261004. Working lane now contains two overlap runs and one labelled changed-posting probe; baseline lane remains unchanged. No new production snapshot needed for reproducing this gap.
+No final tag/cutover or production prefilter activation. No destructive cleanup; 4GiB /root/career-os-next/swapfile is active. Capacity question sent to user; no answer assumed. Final immutable image, live daily performance and stability evidence remain outstanding.
 
 ## Compact diagnostics / anti-limit rules
 

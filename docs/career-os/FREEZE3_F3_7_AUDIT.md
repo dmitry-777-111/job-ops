@@ -55,3 +55,22 @@ One substantial unit, durable checkpoint, stop new work near 18 minutes and repo
 5. If rollback startup is not PASS, complete it from the already-restored rollback lane. Re-measure resource gate and only after all gates pass prepare immutable image/tag/checkpoint.
 
 This series changes documentation/evidence only. Application CI bf68d75 remains the reused green evidence; no old F3-0..F3-6 test suite is manually rerun. Documentation push uses [skip ci] to honor the explicit no-repeat instruction.
+
+## Series 2 executed evidence (2026-10-04)
+
+- Reused existing snapshot; no migrations/backup/rollback drills or green F3-0..F3-6 suites repeated.
+- Freeze 3 source-overlay startup/restart: PASS, health in 63.753s and 55.453s. Earlier short observation was inconclusive. No immutable Freeze 3 image validation is claimed.
+- Copied credential-vault migration: 1 payload exactly matches original after decryption, 0 plaintext credentials remain, wrong-tenant authenticated decryption rejected. This is a migrated-record invariant check; inherited F3-4 API isolation coverage was not repeated.
+- Measured unchanged overlap: 1267 previously scored jobs out of 1275 total; 8 historical unscored rows excluded deliberately. Actual importJobsStep + scoreJobsStep invoked on copy, network disabled, 0.5 CPU / 320MiB cap.
+- First import (empty market inventory): 51.876s; full measured pass 53.238s. Second unchanged import: 44.961s; full pass 46.461s; scoring 4.346ms, 0 eligible/scored jobs. Historical jobs hash exactly unchanged; second pass created no posting versions. No source-fetch or new/changed AI latency measured.
+- NEW BLOCKER: changed-posting acceptance FAIL. Same-URL material requirement change creates new posting version (1267 -> 1268), but ordinary scoring selects 0 jobs because a legacy score already exists. See FREEZE3_F3_7_DELTA_GAP.md. Do not mark full daily-delta acceptance PASS based on unchanged-overlap performance.
+- Post-drill working/startup DB integrity ok, FK violations 0; protected baseline hash unchanged.
+- Resource gate still FAIL (~93% disk). /root/career-os-next's 4GiB is active swap, not obsolete source files. Existing Freeze 1 and Freeze 2 images/containers preserved. No cleanup or paid capacity changes.
+- All acceptance containers stopped/exited; production Freeze 2 healthy. No final acceptance tag/cutover. Live daily end-to-end performance and 3–5 clean daily stability runs remain unproven.
+
+## Revised exact continuation after Series 2
+
+1. Read current checkpoint, F3_7_SERIES2.json and FREEZE3_F3_7_DELTA_GAP.md. Application code is still bf68d75; later commits are docs/evidence only.
+2. Implement one bounded versioned-delta integration unit from the gap document, with focused regression and relevant CI. Do not rerun passed drills unless the change affects them.
+3. Resolve resource capacity without sacrificing rollback; user was asked about VPS expansion/another server, no response or approval assumed.
+4. Complete new/changed measured daily path and immutable candidate image acceptance once feasible; retain Freeze 2 until all remaining gates pass.
