@@ -11,7 +11,7 @@ import type {
   MarketPostingObservation,
   MarketPostingStatus,
 } from "@shared/types";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
   getPrivateDataScope,
@@ -444,4 +444,17 @@ export async function getCandidateMarketPostingLiveContext(
     posting: mapPosting(postingRow),
     observations: observations.map(mapObservation),
   };
+}
+
+export async function getLatestMarketPostingVersionId(
+  marketPostingId: string,
+): Promise<string | null> {
+  const [row] = await db
+    .select({ id: marketPostingVersions.id })
+    .from(marketPostingVersions)
+    .where(eq(marketPostingVersions.marketPostingId, marketPostingId))
+    .orderBy(desc(marketPostingVersions.version))
+    .limit(1);
+
+  return row?.id ?? null;
 }
