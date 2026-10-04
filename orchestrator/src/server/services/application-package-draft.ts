@@ -1,14 +1,12 @@
 import { conflict, notFound } from "@infra/errors";
-import {
-  type ApplicationPackage,
-  createApplicationPackageDraft,
-} from "@server/repositories/application-packages";
+import { createApplicationPackageDraft } from "@server/repositories/application-packages";
 import { getActiveMasterCareerProfile } from "@server/repositories/candidate-profile";
 import { getActiveCandidateStrategy } from "@server/repositories/candidate-strategy";
 import {
   getCandidateMarketPostingLiveContext,
   getLatestMarketPostingVersionId,
 } from "@server/repositories/market-inventory";
+import type { ApplicationPackage } from "@shared/types";
 import { buildApplicationPackagePreparation } from "./application-package-preparation";
 
 export const APPLICATION_PACKAGE_GENERATION_POLICY_VERSION = "freeze3-mvp-v1";
