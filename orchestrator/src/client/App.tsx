@@ -20,6 +20,7 @@ import { OnboardingGate } from "./components/OnboardingGate";
 import { useAnalyticsIdentity } from "./hooks/useAnalyticsIdentity";
 import { useDemoInfo } from "./hooks/useDemoInfo";
 import { setAuthNavigator } from "./lib/auth-navigation";
+import { ApplicationPackageReviewPage } from "./pages/ApplicationPackageReviewPage";
 import { DesignResumePage } from "./pages/DesignResumePage";
 import { GmailOauthCallbackPage } from "./pages/GmailOauthCallbackPage";
 import { HomePage } from "./pages/HomePage";
@@ -184,6 +185,10 @@ export const App: React.FC = () => {
                 <Route
                   path="/applications/in-progress"
                   element={<InProgressBoardPage />}
+                />
+                <Route
+                  path="/applications/package/:applicationPackageId"
+                  element={<ApplicationPackageReviewPage />}
                 />
                 <Route path="/design-resume" element={<DesignResumePage />} />
                 <Route
