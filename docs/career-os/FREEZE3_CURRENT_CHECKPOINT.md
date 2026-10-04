@@ -29,8 +29,8 @@ Updated: 2026-10-03 21:30 EDT
 - `06922d7` passed full CI (`37176824585`): F3-4 Multi-user <=5 acceptance and the anti-interruption protocol/tooling are durable. F3-4 is PASS/CLOSED.
 - `f3342f0` passed full CI (`37177075551`): the F3-5 Product onboarding + UX gap audit is durable.
 - `270dde2` passed full CI (`37178139713`): the strategy-onboarding domain foundation and focused tests are green.
-- Interruption forensics found 29 stale blocked Desktop Commander session shells (PowerShell/SSH), some alive for many hours; they were terminated only after Git/CI state was verified. No committed project work was lost.
-- The anti-interruption protocol is tightened to avoid long-lived interactive shells, large output, high-frequency polling, and multiline PowerShell -> SSH -> Bash code injection.
+- `bbd3b9b` passed full CI (`37178545823`): interruption forensics/protocol hardening is durable. The 29 stale blocked Desktop Commander session shells were removed only after Git/CI state was verified; no committed project work was lost.
+- Current prepared F3-5B unit wires a hosted strategy requirement into onboarding, creates a draft preview, requires explicit activation, keeps local/operator onboarding unchanged, and adds candidate UI + focused regression coverage.
 - Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
@@ -49,11 +49,11 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the anti-interruption forensic update once.
+1. Commit/push the prepared F3-5B strategy onboarding integration once.
 2. Read its single automatic CI run with compact status only; do not redispatch.
-3. If PASS, wire the onboarding strategy requirement/actions and candidate-facing text step with draft preview + explicit activation.
-4. Then add AI-assisted adaptive question enrichment, keeping deterministic fallback and UNKNOWN semantics; voice remains optional/capability-gated.
-5. After strategy onboarding is green, restore the preserved F3-5A navigation WIP from stash and finish candidate navigation while preserving technical screens under Advanced/Admin.
+3. If PASS, add AI-assisted adaptive question enrichment, keeping deterministic fallback and UNKNOWN semantics; voice remains optional/capability-gated.
+4. Then restore the preserved F3-5A navigation WIP from stash and finish candidate navigation while preserving technical screens under Advanced/Admin.
+5. Finish F3-5 with a fresh hosted candidate acceptance run that requires no source/config-file edits.
 6. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Compact diagnostics / anti-limit rules

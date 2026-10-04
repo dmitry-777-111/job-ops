@@ -1,5 +1,8 @@
+import { notFound } from "@infra/errors";
 import { asyncRoute, ok, okWithMeta } from "@infra/http";
 import { isDemoMode } from "@server/config/demo";
+import { activateCandidateStrategyVersion } from "@server/repositories/candidate-strategy";
+import { createCandidateStrategyOnboardingPreview } from "@server/services/candidate-strategy-onboarding";
 import { suggestOnboardingSearchTerms } from "@server/services/onboarding-search-terms";
 import {
   confirmOnboardingResumeAction,
@@ -39,6 +42,29 @@ const profileActionSchema = z.object({
   requiresVisaSponsorship: z.boolean(),
 });
 
+const strategyDraftActionSchema = z.object({
+  targetRoleFamilies: z
+    .array(z.string().trim().min(1).max(200))
+    .min(1)
+    .max(100),
+  excludedRoleFamilies: z
+    .array(z.string().trim().min(1).max(200))
+    .max(100)
+    .optional(),
+  compensationFloorCadAnnual: z
+    .number()
+    .nonnegative()
+    .max(1_000_000)
+    .nullable()
+    .optional(),
+  usTravel: z.enum(["open", "limited", "avoid"]).nullable().optional(),
+  careerPriority: z.string().trim().max(5000).nullable().optional(),
+});
+
+const strategyActivateActionSchema = z.object({
+  versionId: z.string().trim().min(1).max(200),
+});
+
 const resumeConfirmActionSchema = z.object({
   source: z.string().trim().min(1).max(300),
 });
@@ -61,6 +87,39 @@ onboardingRouter.post(
       profileActionSchema.parse(req.body ?? {}),
     );
     ok(res, data);
+  }),
+);
+
+onboardingRouter.post(
+  "/actions/strategy/draft",
+  asyncRoute(async (req: Request, res: Response) => {
+    if (isDemoMode()) {
+      return okWithMeta(
+        res,
+        {
+          preview: null,
+          status: await getOnboardingStatus(),
+        },
+        { simulated: true },
+      );
+    }
+    const preview = await createCandidateStrategyOnboardingPreview(
+      strategyDraftActionSchema.parse(req.body ?? {}),
+    );
+    ok(res, { preview, status: await getOnboardingStatus() }, 201);
+  }),
+);
+
+onboardingRouter.post(
+  "/actions/strategy/activate",
+  asyncRoute(async (req: Request, res: Response) => {
+    if (isDemoMode()) {
+      return okWithMeta(res, await getOnboardingStatus(), { simulated: true });
+    }
+    const { versionId } = strategyActivateActionSchema.parse(req.body ?? {});
+    const activated = await activateCandidateStrategyVersion(versionId);
+    if (!activated) throw notFound("Candidate strategy draft not found.");
+    ok(res, await getOnboardingStatus());
   }),
 );
 

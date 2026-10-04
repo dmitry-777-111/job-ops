@@ -194,7 +194,11 @@ export interface SearchTermsSuggestionResponse {
   source: "ai" | "fallback";
 }
 
-export type OnboardingRequirementId = "profile" | "model" | "resume";
+export type OnboardingRequirementId =
+  | "profile"
+  | "strategy"
+  | "model"
+  | "resume";
 
 export type OnboardingRequirementStatus =
   | "ready"
@@ -205,6 +209,8 @@ export type OnboardingRequirementStatus =
 export type OnboardingRequirementPrimaryAction =
   | "connect_model"
   | "save_profile"
+  | "save_strategy"
+  | "confirm_strategy"
   | "confirm_resume"
   | "upload_resume"
   | "connect_rxresume"

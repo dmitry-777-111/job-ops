@@ -3,6 +3,7 @@ import { logger } from "@infra/logger";
 import { getRequestId } from "@infra/request-context";
 import { getJobOpsAppStatus } from "@server/config/app-mode";
 import { isDemoMode } from "@server/config/demo";
+import { getActiveCandidateStrategy } from "@server/repositories/candidate-strategy";
 import { getSetting } from "@server/repositories/settings";
 import { getCurrentAccountEntitlements } from "@server/services/account-entitlements";
 import { enqueueAutoPdfRegenerationForSettingsChanges } from "@server/services/auto-pdf-regeneration";
@@ -618,6 +619,17 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
         message: "Demo mode includes search preferences.",
         primaryAction: "none",
       }),
+      ...(hostedMode
+        ? [
+            buildRequirement({
+              id: "strategy",
+              status: "ready",
+              title: "Career strategy confirmed",
+              message: "Demo mode includes a confirmed candidate strategy.",
+              primaryAction: "none",
+            }),
+          ]
+        : []),
       ...(userEditableLlmSettings
         ? [
             buildRequirement({
@@ -659,9 +671,27 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
         : "Add your preferred locations and workplace style so Job Ops can prepare sensible run defaults and sponsor-focused sources.",
     primaryAction: profileCompleted === "1" ? "none" : "save_profile",
   });
+  const activeStrategy = hostedMode ? await getActiveCandidateStrategy() : null;
+  const strategyRequirement = hostedMode
+    ? buildRequirement({
+        id: "strategy",
+        status: activeStrategy ? "ready" : "needs_action",
+        title: activeStrategy
+          ? "Career strategy confirmed"
+          : "Confirm your career strategy",
+        message: activeStrategy
+          ? `Strategy version ${activeStrategy.version} is active for this candidate.`
+          : "Add the roles, constraints, and priorities Job Ops should use, review the proposed strategy, then confirm it explicitly.",
+        primaryAction: activeStrategy ? "none" : "save_strategy",
+        details: activeStrategy
+          ? { strategyId: activeStrategy.id, version: activeStrategy.version }
+          : undefined,
+      })
+    : null;
   const requirements = userEditableLlmSettings
     ? [
         profileRequirement,
+        ...(strategyRequirement ? [strategyRequirement] : []),
         await buildModelRequirement(),
         hostedMode
           ? await buildHostedResumeRequirement()
@@ -669,6 +699,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
       ]
     : [
         profileRequirement,
+        ...(strategyRequirement ? [strategyRequirement] : []),
         hostedMode
           ? await buildHostedResumeRequirement()
           : await buildResumeRequirement(),

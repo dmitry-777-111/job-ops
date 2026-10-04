@@ -1,6 +1,8 @@
 import type { UpdateSettingsInput } from "@shared/settings-schema";
 import type {
   AppSettings,
+  CandidateStrategyDelta,
+  CandidateStrategyProfile,
   DesignResumeAiFieldSuggestionRequest,
   DesignResumeAiFieldSuggestionResponse,
   DesignResumeDocument,
@@ -206,6 +208,50 @@ export async function saveOnboardingProfile(input: {
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export type CandidateStrategyOnboardingQuestion = {
+  id: "target_roles" | "compensation_floor" | "us_travel" | "career_priority";
+  prompt: string;
+  required: boolean;
+  reason: string;
+};
+
+export type CandidateStrategyOnboardingPreviewResponse = {
+  preview: {
+    draft: CandidateStrategyProfile;
+    delta: CandidateStrategyDelta;
+    remainingQuestions: CandidateStrategyOnboardingQuestion[];
+  } | null;
+  status: OnboardingStatusResponse;
+};
+
+export async function saveOnboardingStrategyDraft(input: {
+  targetRoleFamilies: string[];
+  excludedRoleFamilies?: string[];
+  compensationFloorCadAnnual?: number | null;
+  usTravel?: "open" | "limited" | "avoid" | null;
+  careerPriority?: string | null;
+}): Promise<CandidateStrategyOnboardingPreviewResponse> {
+  return fetchApi<CandidateStrategyOnboardingPreviewResponse>(
+    "/onboarding/actions/strategy/draft",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
+export async function activateOnboardingStrategy(
+  versionId: string,
+): Promise<OnboardingStatusResponse> {
+  return fetchApi<OnboardingStatusResponse>(
+    "/onboarding/actions/strategy/activate",
+    {
+      method: "POST",
+      body: JSON.stringify({ versionId }),
+    },
+  );
 }
 
 export async function confirmOnboardingResume(

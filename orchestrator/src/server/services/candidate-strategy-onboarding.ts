@@ -1,13 +1,18 @@
-import { createCandidateStrategyDraft } from "@server/repositories/candidate-strategy";
+import {
+  createCandidateStrategyDraft,
+  getActiveCandidateStrategy,
+} from "@server/repositories/candidate-strategy";
 import type {
   AppSettings,
   CandidateConstraint,
+  CandidateStrategyDelta,
   CandidateStrategyProfile,
 } from "@shared/types";
 import {
   deriveLegacyCandidateStrategyDraft,
   snapshotLegacyCandidateStrategySettings,
 } from "./candidate-strategy-bootstrap";
+import { deriveCandidateStrategyDelta } from "./candidate-strategy-delta";
 import { getEffectiveSettings } from "./settings";
 
 export type CandidateStrategyQuestionId =
@@ -192,4 +197,25 @@ export async function createCandidateStrategyOnboardingDraft(
       effectiveAt: new Date().toISOString(),
     }),
   );
+}
+
+export type CandidateStrategyOnboardingPreview = {
+  draft: CandidateStrategyProfile;
+  delta: CandidateStrategyDelta;
+  remainingQuestions: CandidateStrategyQuestion[];
+};
+
+export async function createCandidateStrategyOnboardingPreview(
+  answers: CandidateStrategyOnboardingAnswers,
+): Promise<CandidateStrategyOnboardingPreview> {
+  const [active, draft] = await Promise.all([
+    getActiveCandidateStrategy(),
+    createCandidateStrategyOnboardingDraft(answers),
+  ]);
+
+  return {
+    draft,
+    delta: deriveCandidateStrategyDelta(active, draft),
+    remainingQuestions: deriveCandidateStrategyQuestions(answers),
+  };
 }

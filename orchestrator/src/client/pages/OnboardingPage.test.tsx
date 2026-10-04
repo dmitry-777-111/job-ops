@@ -14,12 +14,14 @@ const analyticsMocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/client/api", () => ({
+  activateOnboardingStrategy: vi.fn(),
   confirmOnboardingResume: vi.fn(),
   getAppStatus: vi.fn(),
   getAuthBootstrapStatus: vi.fn(),
   hasAuthenticatedSession: vi.fn(() => true),
   getProfile: vi.fn(),
   saveOnboardingProfile: vi.fn(),
+  saveOnboardingStrategyDraft: vi.fn(),
   setupFirstAdmin: vi.fn(),
 }));
 
@@ -79,6 +81,34 @@ const profileStatus: OnboardingStatusResponse = {
       title: "Connect AI",
       message: "Connect AI.",
       primaryAction: "connect_model",
+    },
+    {
+      id: "resume",
+      status: "needs_action",
+      title: "Load resume",
+      message: "Load resume.",
+      primaryAction: "upload_resume",
+    },
+  ],
+};
+
+const strategyStatus: OnboardingStatusResponse = {
+  complete: false,
+  nextRequirementId: "strategy",
+  requirements: [
+    {
+      id: "profile",
+      status: "ready",
+      title: "Saved",
+      message: "Saved",
+      primaryAction: "none",
+    },
+    {
+      id: "strategy",
+      status: "needs_action",
+      title: "Confirm your career strategy",
+      message: "Review and confirm.",
+      primaryAction: "save_strategy",
     },
     {
       id: "resume",
@@ -196,7 +226,7 @@ async function renderPage() {
     </MemoryRouter>,
   );
   await screen.findByText(
-    "Three focused choices, then you’re in. Search terms wait until your first run.",
+    "A few focused choices, then you???re in. You can review the strategy before it becomes active.",
   );
 }
 
@@ -313,6 +343,75 @@ describe("OnboardingPage", () => {
     expect(analyticsMocks.trackProductEvent).toHaveBeenCalledWith(
       "onboarding_profile_save_completed",
       { result: "success" },
+    );
+    expect(await screen.findByText("Resume importer")).toBeInTheDocument();
+  });
+
+  it("previews and explicitly activates a candidate strategy", async () => {
+    vi.mocked(useOnboardingStatus).mockReturnValue({
+      status: strategyStatus,
+      complete: false,
+      nextRequirementId: "strategy",
+      requirements: strategyStatus.requirements,
+      checking: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useOnboardingStatus>);
+    vi.mocked(api.saveOnboardingStrategyDraft).mockResolvedValue({
+      preview: {
+        draft: {
+          id: "strategy-draft-1",
+          version: 1,
+          status: "draft",
+          targetMarkets: ["canada"],
+          targetRoleFamilies: ["Field Service Engineer"],
+          excludedRoleFamilies: [],
+          constraints: [],
+          freeformNotes: null,
+          createdAt: "2026-10-04T00:00:00.000Z",
+          activatedAt: null,
+        },
+        delta: {
+          previousVersion: null,
+          nextVersion: 1,
+          added: [],
+          removedConstraintIds: [],
+          changed: [],
+          likelySearchImpact: ["Target roles changed."],
+        },
+        remainingQuestions: [],
+      },
+      status: strategyStatus,
+    });
+    vi.mocked(api.activateOnboardingStrategy).mockResolvedValue(resumeStatus);
+
+    await renderPage();
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        "Field Service Engineer, Commissioning, Technical Support",
+      ),
+      { target: { value: "Field Service Engineer" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Review strategy" }));
+
+    await waitFor(() =>
+      expect(api.saveOnboardingStrategyDraft).toHaveBeenCalledWith(
+        expect.objectContaining({
+          targetRoleFamilies: ["Field Service Engineer"],
+          compensationFloorCadAnnual: null,
+          usTravel: null,
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText("Confirm what Job Ops should optimize for"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirm strategy" }));
+    await waitFor(() =>
+      expect(api.activateOnboardingStrategy).toHaveBeenCalledWith(
+        "strategy-draft-1",
+      ),
     );
     expect(await screen.findByText("Resume importer")).toBeInTheDocument();
   });

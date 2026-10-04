@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getDesignResumeStatus: vi.fn(),
   getJobOpsAppStatus: vi.fn(),
   getCurrentAccountEntitlements: vi.fn(),
+  getActiveCandidateStrategy: vi.fn(),
   getResume: vi.fn(),
   getSetting: vi.fn(),
   isDemoMode: vi.fn(),
@@ -24,6 +25,10 @@ vi.mock("@server/services/account-entitlements", () => ({
 
 vi.mock("@server/config/demo", () => ({
   isDemoMode: mocks.isDemoMode,
+}));
+
+vi.mock("@server/repositories/candidate-strategy", () => ({
+  getActiveCandidateStrategy: mocks.getActiveCandidateStrategy,
 }));
 
 vi.mock("@server/repositories/settings", () => ({
@@ -113,6 +118,18 @@ describe("onboarding status engine", () => {
       userEditableLlmSettings: true,
       hostedLimits: {},
       subscription: null,
+    });
+    mocks.getActiveCandidateStrategy.mockResolvedValue({
+      id: "strategy-active",
+      version: 1,
+      status: "active",
+      targetMarkets: ["canada"],
+      targetRoleFamilies: ["field service"],
+      excludedRoleFamilies: [],
+      constraints: [],
+      freeformNotes: null,
+      createdAt: "2026-10-04T00:00:00.000Z",
+      activatedAt: "2026-10-04T00:00:00.000Z",
     });
     mocks.isDemoMode.mockReturnValue(false);
     mocks.getSetting.mockImplementation(async (key: string) => {
@@ -338,11 +355,45 @@ describe("onboarding status engine", () => {
     expect(mocks.validateRxResumeCredentials).not.toHaveBeenCalled();
     expect(status.complete).toBe(false);
     expect(status.nextRequirementId).toBe("resume");
-    expect(status.requirements).toHaveLength(2);
+    expect(status.requirements).toHaveLength(3);
     expect(status.requirements[1]).toMatchObject({
+      id: "strategy",
+      status: "ready",
+    });
+    expect(status.requirements[2]).toMatchObject({
       id: "resume",
       status: "needs_action",
       title: "Upload your existing resume, PDF or DOCX",
+    });
+  });
+
+  it("requires an explicit strategy confirmation for a fresh hosted candidate", async () => {
+    mocks.getJobOpsAppStatus.mockReturnValue({
+      appMode: "hosted",
+      capabilities: {
+        hostedSignups: true,
+        platformLlm: true,
+        quotas: true,
+        userEditableLlmSettings: false,
+      },
+      hostedTenantConfigured: true,
+    });
+    mocks.getCurrentAccountEntitlements.mockResolvedValue({
+      plan: "free",
+      platformAiIncluded: true,
+      userEditableLlmSettings: false,
+      hostedLimits: {},
+      subscription: null,
+    });
+    mocks.getActiveCandidateStrategy.mockResolvedValue(null);
+
+    const status = await getOnboardingStatus();
+
+    expect(status.nextRequirementId).toBe("strategy");
+    expect(status.requirements[1]).toMatchObject({
+      id: "strategy",
+      status: "needs_action",
+      primaryAction: "save_strategy",
     });
   });
 

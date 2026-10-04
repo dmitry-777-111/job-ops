@@ -48,7 +48,12 @@ import { LlmConnectionStep } from "./onboarding/components/LlmConnectionStep";
 import type { ValidationState } from "./onboarding/types";
 import { useOnboardingFlow } from "./onboarding/useOnboardingFlow";
 
-const STEP_ORDER: OnboardingRequirementId[] = ["profile", "model", "resume"];
+const STEP_ORDER: OnboardingRequirementId[] = [
+  "profile",
+  "strategy",
+  "model",
+  "resume",
+];
 const COUNTRY_OPTIONS = SUPPORTED_COUNTRY_KEYS.filter(
   (country) => country !== "usa/ca",
 ).map((country) => ({
@@ -78,6 +83,7 @@ function toValidationState(
 
 function stepTitle(id: OnboardingRequirementId): string {
   if (id === "profile") return "Your search";
+  if (id === "strategy") return "Your strategy";
   if (id === "model") return "AI connection";
   return "Your resume";
 }
@@ -136,7 +142,7 @@ export const OnboardingPage: React.FC = () => {
   }, [bootstrapState, trackStarted]);
 
   if (bootstrapState === "checking") {
-    return <LoadingState message="Preparing your workspace…" />;
+    return <LoadingState message="Preparing your workspace???" />;
   }
   if (bootstrapState === "error") {
     return (
@@ -259,7 +265,7 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
               </div>
               <div className="flex justify-end">
                 <Button type="submit" disabled={busy}>
-                  {busy ? "Creating account…" : "Create account"}
+                  {busy ? "Creating account???" : "Create account"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -312,7 +318,17 @@ function LaunchSetup({
   const [selectedStep, setSelectedStep] =
     useState<OnboardingRequirementId | null>(null);
   const [profileBusy, setProfileBusy] = useState(false);
+  const [strategyBusy, setStrategyBusy] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const [strategyPreview, setStrategyPreview] =
+    useState<api.CandidateStrategyOnboardingPreviewResponse["preview"]>(null);
+  const [targetRoles, setTargetRoles] = useState("");
+  const [excludedRoles, setExcludedRoles] = useState("");
+  const [compensationFloor, setCompensationFloor] = useState("");
+  const [usTravel, setUsTravel] = useState<"" | "open" | "limited" | "avoid">(
+    "",
+  );
+  const [careerPriority, setCareerPriority] = useState("");
   const [country, setCountry] = useState("");
   const [cities, setCities] = useState("");
   const [workplaceTypes, setWorkplaceTypes] = useState<
@@ -327,11 +343,14 @@ function LaunchSetup({
   const showModel = status
     ? status.requirements.some((requirement) => requirement.id === "model")
     : true;
-  const visibleSteps = showModel
-    ? STEP_ORDER
-    : STEP_ORDER.filter((step) => step !== "model");
+  const visibleSteps = status
+    ? STEP_ORDER.filter((step) =>
+        status.requirements.some((requirement) => requirement.id === step),
+      )
+    : STEP_ORDER.filter((step) => step !== "strategy");
   const activeStep = selectedStep ?? status?.nextRequirementId ?? "profile";
   const profileRequirement = getRequirement(status, "profile");
+  const strategyRequirement = getRequirement(status, "strategy");
   const modelRequirement = getRequirement(status, "model");
   const resumeRequirement = getRequirement(status, "resume");
   const activeRequirement = getRequirement(status, activeStep);
@@ -365,6 +384,7 @@ function LaunchSetup({
       status.complete,
       status.nextRequirementId,
       profileRequirement?.status,
+      strategyRequirement?.status,
       modelRequirement?.status,
       resumeRequirement?.status,
     ]);
@@ -374,6 +394,7 @@ function LaunchSetup({
       complete: status.complete,
       next_step: status.nextRequirementId ?? "none",
       profile_status: getRequirementAnalyticsStatus(profileRequirement),
+      strategy_status: getRequirementAnalyticsStatus(strategyRequirement),
       model_status: getRequirementAnalyticsStatus(modelRequirement),
       resume_status: getRequirementAnalyticsStatus(resumeRequirement),
     });
@@ -381,6 +402,7 @@ function LaunchSetup({
     modelRequirement,
     onboarding.checking,
     profileRequirement,
+    strategyRequirement,
     resumeRequirement,
     status,
   ]);
@@ -403,7 +425,7 @@ function LaunchSetup({
     return <Navigate to="/jobs/ready" replace />;
   }
   if (onboarding.checking) {
-    return <LoadingState message="Loading your setup…" />;
+    return <LoadingState message="Loading your setup???" />;
   }
 
   const resumeSource =
@@ -449,6 +471,66 @@ function LaunchSetup({
     }
   };
 
+  const saveStrategyDraft = async () => {
+    const parseList = (value: string) =>
+      value
+        .split(/[\n,]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    const targetRoleFamilies = parseList(targetRoles);
+    const excludedRoleFamilies = parseList(excludedRoles);
+    if (targetRoleFamilies.length === 0) {
+      showErrorToast(
+        new Error("Add at least one target role or role family."),
+        "Could not prepare strategy",
+      );
+      return;
+    }
+    const parsedFloor = compensationFloor.trim()
+      ? Number(compensationFloor.trim())
+      : null;
+    if (parsedFloor !== null && !Number.isFinite(parsedFloor)) {
+      showErrorToast(
+        new Error("Compensation floor must be a number or left blank."),
+        "Could not prepare strategy",
+      );
+      return;
+    }
+
+    try {
+      setStrategyBusy(true);
+      const result = await api.saveOnboardingStrategyDraft({
+        targetRoleFamilies,
+        excludedRoleFamilies,
+        compensationFloorCadAnnual: parsedFloor,
+        usTravel: usTravel || null,
+        careerPriority: careerPriority.trim() || null,
+      });
+      setStrategyPreview(result.preview);
+      queryClient.setQueryData(queryKeys.onboarding.status(), result.status);
+      setSelectedStep("strategy");
+    } catch (error) {
+      showErrorToast(error, "Could not prepare strategy");
+    } finally {
+      setStrategyBusy(false);
+    }
+  };
+
+  const activateStrategy = async () => {
+    if (!strategyPreview?.draft.id) return;
+    try {
+      setStrategyBusy(true);
+      applyStatus(
+        await api.activateOnboardingStrategy(strategyPreview.draft.id),
+      );
+      setStrategyPreview(null);
+    } catch (error) {
+      showErrorToast(error, "Could not confirm strategy");
+    } finally {
+      setStrategyBusy(false);
+    }
+  };
+
   const saveModel = async () => {
     const next = await flow.handleSaveModel();
     if (next) applyStatus(next);
@@ -483,7 +565,7 @@ function LaunchSetup({
       <PageHeader
         icon={Sparkles}
         title="Set up Job Ops"
-        subtitle="Three focused choices, then you’re in. Search terms wait until your first run."
+        subtitle="A few focused choices, then you???re in. You can review the strategy before it becomes active."
       />
       <PageMain>
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
@@ -556,6 +638,25 @@ function LaunchSetup({
                   onVisaChange={setRequiresVisaSponsorship}
                   onContinue={saveProfile}
                 />
+              ) : activeStep === "strategy" ? (
+                <StrategyStep
+                  targetRoles={targetRoles}
+                  excludedRoles={excludedRoles}
+                  compensationFloor={compensationFloor}
+                  usTravel={usTravel}
+                  careerPriority={careerPriority}
+                  preview={strategyPreview}
+                  busy={strategyBusy}
+                  onTargetRolesChange={setTargetRoles}
+                  onExcludedRolesChange={setExcludedRoles}
+                  onCompensationFloorChange={setCompensationFloor}
+                  onUsTravelChange={setUsTravel}
+                  onCareerPriorityChange={setCareerPriority}
+                  onBack={() => setSelectedStep("profile")}
+                  onEdit={() => setStrategyPreview(null)}
+                  onPrepare={saveStrategyDraft}
+                  onActivate={activateStrategy}
+                />
               ) : activeStep === "model" ? (
                 <StepShell
                   eyebrow="AI connection"
@@ -591,7 +692,11 @@ function LaunchSetup({
                     }
                   />
                   <StepActions
-                    onBack={() => setSelectedStep("profile")}
+                    onBack={() =>
+                      setSelectedStep(
+                        strategyRequirement ? "strategy" : "profile",
+                      )
+                    }
                     onContinue={saveModel}
                     busy={flow.isBusy}
                     label="Connect and continue"
@@ -605,7 +710,13 @@ function LaunchSetup({
                   hasResume={Boolean(resumeSource)}
                   busy={confirmBusy}
                   onBack={() =>
-                    setSelectedStep(showModel ? "model" : "profile")
+                    setSelectedStep(
+                      showModel
+                        ? "model"
+                        : strategyRequirement
+                          ? "strategy"
+                          : "profile",
+                    )
                   }
                   onConfirm={confirmResume}
                 />
@@ -667,7 +778,7 @@ function StepActions({
         <span />
       )}
       <Button type="button" onClick={() => void onContinue()} disabled={busy}>
-        {busy ? "Saving…" : label}
+        {busy ? "Saving???" : label}
         <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
@@ -773,6 +884,170 @@ function ProfileStep(props: {
   );
 }
 
+function StrategyStep(props: {
+  targetRoles: string;
+  excludedRoles: string;
+  compensationFloor: string;
+  usTravel: "" | "open" | "limited" | "avoid";
+  careerPriority: string;
+  preview: api.CandidateStrategyOnboardingPreviewResponse["preview"];
+  busy: boolean;
+  onTargetRolesChange: (value: string) => void;
+  onExcludedRolesChange: (value: string) => void;
+  onCompensationFloorChange: (value: string) => void;
+  onUsTravelChange: (value: "" | "open" | "limited" | "avoid") => void;
+  onCareerPriorityChange: (value: string) => void;
+  onBack: () => void;
+  onEdit: () => void;
+  onPrepare: () => void | Promise<void>;
+  onActivate: () => void | Promise<void>;
+}) {
+  if (props.preview) {
+    return (
+      <StepShell
+        eyebrow="Strategy review"
+        title="Confirm what Job Ops should optimize for"
+        description="This draft does not affect matching until you confirm it. Review the target roles and search-impact summary first."
+      >
+        <div className="space-y-4 rounded-xl border border-border/60 p-5">
+          <div>
+            <div className="text-sm font-medium">Target roles</div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              {props.preview.draft.targetRoleFamilies.join(", ")}
+            </div>
+          </div>
+          {props.preview.draft.excludedRoleFamilies.length > 0 ? (
+            <div>
+              <div className="text-sm font-medium">Excluded roles</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {props.preview.draft.excludedRoleFamilies.join(", ")}
+              </div>
+            </div>
+          ) : null}
+          <div>
+            <div className="text-sm font-medium">Likely search impact</div>
+            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              {props.preview.delta.likelySearchImpact.length > 0 ? (
+                props.preview.delta.likelySearchImpact.map((item) => (
+                  <li key={item}>{item}</li>
+                ))
+              ) : (
+                <li>No material search-impact change detected.</li>
+              )}
+            </ul>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Draft version {props.preview.draft.version}. Activation is explicit
+            and can be changed later through a new version.
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t pt-6">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={props.onEdit}
+            disabled={props.busy}
+          >
+            Review answers
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void props.onActivate()}
+            disabled={props.busy}
+          >
+            {props.busy ? "Confirming???" : "Confirm strategy"}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </StepShell>
+    );
+  }
+
+  return (
+    <StepShell
+      eyebrow="Your strategy"
+      title="What should Job Ops optimize for?"
+      description="Use plain text. Unknown optional answers stay unknown; they are not converted into hard exclusions. You will review a draft before it becomes active."
+    >
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Target roles or role families">
+          <Input
+            value={props.targetRoles}
+            onChange={(event) => props.onTargetRolesChange(event.target.value)}
+            placeholder="Field Service Engineer, Commissioning, Technical Support"
+          />
+        </Field>
+        <Field label="Roles to exclude (optional)">
+          <Input
+            value={props.excludedRoles}
+            onChange={(event) =>
+              props.onExcludedRolesChange(event.target.value)
+            }
+            placeholder="Pure sales, narrow maintenance-only roles"
+          />
+        </Field>
+        <Field label="Minimum annual compensation in CAD (optional)">
+          <Input
+            type="number"
+            min="0"
+            value={props.compensationFloor}
+            onChange={(event) =>
+              props.onCompensationFloorChange(event.target.value)
+            }
+            placeholder="70000"
+          />
+        </Field>
+        <Field label="United States travel">
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                ["open", "Open"],
+                ["limited", "Limited"],
+                ["avoid", "Avoid"],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                type="button"
+                variant={props.usTravel === value ? "default" : "outline"}
+                onClick={() => props.onUsTravelChange(value)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+        </Field>
+      </div>
+      <Field label="Career priority or context (optional)">
+        <Input
+          value={props.careerPriority}
+          onChange={(event) => props.onCareerPriorityChange(event.target.value)}
+          placeholder="Higher income first; PR remains important but should not force a low-pay path"
+        />
+      </Field>
+      <div className="flex items-center justify-between border-t pt-6">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={props.onBack}
+          disabled={props.busy}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+        <Button
+          type="button"
+          onClick={() => void props.onPrepare()}
+          disabled={props.busy || props.targetRoles.trim().length === 0}
+        >
+          {props.busy ? "Preparing???" : "Review strategy"}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </StepShell>
+  );
+}
+
 function ResumeStep({
   flow,
   requirement,
@@ -796,7 +1071,7 @@ function ResumeStep({
       <StepShell
         eyebrow="Your resume"
         title="Load the resume Job Ops should use"
-        description="Upload a file or connect Reactive Resume. After parsing, you’ll review the result before anything is marked complete."
+        description="Upload a file or connect Reactive Resume. After parsing, you???ll review the result before anything is marked complete."
       >
         <BaseResumeStep
           allowReactiveResume
@@ -872,7 +1147,7 @@ function ResumeStep({
                   <div className="font-medium">{item.position}</div>
                   <div className="text-sm text-muted-foreground">
                     {item.company}
-                    {item.location ? ` · ${item.location}` : ""}
+                    {item.location ? ` ?? ${item.location}` : ""}
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground">{item.date}</div>
