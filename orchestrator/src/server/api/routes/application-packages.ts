@@ -6,6 +6,10 @@ import {
   evaluateStoredApplicationPackageQa,
 } from "@server/services/application-package-approval";
 import { prepareApplicationPackageDraft } from "@server/services/application-package-draft";
+import {
+  getApplicationPackageJobFlow,
+  prepareApplicationPackageForJob,
+} from "@server/services/application-package-job-flow";
 import { deriveApplicationVacancyLiveGate } from "@server/services/application-package-live-gate";
 import { getApplicationPackageReview } from "@server/services/application-package-review";
 import { type Request, type Response, Router } from "express";
@@ -86,6 +90,38 @@ applicationPackagesRouter.get(
           req.query.acknowledgeUnknownLiveState === "true",
       });
       ok(res, result);
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+applicationPackagesRouter.get(
+  "/jobs/:legacyJobId",
+  async (req: Request, res: Response) => {
+    try {
+      ok(
+        res,
+        await getApplicationPackageJobFlow({
+          legacyJobId: req.params.legacyJobId,
+        }),
+      );
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+applicationPackagesRouter.post(
+  "/jobs/:legacyJobId/prepare",
+  async (req: Request, res: Response) => {
+    try {
+      const result = await prepareApplicationPackageForJob({
+        legacyJobId: req.params.legacyJobId,
+        acknowledgeUnknownLiveState:
+          req.body?.acknowledgeUnknownLiveState === true,
+      });
+      ok(res, result, 201);
     } catch (error) {
       fail(res, toAppError(error));
     }

@@ -480,3 +480,20 @@ export async function getMarketPostingVersion(
     createdAt: row.createdAt,
   };
 }
+
+export async function getCandidateMarketPostingIdForLegacyJob(
+  legacyJobId: string,
+): Promise<string | null> {
+  const [row] = await db
+    .select({ marketPostingId: candidateMarketPostings.marketPostingId })
+    .from(candidateMarketPostings)
+    .where(
+      and(
+        privateDataScopeFilter(candidateMarketPostings),
+        eq(candidateMarketPostings.legacyJobId, legacyJobId),
+      ),
+    )
+    .limit(1);
+
+  return row?.marketPostingId ?? null;
+}
