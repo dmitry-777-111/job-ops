@@ -16,6 +16,10 @@ vi.mock("@server/repositories/candidate-strategy", () => ({
   listCandidateStrategyVersions: vi.fn(),
 }));
 
+vi.mock("@server/services/candidate-strategy-bootstrap", () => ({
+  bootstrapCurrentCandidateStrategy: vi.fn(),
+}));
+
 describe.sequential("Candidate v3 API", () => {
   let server: Server;
   let baseUrl: string;
@@ -58,6 +62,42 @@ describe.sequential("Candidate v3 API", () => {
     expect(body.data.created).toBe(false);
     expect(body.data.profile.id).toBe("profile-v1");
     expect(profileRepo.createMasterCareerProfileDraft).not.toHaveBeenCalled();
+  });
+
+  it("bootstraps current legacy strategy once through the migration service", async () => {
+    const bootstrap = await import(
+      "@server/services/candidate-strategy-bootstrap"
+    );
+    vi.mocked(
+      bootstrap.bootstrapCurrentCandidateStrategy,
+    ).mockResolvedValueOnce({
+      strategy: {
+        id: "strategy-v1",
+        version: 1,
+        status: "active",
+        targetMarkets: ["canada"],
+        targetRoleFamilies: ["field service technician"],
+        excludedRoleFamilies: [],
+        constraints: [],
+        freeformNotes: "legacy rules",
+        createdAt: "2026-10-04T01:00:00.000Z",
+        activatedAt: "2026-10-04T01:00:00.000Z",
+      },
+      created: true,
+    });
+
+    const res = await fetch(
+      `${baseUrl}/api/candidate/strategy/bootstrap-current`,
+      { method: "POST" },
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data.created).toBe(true);
+    expect(body.data.strategy.id).toBe("strategy-v1");
+    expect(bootstrap.bootstrapCurrentCandidateStrategy).toHaveBeenCalledTimes(
+      1,
+    );
   });
 
   it("creates a structured strategy draft without activating it", async () => {

@@ -8,12 +8,13 @@ Updated: 2026-10-03 21:30 EDT
 - `9229a7e` passed full CI (`37167333605`): controlled interrupted-vs-uninterrupted recovery equivalence gate is PASS.
 - `810f4b4` passed full CI (`37167544876`): source identity / fuzzy-dedupe hardening is PASS.
 - `608946f` passed full CI (`37168123251`): delta/idempotency is race-safe and F3-1 is closed.
-- F3-0 baseline/evidence is the current prepared unit to commit/push next.
+- `dc6519c` passed full CI (`37168368363`): F3-0 baseline/evidence and F3-1 acceptance are durably closed.
+- Current local unit begins F3-2 by bootstrapping the active legacy strategy/settings into the versioned Candidate Strategy domain without reinterpreting the existing scoring instructions.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
 
-## F3-0 evidence prepared locally
+## F3-0 evidence
 
 - `FREEZE3_R0_BASELINE.md` captures the terminal run, loss/disposition funnel, DB integrity, and all seven accounted unscored jobs.
 - `evidence/R0_PREFILTER_SHADOW.jsonl`: 1,274 rows, SHA-256 `c18dfe087f6ffd5b3974e147dcfdeb3828544b8591500f62683d3d72697828d5`.
@@ -26,10 +27,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared F3-0 baseline/evidence + F3-1 acceptance unit once.
+1. Commit/push the prepared F3-2 legacy-strategy bootstrap unit once.
 2. Read its single automatic CI run; do not redispatch.
-3. If PASS, begin F3-2 Candidate/Strategy domain from the existing versioned profile/strategy foundations rather than rebuilding them.
-4. First F3-2 task: audit and implement migration/bootstrap of current candidate strategy/settings with behavior-equivalence tests.
+3. If PASS, validate the migrated representation against the current Dmitrii settings and continue F3-2 with profile/strategy repository isolation/versioning tests and behavior-equivalence coverage.
+4. Do not activate or deploy the new domain in Freeze 2 production during development.
 
 ## Safety / no-repeat rules
 

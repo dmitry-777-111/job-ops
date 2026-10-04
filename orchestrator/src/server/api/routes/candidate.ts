@@ -14,6 +14,7 @@ import {
 } from "@server/repositories/candidate-strategy";
 import { listExternalConnections } from "@server/repositories/external-connections";
 import { deriveCandidateReadiness } from "@server/services/candidate-readiness";
+import { bootstrapCurrentCandidateStrategy } from "@server/services/candidate-strategy-bootstrap";
 import { deriveCandidateStrategyDelta } from "@server/services/candidate-strategy-delta";
 import { getProfile } from "@server/services/profile";
 import {
@@ -123,6 +124,17 @@ candidateRouter.post(
         throw notFound("Candidate profile version not found.");
       }
       ok(res, activated);
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+candidateRouter.post(
+  "/strategy/bootstrap-current",
+  async (_req: Request, res: Response) => {
+    try {
+      ok(res, await bootstrapCurrentCandidateStrategy());
     } catch (error) {
       fail(res, toAppError(error));
     }
