@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
   getJobOpsAppStatus: vi.fn(),
   getCurrentAccountEntitlements: vi.fn(),
   getActiveCandidateStrategy: vi.fn(),
+  getActiveMasterCareerProfile: vi.fn(),
+  createMasterCareerProfileDraft: vi.fn(),
+  activateMasterCareerProfileVersion: vi.fn(),
+  getProfile: vi.fn(),
   getResume: vi.fn(),
   getSetting: vi.fn(),
   isDemoMode: vi.fn(),
@@ -25,6 +29,12 @@ vi.mock("@server/services/account-entitlements", () => ({
 
 vi.mock("@server/config/demo", () => ({
   isDemoMode: mocks.isDemoMode,
+}));
+
+vi.mock("@server/repositories/candidate-profile", () => ({
+  activateMasterCareerProfileVersion: mocks.activateMasterCareerProfileVersion,
+  createMasterCareerProfileDraft: mocks.createMasterCareerProfileDraft,
+  getActiveMasterCareerProfile: mocks.getActiveMasterCareerProfile,
 }));
 
 vi.mock("@server/repositories/candidate-strategy", () => ({
@@ -61,6 +71,7 @@ vi.mock("@server/services/llm/service", () => ({
 
 vi.mock("@server/services/profile", () => ({
   clearProfileCache: vi.fn(),
+  getProfile: mocks.getProfile,
 }));
 
 vi.mock("@server/services/rxresume", () => ({
@@ -118,6 +129,43 @@ describe("onboarding status engine", () => {
       userEditableLlmSettings: true,
       hostedLimits: {},
       subscription: null,
+    });
+    mocks.getActiveMasterCareerProfile.mockResolvedValue({
+      id: "profile-active",
+      version: 1,
+      status: "active",
+      profile: { basics: { name: "Candidate" } },
+      source: "legacy_current_profile",
+      sourceRef: "local:doc-1",
+      provenance: null,
+      createdAt: "2026-10-04T00:00:00.000Z",
+      activatedAt: "2026-10-04T00:00:00.000Z",
+      supersededAt: null,
+    });
+    mocks.getProfile.mockResolvedValue({ basics: { name: "Candidate" } });
+    mocks.createMasterCareerProfileDraft.mockResolvedValue({
+      id: "profile-draft",
+      version: 1,
+      status: "draft",
+      profile: { basics: { name: "Candidate" } },
+      source: "legacy_current_profile",
+      sourceRef: "local:doc-1",
+      provenance: { activation: "onboarding-resume-confirmation" },
+      createdAt: "2026-10-04T00:00:00.000Z",
+      activatedAt: null,
+      supersededAt: null,
+    });
+    mocks.activateMasterCareerProfileVersion.mockResolvedValue({
+      id: "profile-draft",
+      version: 1,
+      status: "active",
+      profile: { basics: { name: "Candidate" } },
+      source: "legacy_current_profile",
+      sourceRef: "local:doc-1",
+      provenance: { activation: "onboarding-resume-confirmation" },
+      createdAt: "2026-10-04T00:00:00.000Z",
+      activatedAt: "2026-10-04T00:00:01.000Z",
+      supersededAt: null,
     });
     mocks.getActiveCandidateStrategy.mockResolvedValue({
       id: "strategy-active",
@@ -480,6 +528,23 @@ describe("onboarding status engine", () => {
     await expect(
       confirmOnboardingResumeAction({ source: "local:stale-document" }),
     ).rejects.toMatchObject({ status: 422 });
+  });
+
+  it("activates the current resume as the first Master Career Profile on confirmation", async () => {
+    mocks.getActiveMasterCareerProfile.mockResolvedValue(null);
+
+    await confirmOnboardingResumeAction({ source: "local:doc-1" });
+
+    expect(mocks.getProfile).toHaveBeenCalledTimes(1);
+    expect(mocks.createMasterCareerProfileDraft).toHaveBeenCalledWith({
+      profile: { basics: { name: "Candidate" } },
+      source: "legacy_current_profile",
+      sourceRef: "local:doc-1",
+      provenance: { activation: "onboarding-resume-confirmation" },
+    });
+    expect(mocks.activateMasterCareerProfileVersion).toHaveBeenCalledWith(
+      "profile-draft",
+    );
   });
 
   it("rejects a new Ollama model action without an explicit model", async () => {

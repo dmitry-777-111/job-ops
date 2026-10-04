@@ -3,6 +3,11 @@ import { logger } from "@infra/logger";
 import { getRequestId } from "@infra/request-context";
 import { getJobOpsAppStatus } from "@server/config/app-mode";
 import { isDemoMode } from "@server/config/demo";
+import {
+  activateMasterCareerProfileVersion,
+  createMasterCareerProfileDraft,
+  getActiveMasterCareerProfile,
+} from "@server/repositories/candidate-profile";
 import { getActiveCandidateStrategy } from "@server/repositories/candidate-strategy";
 import { getSetting } from "@server/repositories/settings";
 import { getCurrentAccountEntitlements } from "@server/services/account-entitlements";
@@ -12,7 +17,7 @@ import { getOriginalEnvValue } from "@server/services/envSettings";
 import { resolveLlmApiKey } from "@server/services/llm/credentials";
 import { isHostedLocalProvider } from "@server/services/llm/hosted-policy";
 import { LlmService } from "@server/services/llm/service";
-import { clearProfileCache } from "@server/services/profile";
+import { clearProfileCache, getProfile } from "@server/services/profile";
 import {
   clearRxResumeResumeCache,
   getResume,
@@ -848,6 +853,20 @@ export async function confirmOnboardingResumeAction(
     { onboardingResumeConfirmedSource: input.source },
     "POST /api/onboarding/actions/resume/confirm",
   );
+
+  if (!(await getActiveMasterCareerProfile())) {
+    const currentProfile = await getProfile();
+    const draft = await createMasterCareerProfileDraft({
+      profile: currentProfile,
+      source: "legacy_current_profile",
+      sourceRef: input.source,
+      provenance: {
+        activation: "onboarding-resume-confirmation",
+      },
+    });
+    await activateMasterCareerProfileVersion(draft.id);
+  }
+
   return getOnboardingStatus();
 }
 
