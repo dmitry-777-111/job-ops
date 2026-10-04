@@ -13,7 +13,7 @@ function normalizeDescription(value: string): string {
 
 function hasCitizenOrPrOnlyRequirement(text: string): boolean {
   const mandatoryWindow =
-    /(?:must|required|requirements?|require)[^.]{0,140}(?:canadian citizenship|canadian citizen)[^.]{0,90}(?:permanent resident|permanent residency|permanent resident status)/i;
+    /\b(?:must|require|requires|required)\b[^.]{0,140}(?:canadian citizenship|canadian citizen)[^.]{0,90}(?:permanent resident|permanent residency|permanent resident status)/i;
   const reverseWindow =
     /(?:canadian citizenship|canadian citizen)[^.]{0,90}(?:permanent resident|permanent residency|permanent resident status)[^.]{0,100}(?:required|must)/i;
 

@@ -17,7 +17,9 @@ Updated: 2026-10-03 21:30 EDT
 - `1cf2569` passed full CI (`37169856874`): F3-3 shadow-only safe prefilter foundation is green after the single type-only test-fixture repair.
 - `f612afb` passed full CI (`37170437988`): the R0 geography shadow now has zero false rejects after ambiguous multi-location evidence was downgraded to UNKNOWN-to-AI.
 - Observed geography-only shadow result: 1,274 total = 0 safe rejects, 13 uncertain-to-AI, 1,261 pass-to-AI; therefore 0% savings and no basis for activation by geography alone.
-- Current prepared unit adds Canada-specific explicit hard-requirement evidence behind the Canada boundary plus a generic strategy-driven evidence-signal reject rule. The frozen broad evidence corpus contains 25 candidate postings; preliminary deterministic audit identifies 13 safe rejects, zero selected jobs, and zero score>=50 cases.
+- `a6e3356` passed full CI (`37170657515`) with an initial 13-reject Canada hard-evidence shadow result (1.0204% savings, max score 38, zero selected/score>=50 rejects).
+- Semantic audit then found three phrases too broad for irreversible rejection; before any activation, the local parser was tightened to 10 safe rejects (0.7849%), still zero selected/score>=50 rejects.
+- Current prepared unit contains that tightening plus a staged rollout controller that cannot enforce unless the full reject set is audited, false-reject gates are zero, measurable savings exist, and explicit activation approval is supplied.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -35,10 +37,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared Canada hard-requirement shadow evidence unit once.
-2. Read its single automatic CI run and extract the exact savings/max-rejected-score summary; do not redispatch.
-3. If PASS, record the F3-3 shadow metrics and add audit-sample/staged-activation safeguards without enabling production rejection.
-4. No prefilter may affect production decisions until false-negative and decision-worthy regression gates pass.
+1. Commit/push the tightened Canada evidence parser + staged rollout controller + shadow audit record once.
+2. Read its single automatic CI run; do not redispatch.
+3. If PASS, record the exact final 10-reject metrics and close the F3-3 acceptance gate while keeping production enforcement disabled.
+4. No prefilter may affect production decisions without a later explicit activation approval.
 
 ## Safety / no-repeat rules
 

@@ -86,7 +86,7 @@ describe("F3-3 Canada hard-requirement shadow on R0", () => {
       ({ decision }) => decision.disposition === "safe_reject",
     );
 
-    expect(rejected).toHaveLength(13);
+    expect(rejected).toHaveLength(10);
     expect(rejected.filter(({ row }) => row.status === "ready")).toEqual([]);
     expect(
       rejected.filter(({ row }) => (row.suitability_score ?? 0) >= 50),
@@ -104,8 +104,8 @@ describe("F3-3 Canada hard-requirement shadow on R0", () => {
     ]);
 
     expect(fullShadowSummary.total).toBe(R0_TOTAL);
-    expect(fullShadowSummary.safeReject).toBe(13);
-    expect(fullShadowSummary.estimatedSavingsRate).toBeCloseTo(13 / R0_TOTAL);
+    expect(fullShadowSummary.safeReject).toBe(10);
+    expect(fullShadowSummary.estimatedSavingsRate).toBeCloseTo(10 / R0_TOTAL);
     console.info(
       `F3-3 Canada hard-evidence summary total=${R0_TOTAL} safeReject=${rejected.length} savingsRate=${fullShadowSummary.estimatedSavingsRate.toFixed(6)} maxRejectedScore=${Math.max(...rejected.map(({ row }) => row.suitability_score ?? -1))}`,
     );

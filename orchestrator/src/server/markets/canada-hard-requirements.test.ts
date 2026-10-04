@@ -41,6 +41,8 @@ describe("Canada hard requirement evidence", () => {
     "Legally allowed to work in Canada: Canadian citizen, permanent resident, or existing VISA with no work restrictions.",
     "Proof of eligibility may be a Canadian passport, citizenship certificate, permanent residence, or open work permit.",
     "Canadian citizens and permanent residents will be given priority, but all qualified applicants are encouraged to apply.",
+    "In accordance with Canadian immigration requirements, Canadian citizens and permanent residents will be given priority.",
+    "Applicants must be authorized to work in Canada to apply (Canadian Citizen or Permanent Resident).",
   ])("does not turn preference or alternative eligibility into a hard signal: %s", (description) => {
     expect(extractCanadaHardRequirementSignals(description)).toEqual([]);
   });
