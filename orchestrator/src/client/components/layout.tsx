@@ -49,6 +49,7 @@ import { Tip } from "./Tip";
 export const AppModeContext = React.createContext({
   appMode: "local" as "local" | "hosted",
   isPending: false,
+  isSystemAdmin: false,
 });
 
 export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -58,12 +59,21 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({
     queryKey: queryKeys.app.status(),
     queryFn: getAppStatus,
   });
+  const appMode = appStatusQuery.data?.appMode ?? "local";
+  const currentUserQuery = useQuery({
+    queryKey: ["auth", "me", "app-mode"],
+    queryFn: getCurrentAuthUser,
+    enabled: appMode === "hosted" && hasAuthenticatedSession(),
+    retry: false,
+    staleTime: 60_000,
+  });
 
   return (
     <AppModeContext.Provider
       value={{
-        appMode: appStatusQuery.data?.appMode ?? "local",
+        appMode,
         isPending: appStatusQuery.isPending,
+        isSystemAdmin: currentUserQuery.data?.isSystemAdmin === true,
       }}
     >
       {children}
@@ -120,17 +130,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const navOpen = controlledNavOpen ?? internalNavOpen;
   const setNavOpen = onNavOpenChange ?? setInternalNavOpen;
   const { version, updateAvailable } = useVersionCheck();
-  const { appMode } = React.useContext(AppModeContext);
-  const currentUserQuery = useQuery({
-    queryKey: ["auth", "me", "navigation"],
-    queryFn: getCurrentAuthUser,
-    enabled: appMode === "hosted" && hasAuthenticatedSession(),
-    retry: false,
-    staleTime: 60_000,
-  });
+  const { appMode, isSystemAdmin } = React.useContext(AppModeContext);
   const navLinks = resolveNavLinks({
     appMode,
-    isSystemAdmin: currentUserQuery.data?.isSystemAdmin === true,
+    isSystemAdmin,
   });
 
   useEffect(() => {
