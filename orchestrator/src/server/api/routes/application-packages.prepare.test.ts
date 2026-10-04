@@ -206,6 +206,68 @@ describe.sequential("F3-6D application package prepare API", () => {
       status: "draft",
     });
 
+    const packageId = body.data.applicationPackage.id as string;
+    const reviewResponse = await fetch(
+      `${baseUrl}/api/application-packages/${packageId}/review`,
+      { headers: { Authorization: `Bearer ${owner.token}` } },
+    );
+    const reviewBody = await reviewResponse.json();
+    expect(reviewResponse.status, JSON.stringify(reviewBody)).toBe(200);
+    expect(reviewBody.data).toMatchObject({
+      liveGate: { state: "live" },
+      qa: { pass: true },
+    });
+    expect(reviewBody.data.requirementCoverage).toHaveLength(1);
+    expect(reviewBody.data.requirementCoverage[0]).toMatchObject({
+      state: "verified",
+      requirement: { text: "PLC knowledge is required." },
+      evidence: { evidenceText: "PLC" },
+    });
+
+    const approveResponse = await fetch(
+      `${baseUrl}/api/application-packages/${packageId}/approve`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${owner.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      },
+    );
+    const approveBody = await approveResponse.json();
+    expect(approveResponse.status, JSON.stringify(approveBody)).toBe(200);
+    expect(approveBody.data).toMatchObject({
+      qa: { pass: true },
+      applicationPackage: { id: packageId, status: "approved" },
+    });
+
+    const exportResponse = await fetch(
+      `${baseUrl}/api/application-packages/${packageId}/export`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${owner.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      },
+    );
+    const exportBody = await exportResponse.json();
+    expect(exportResponse.status, JSON.stringify(exportBody)).toBe(200);
+    expect(exportBody.data).toMatchObject({
+      applicationPackage: { id: packageId, status: "exported" },
+      artifact: {
+        mediaType: "application/json",
+        document: {
+          packageId,
+          marketPostingVersionId: "posting-prepare-v1",
+          profileVersionId: "prepare-profile-v1",
+          strategyVersionId: "prepare-strategy-v1",
+        },
+      },
+    });
+
     const otherResponse = await fetch(
       `${baseUrl}/api/application-packages/postings/${marketPostingId}/prepare`,
       {
@@ -219,5 +281,24 @@ describe.sequential("F3-6D application package prepare API", () => {
     );
 
     expect(otherResponse.status).toBe(404);
+
+    const otherReviewResponse = await fetch(
+      `${baseUrl}/api/application-packages/${packageId}/review`,
+      { headers: { Authorization: `Bearer ${other.token}` } },
+    );
+    expect(otherReviewResponse.status).toBe(404);
+
+    const otherExportResponse = await fetch(
+      `${baseUrl}/api/application-packages/${packageId}/export`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${other.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}),
+      },
+    );
+    expect(otherExportResponse.status).toBe(404);
   });
 });

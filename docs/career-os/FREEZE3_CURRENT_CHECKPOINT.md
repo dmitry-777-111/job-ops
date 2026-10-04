@@ -47,6 +47,15 @@ Updated: 2026-10-04 04:52 EDT
 - `3295132` passed full CI (`37195192049`): live gate + requirement extraction + verified evidence/gap mapping composition is green.
 - `ff58e9d` CI (`37195432886`) exposed one TypeScript-only import error in the new application-draft orchestration; feature logic was not accepted from that run.
 - `10032b3` passed full CI (`37195666555`): F3-6 draft orchestration is green. `Prepare application` now pins posting/profile/strategy/generation-policy versions, persists verified evidence/gaps, enforces CLOSED/UNKNOWN rules, and has hosted API tenant-isolation/persistence acceptance coverage.
+- `90c5cd6` CI (`37196037173`) failed only the new generation test typing; feature logic was not accepted from that run.
+- `9e363b7` passed full CI (`37196231237`): truth-constrained targeted CV and evidence-bounded cover-letter generation are green.
+- `5a5f949` passed full CI (`37196451850`): package QA truth/staleness gate is green.
+- `d978abb` passed full CI (`37196858201`): QA evaluation and explicit approval orchestration are green.
+- `b941a4d` passed full CI (`37221251524`): pinned-version candidate review API is green.
+- `4ed8b9a` passed full CI (`37221487307`): job-facing package facade is green.
+- `735db7f` passed full CI (`37221909072`): candidate Prepare application / review / approval UI is green.
+- `2172a7d` passed full CI (`37222245114`): approved-package export re-runs QA, marks the package exported, and provides the candidate export artifact.
+- Final F3-6 truth-regression and prepare -> review -> approve -> export acceptance tests are prepared and are the next single commit.
 - Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
@@ -65,10 +74,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Begin F3-6C truth-constrained generation behind the verified-evidence boundary.
-2. Produce a targeted CV derivative without inventing candidate facts; preserve unsupported requirements as gaps.
-3. Add cover-letter/form-answer drafting only from verified candidate evidence plus public vacancy facts.
-4. Add a QA/truth gate before approval/export, then staleness and explicit candidate approval.
+1. Commit the prepared F3-6F truth regression plus fresh product-API prepare -> review -> approve -> export acceptance flow.
+2. Run its single automatic full CI; do not redispatch it.
+3. If the acceptance CI is green, update FREEZE3_F3_6_ACCEPTANCE.md with that evidence, refresh this checkpoint and mark F3-6 PASS/CLOSED.
+4. Only then move to the next Freeze 3 phase from the master plan.
 5. Keep Freeze 2 production and safe-prefilter enforcement unchanged until their separate acceptance/activation decisions.
 
 ## Compact diagnostics / anti-limit rules
