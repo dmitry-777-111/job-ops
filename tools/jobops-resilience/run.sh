@@ -4,11 +4,13 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 RUNTIME="$ROOT/.jobops-runtime"
 LOGS="$ROOT/.jobops-logs"
 mkdir -p "$RUNTIME" "$LOGS"
+source "$ROOT/tools/jobops-resilience/log-guard.sh"
 if [ "$#" -lt 3 ]; then echo "usage: run.sh <job-id> <retry-safe:0|1> <command...>" >&2; exit 2; fi
 JOB="$1"; SAFE="$2"; shift 2; CMD="$*"
 case "$JOB" in (*[!A-Za-z0-9._-]*|'') echo "invalid job id" >&2; exit 2;; esac
 [ "$SAFE" = 0 ] || [ "$SAFE" = 1 ] || { echo "retry-safe must be 0 or 1" >&2; exit 2; }
 META="$RUNTIME/$JOB.meta"; PIDF="$RUNTIME/$JOB.pid"; EXITF="$RUNTIME/$JOB.exit"; HEART="$RUNTIME/$JOB.heartbeat"; LOG="$LOGS/$JOB.log"
+jobops_rotate_log_if_needed "$LOG"
 rm -f "$EXITF"
 printf 'job=%s\nretry_safe=%s\nretries=0\ncommand_b64=%s\nstarted_at=%s\n' "$JOB" "$SAFE" "$(printf '%s' "$CMD" | base64 -w0)" "$(date -Is)" > "$META"
 nohup bash -lc '

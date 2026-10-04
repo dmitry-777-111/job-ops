@@ -5,12 +5,15 @@ RUNTIME="$ROOT/.jobops-runtime"
 LOGS="$ROOT/.jobops-logs"
 LOCK="$RUNTIME/watchdog.lock"
 mkdir -p "$RUNTIME" "$LOGS"
+source "$ROOT/tools/jobops-resilience/log-guard.sh"
 exec 9>"$LOCK"; flock -n 9 || exit 0
 for META in "$RUNTIME"/*.meta; do
   [ -e "$META" ] || continue
   unset job retry_safe retries command_b64 started_at
   . "$META"
   PIDF="$RUNTIME/$job.pid"; EXITF="$RUNTIME/$job.exit"; HEART="$RUNTIME/$job.heartbeat"; LOG="$LOGS/$job.log"
+  jobops_rotate_log_if_needed "$LOG"
+  jobops_rotate_log_if_needed "$LOGS/watchdog.log"
   [ -f "$EXITF" ] && continue
   pid="$(cat "$PIDF" 2>/dev/null || true)"
   if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then continue; fi

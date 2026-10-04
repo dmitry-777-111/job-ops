@@ -23,18 +23,18 @@ The durable anti-repeat mechanism is now:
 
 ## Local next unit
 
-Prepared next after dispatcher startup validation:
-- disk-pressure guard with 80% warning, 85% optional-heavy-work block, 90% critical state;
-- startup visibility of current disk pressure;
-- no automatic destructive cleanup.
+Prepared next after disk-pressure validation:
+- bounded resilience logs: 5 MiB default cap per active log, two rotated copies retained;
+- rotation happens before new writes and never touches pipeline data;
+- retention is configurable with `JOBOPS_LOG_MAX_BYTES` and `JOBOPS_LOG_KEEP`.
 
 ## Next exact actions
 
 1. Read terminal result of CI run `37165481990`.
 2. If PASS: commit/push the already prepared startup-wiring unit once; automatic CI validates it.
 3. If FAIL: read only the failing job/log, apply the minimal fix to `9eea53e`, then continue the same startup-wiring unit without rebuilding it.
-4. After startup-wiring validation, commit/push the prepared disk-pressure guard.
-5. Then complete log safeguards and the controlled interrupted-vs-uninterrupted equivalence test.
+4. After disk-pressure validation, commit/push the prepared log safeguards.
+5. Then run the controlled interrupted-vs-uninterrupted equivalence test.
 
 ## Safety / no-repeat rules
 
