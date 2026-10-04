@@ -44,9 +44,9 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared safe public-extractor shared-discovery integration + two-candidate discovery regression once.
-2. Read its single automatic CI run; do not redispatch.
-3. If PASS, combine that result with the already-green private-domain isolation regression and write the F3-4 acceptance record.
+1. Commit/push the anti-interruption tooling + F3-4 acceptance record once.
+2. Read its single automatic CI run with `compact-ci.sh`; do not redispatch.
+3. If PASS, begin F3-5 Product onboarding + UX from the existing signup/profile/settings/navigation foundation.
 4. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Compact diagnostics / anti-limit rules
