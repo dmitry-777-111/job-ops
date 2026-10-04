@@ -22,7 +22,8 @@ Updated: 2026-10-03 21:30 EDT
 - `1fd1e23` added the tightened parser, audit record, and staged rollout controller, but its single CI run `37170981072` failed only two focused tests: generic "authorized to work in Canada (Canadian Citizen or Permanent Resident)" wording was still being misclassified, producing 12 rejects instead of the audited 10.
 - `e19bb90` passed full CI (`37174790740`): generic work-authorization framing is excluded from the citizen/PR-only hard signal. Final deterministic result is exactly 10 SAFE_REJECT cases, max historical score 38, zero `ready` rejects, zero score>=50 rejects, and 10/10 manual audit coverage.
 - `63eeaa6` passed full CI (`37175005471`): F3-3 acceptance record is durable. F3-3 Safe Prefilter is PASS/CLOSED for shadow/audit readiness; production enforcement remains disabled pending a separate explicit activation approval.
-- Current prepared F3-4 unit adds a hosted two-candidate isolation regression for profile, strategy, connection status, encrypted credentials, and cross-user activation attempts.
+- `6936ca4` passed full CI (`37175486379`): hosted two-candidate private-domain isolation is green for profile, strategy, connection status, encrypted credentials, and cross-user activation attempts.
+- Current prepared unit is `FREEZE3_F3_4_GAP_AUDIT.md`, documenting the only remaining F3-4 gate gap: duplicate heavy public discovery across shareable candidate runs.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -40,10 +41,11 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared F3-4 candidate-private isolation test once.
+1. Commit/push the F3-4 gap audit once.
 2. Read its single automatic CI run; do not redispatch.
-3. If PASS, audit and implement the remaining F3-4 gap: avoid duplicate heavy discovery when two candidate requests are shareable, while preserving per-candidate evaluation/status isolation.
-4. Keep prefilter enforcement disabled until a later explicit activation approval.
+3. If PASS, implement the bounded shared-discovery coordinator and its exact-fingerprint/single-flight tests.
+4. Then integrate it only into the safe public-extractor path and prove two candidates cause one heavy discovery call while downstream candidate state remains isolated.
+5. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Safety / no-repeat rules
 
