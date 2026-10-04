@@ -15,7 +15,9 @@ Updated: 2026-10-03 21:30 EDT
 - `8ffab66` passed full CI (`37169232837`): the frozen 1,274-row R0 corpus produces identical accepted IDs under legacy and migrated search/location configuration.
 - `d4b39a1` passed full CI (`37169388118`): F3-2 Candidate/Strategy Domain is durably recorded as PASS/CLOSED.
 - `1cf2569` passed full CI (`37169856874`): F3-3 shadow-only safe prefilter foundation is green after the single type-only test-fixture repair.
-- Current prepared unit runs that prefilter against the frozen 1,274-row R0 corpus and rejects the phase if any known selected job or any scored job at >=50 is falsely safe-rejected.
+- `f612afb` passed full CI (`37170437988`): the R0 geography shadow now has zero false rejects after ambiguous multi-location evidence was downgraded to UNKNOWN-to-AI.
+- Observed geography-only shadow result: 1,274 total = 0 safe rejects, 13 uncertain-to-AI, 1,261 pass-to-AI; therefore 0% savings and no basis for activation by geography alone.
+- Current prepared unit adds Canada-specific explicit hard-requirement evidence behind the Canada boundary plus a generic strategy-driven evidence-signal reject rule. The frozen broad evidence corpus contains 25 candidate postings; preliminary deterministic audit identifies 13 safe rejects, zero selected jobs, and zero score>=50 cases.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -33,9 +35,9 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared R0 shadow prefilter regression test once.
-2. Read its single automatic CI run and extract the printed savings summary; do not redispatch.
-3. If PASS, record the observed savings/false-negative result and decide whether the rule set is strong enough for staged activation or needs more evidence-backed rules.
+1. Commit/push the prepared Canada hard-requirement shadow evidence unit once.
+2. Read its single automatic CI run and extract the exact savings/max-rejected-score summary; do not redispatch.
+3. If PASS, record the F3-3 shadow metrics and add audit-sample/staged-activation safeguards without enabling production rejection.
 4. No prefilter may affect production decisions until false-negative and decision-worthy regression gates pass.
 
 ## Safety / no-repeat rules

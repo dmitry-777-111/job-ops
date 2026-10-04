@@ -147,6 +147,36 @@ describe("safe prefilter shadow rules", () => {
     expect(result.evidence).toContain("verified:no_sponsorship");
   });
 
+  it("safe-rejects only configured market evidence signals", () => {
+    const hardSignalStrategy = strategy([
+      {
+        id: "eligibility",
+        key: "reject_evidence_signals",
+        kind: "hard",
+        value: ["canada.citizenship_required"],
+        source: "candidate",
+        confidence: 1,
+        effectiveAt: "2026-10-01T00:00:00.000Z",
+      },
+    ]);
+
+    const rejected = evaluateSafePrefilter({
+      job: { location: "Ottawa, Ontario, Canada" },
+      strategy: hardSignalStrategy,
+      evidenceSignals: ["canada.citizenship_required"],
+      evaluatedAt: at,
+    });
+    const notConfigured = evaluateSafePrefilter({
+      job: { location: "Ottawa, Ontario, Canada" },
+      strategy: hardSignalStrategy,
+      evidenceSignals: ["canada.passport_required"],
+      evaluatedAt: at,
+    });
+
+    expect(rejected.disposition).toBe("safe_reject");
+    expect(notConfigured.disposition).toBe("pass_to_ai");
+  });
+
   it("does not convert missing sponsorship evidence into a failure", () => {
     const result = evaluateSafePrefilter({
       job: { location: "Toronto, Ontario, Canada" },

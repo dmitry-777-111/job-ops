@@ -212,6 +212,7 @@ export function evaluateSafePrefilter(input: {
   job: PrefilterJob;
   strategy: CandidateStrategyProfile;
   verifiedFacts?: JobVerifiedFact[];
+  evidenceSignals?: string[];
   evaluatedAt?: string;
 }): SafePrefilterDecision {
   const evaluatedAt = input.evaluatedAt ?? new Date().toISOString();
@@ -230,6 +231,26 @@ export function evaluateSafePrefilter(input: {
     evaluatedAt,
   );
   if (verifiedHardFact) return verifiedHardFact;
+
+  const rejectSignals = getEffectiveHardConstraint(
+    input.strategy,
+    "reject_evidence_signals",
+    evaluatedAt,
+  );
+  const configuredSignals = asStringArray(rejectSignals?.value);
+  const matchedSignal = (input.evidenceSignals ?? []).find((signal) =>
+    configuredSignals.includes(signal),
+  );
+  if (rejectSignals && matchedSignal) {
+    return {
+      disposition: "safe_reject",
+      hardGateOutcome: "fail",
+      ruleVersion: SAFE_PREFILTER_RULE_VERSION,
+      reason:
+        "Explicit market evidence matches a candidate hard-reject signal.",
+      evidence: [rejectSignals.id, `signal:${matchedSignal}`],
+    };
+  }
 
   return {
     disposition: "pass_to_ai",
