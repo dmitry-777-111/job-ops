@@ -11,7 +11,8 @@ Updated: 2026-10-03 21:30 EDT
 - `dc6519c` passed full CI (`37168368363`): F3-0 baseline/evidence and F3-1 acceptance are durably closed.
 - `f46d896` passed full CI (`37168586940`): F3-2 legacy strategy bootstrap is green.
 - `e1f87df` passed full CI (`37168809285`): profile/strategy versioning repository coverage and live migration preview are green.
-- Current prepared unit adds a formal legacy-vs-migrated behavior projection so the F3-2 equivalence gate is machine-checked rather than narrative-only.
+- `b8ca148` passed full CI (`37169023123`): legacy-vs-migrated strategy behavior projection is machine-checked.
+- Current prepared unit applies the legacy and migrated location/search configuration to the frozen 1,274-row R0 corpus and requires identical accepted job IDs plus identical search terms.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -29,7 +30,7 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared F3-2 behavior-equivalence projection/test once.
+1. Commit/push the prepared R0 search-equivalence test once.
 2. Read its single automatic CI run; do not redispatch.
 3. If PASS, write the F3-2 acceptance record from the existing evidence and close the phase.
 4. Do not activate or deploy the new domain in Freeze 2 production during development.
