@@ -287,12 +287,12 @@ type ProductEventMap = {
   };
   onboarding_started: {
     entry_state: "account_required" | "launch";
-    next_step: "account" | "profile" | "model" | "resume" | "none";
+    next_step: "account" | "profile" | "strategy" | "model" | "resume" | "none";
     has_session: boolean;
     demo_mode: boolean;
   };
   onboarding_step_viewed: {
-    step: "profile" | "model" | "resume";
+    step: "profile" | "strategy" | "model" | "resume";
     step_index: number;
     requirement_status:
       | "ready"
@@ -365,8 +365,14 @@ type ProductEventMap = {
   };
   onboarding_status_checked: {
     complete: boolean;
-    next_step: "profile" | "model" | "resume" | "none";
+    next_step: "profile" | "strategy" | "model" | "resume" | "none";
     profile_status:
+      | "ready"
+      | "needs_action"
+      | "invalid"
+      | "checking_unavailable"
+      | "missing";
+    strategy_status:
       | "ready"
       | "needs_action"
       | "invalid"
