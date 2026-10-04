@@ -44,7 +44,10 @@ function verifiedFact(factKey: JobVerifiedFact["factKey"]): JobVerifiedFact {
 describe("safe prefilter shadow rules", () => {
   it("safe-rejects only an explicit hard geography mismatch", () => {
     const result = evaluateSafePrefilter({
-      job: { location: "New York, NY, United States" },
+      job: {
+        location: "New York, NY, United States",
+        locationEvidence: { country: "United States" },
+      },
       strategy: strategy([
         {
           id: "geo",
@@ -72,6 +75,33 @@ describe("safe prefilter shadow rules", () => {
         ruleVersion: SAFE_PREFILTER_RULE_VERSION,
       }),
     );
+  });
+
+  it("does not safe-reject ambiguous multi-location text without explicit country evidence", () => {
+    const result = evaluateSafePrefilter({
+      job: { location: "Surrey, BC/Saskatoon, SK/Lively, ON" },
+      strategy: strategy([
+        {
+          id: "geo",
+          key: "search_geography",
+          kind: "hard",
+          value: {
+            country: "canada",
+            cities: ["Toronto, ON", "Calgary, AB"],
+            workplaceTypes: ["onsite"],
+            scope: "selected_only",
+            matchStrictness: "flexible",
+          },
+          source: "candidate",
+          confidence: 1,
+          effectiveAt: "2026-10-01T00:00:00.000Z",
+        },
+      ]),
+      evaluatedAt: at,
+    });
+
+    expect(result.disposition).toBe("uncertain_to_ai");
+    expect(result.hardGateOutcome).toBe("unknown");
   });
 
   it("routes missing hard-geography evidence to AI instead of rejecting", () => {

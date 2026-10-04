@@ -110,11 +110,48 @@ function evaluateHardGeography(
   });
   const match = matchJobLocationIntent(job, intent);
   if (!match.matched) {
+    // A free-form location can be incomplete or multi-location (for example,
+    // several Canadian provinces without the country token). That is not
+    // strong enough evidence for an irreversible reject. Only a structured
+    // explicit country mismatch may become SAFE_REJECT.
+    const explicitCountry = job.locationEvidence?.country?.trim() ?? "";
+    if (!explicitCountry || !country) {
+      return {
+        disposition: "uncertain_to_ai",
+        hardGateOutcome: "unknown",
+        ruleVersion: SAFE_PREFILTER_RULE_VERSION,
+        reason:
+          "Location does not match the hard geography, but country evidence is not explicit enough for safe rejection.",
+        evidence: [constraint.id, match.reasonCode],
+      };
+    }
+
+    const explicitCountryIntent = createLocationIntentFromLegacyInputs({
+      selectedCountry: country,
+      searchScope: searchScope,
+      matchStrictness,
+    });
+    const explicitCountryMatch = matchJobLocationIntent(
+      { location: explicitCountry },
+      explicitCountryIntent,
+    );
+    if (!explicitCountryMatch.matched) {
+      return {
+        disposition: "safe_reject",
+        hardGateOutcome: "fail",
+        ruleVersion: SAFE_PREFILTER_RULE_VERSION,
+        reason:
+          "Explicit structured country evidence conflicts with hard geography.",
+        evidence: [constraint.id, `country:${explicitCountry}`],
+      };
+    }
+
     return {
-      disposition: "safe_reject",
-      hardGateOutcome: "fail",
+      disposition: "uncertain_to_ai",
+      hardGateOutcome: "unknown",
       ruleVersion: SAFE_PREFILTER_RULE_VERSION,
-      reason: "Explicit hard geography mismatch.",
+      reason:
+        "Structured country matches, but the remaining location evidence is ambiguous.",
       evidence: [constraint.id, match.reasonCode],
     };
   }
