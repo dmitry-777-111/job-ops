@@ -7,6 +7,7 @@ import {
   getLatestMarketPostingVersionId,
 } from "@server/repositories/market-inventory";
 import type { ApplicationPackage } from "@shared/types";
+import { buildTruthConstrainedApplicationDraft } from "./application-package-generation";
 import { buildApplicationPackagePreparation } from "./application-package-preparation";
 
 export const APPLICATION_PACKAGE_GENERATION_POLICY_VERSION = "freeze3-mvp-v1";
@@ -63,6 +64,13 @@ export async function prepareApplicationPackageDraft(input: {
     );
   }
 
+  const generated = buildTruthConstrainedApplicationDraft({
+    posting: context.posting,
+    profile: profile.profile,
+    evidenceMap: preparation.evidenceMap,
+    gaps: preparation.gaps,
+  });
+
   const applicationPackage = await createApplicationPackageDraft({
     marketPostingId: input.marketPostingId,
     marketPostingVersionId,
@@ -71,6 +79,9 @@ export async function prepareApplicationPackageDraft(input: {
     generationPolicyVersion: APPLICATION_PACKAGE_GENERATION_POLICY_VERSION,
     evidenceMap: preparation.evidenceMap,
     gaps: preparation.gaps,
+    targetedCvJson: generated.targetedCvJson,
+    coverLetter: generated.coverLetter,
+    formAnswers: generated.formAnswers,
   });
 
   return {

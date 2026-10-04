@@ -39,6 +39,14 @@ Updated: 2026-10-04 04:52 EDT
 - `e760795` passed full CI (`37187585818`): fresh-candidate API acceptance is green.
 - `59bcf7f` passed full CI (`37189610439`): fresh hosted candidate can sign up, configure profile/strategy, import+confirm resume, obtain active profile/strategy, and become search-ready/application-package-ready through product APIs.
 - `50eca8d` passed full CI (`37190131324`): F3-5 acceptance record is durable. F3-5 Product onboarding + UX is PASS/CLOSED.
+- `2451e0c` passed full CI (`37190348925`): F3-6 gap audit and refreshed anti-interruption checkpoint are durable.
+- `e660de2` passed full CI (`37190741644`): F3-6A authoritative LIVE/CLOSED/UNKNOWN vacancy gate is green.
+- `1a05e87` passed full CI (`37191002651`): candidate-facing live-gate API and cross-tenant isolation regression are green.
+- `44e42b0` CI (`37191286628`) failed one new focused requirement/evidence test while 340 test files passed; root cause was an experience-with-years statement being classified as a skill because it contained PLC.
+- `bb4785e` passed full CI (`37191562665`): the narrow experience-classification repair is green.
+- `3295132` passed full CI (`37195192049`): live gate + requirement extraction + verified evidence/gap mapping composition is green.
+- `ff58e9d` CI (`37195432886`) exposed one TypeScript-only import error in the new application-draft orchestration; feature logic was not accepted from that run.
+- `10032b3` passed full CI (`37195666555`): F3-6 draft orchestration is green. `Prepare application` now pins posting/profile/strategy/generation-policy versions, persists verified evidence/gaps, enforces CLOSED/UNKNOWN rules, and has hosted API tenant-isolation/persistence acceptance coverage.
 - Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
@@ -57,10 +65,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Begin F3-6 Application Package Builder MVP from the evidence-based gap audit.
-2. Implement F3-6A authoritative vacancy live gate first; CLOSED must block package generation and UNKNOWN must require explicit review.
-3. Then implement normalized requirement extraction + verified candidate evidence mapping while preserving UNKNOWN as a gap.
-4. Keep AI drafting behind the evidence boundary; AI output is never evidence for candidate facts.
+1. Begin F3-6C truth-constrained generation behind the verified-evidence boundary.
+2. Produce a targeted CV derivative without inventing candidate facts; preserve unsupported requirements as gaps.
+3. Add cover-letter/form-answer drafting only from verified candidate evidence plus public vacancy facts.
+4. Add a QA/truth gate before approval/export, then staleness and explicit candidate approval.
 5. Keep Freeze 2 production and safe-prefilter enforcement unchanged until their separate acceptance/activation decisions.
 
 ## Compact diagnostics / anti-limit rules
