@@ -56,7 +56,7 @@ function classifyRequirement(text: string): ApplicationRequirementCategory {
     return "travel";
   }
   if (
-    /\b(years? of experience|experience with|experience in|experience working|hands[- ]on experience)\b/.test(
+    /\b(years?\b[^.]{0,80}\bexperience|experience with|experience in|experience working|hands[- ]on experience)\b/.test(
       value,
     )
   ) {
