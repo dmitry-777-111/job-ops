@@ -28,7 +28,9 @@ Updated: 2026-10-03 21:30 EDT
 - `7f7bf7f` passed full CI (`37176478379`): safe public discovery reuse is integrated behind explicit extractor opt-in (initially JobSpy), and the two-candidate regression proves one heavy extractor execution for identical shareable discovery.
 - `06922d7` passed full CI (`37176824585`): F3-4 Multi-user <=5 acceptance and the anti-interruption protocol/tooling are durable. F3-4 is PASS/CLOSED.
 - `f3342f0` passed full CI (`37177075551`): the F3-5 Product onboarding + UX gap audit is durable.
-- Current prepared F3-5 unit starts the strategy-onboarding domain: deterministic missing-dimension questions plus draft derivation from explicit candidate answers and current search settings. It creates a draft only; activation remains an explicit later confirmation step.
+- `270dde2` passed full CI (`37178139713`): the strategy-onboarding domain foundation and focused tests are green.
+- Interruption forensics found 29 stale blocked Desktop Commander session shells (PowerShell/SSH), some alive for many hours; they were terminated only after Git/CI state was verified. No committed project work was lost.
+- The anti-interruption protocol is tightened to avoid long-lived interactive shells, large output, high-frequency polling, and multiline PowerShell -> SSH -> Bash code injection.
 - Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
@@ -47,11 +49,11 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared strategy-onboarding domain service + focused tests once.
+1. Commit/push the anti-interruption forensic update once.
 2. Read its single automatic CI run with compact status only; do not redispatch.
 3. If PASS, wire the onboarding strategy requirement/actions and candidate-facing text step with draft preview + explicit activation.
 4. Then add AI-assisted adaptive question enrichment, keeping deterministic fallback and UNKNOWN semantics; voice remains optional/capability-gated.
-5. After strategy onboarding is green, simplify candidate navigation while preserving technical screens under Advanced/Admin.
+5. After strategy onboarding is green, restore the preserved F3-5A navigation WIP from stash and finish candidate navigation while preserving technical screens under Advanced/Admin.
 6. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Compact diagnostics / anti-limit rules

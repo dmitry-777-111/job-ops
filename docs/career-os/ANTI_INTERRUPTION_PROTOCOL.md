@@ -8,6 +8,8 @@ Purpose: keep long Freeze 3 work resumable while preventing chat/tool-output lim
 2. **Oversized stdout is avoidable.** Full CI logs, broad recursive grep output, and large `sed` ranges can consume tool/output limits without adding evidence.
 3. **High-frequency polling is wasteful.** GitHub test jobs can take several minutes; repeated status calls add messages/context but do not make CI finish sooner.
 4. **Long work must survive chat interruption.** Repository SHA, origin SHA, checkpoint, CI run id, DB state, and resilience runtime files are authoritative recovery points.
+5. **Stale terminal sessions can accumulate.** A forensic check found dozens of blocked Desktop Commander PowerShell/SSH sessions surviving for hours. They consumed memory/process slots and could replay delayed stdout. Stale session shells were terminated; active project state was preserved in Git/CI/checkpoints.
+6. **Nested multiline SSH quoting is fragile.** PowerShell -> SSH -> Bash heredocs/pipes can be reinterpreted by the wrong shell. Multiline code is now edited/written as files first, then transferred or executed with simple bounded commands.
 
 ## Mandatory operating rules
 
@@ -18,6 +20,8 @@ Purpose: keep long Freeze 3 work resumable while preventing chat/tool-output lim
 - Prefer one status read after a meaningful wait over repeated polling.
 - Keep one pushed unit under CI and at most one prepared unpushed unit.
 - Never rerun a passed/active CI merely because the chat or remote-command transport timed out.
+- Do not keep a long-lived interactive terminal as the main work channel; use short-lived bounded commands. If blocked sessions survive longer than the work they launched, verify durable state and terminate only the stale session shells.
+- Do not send multiline Python/heredoc bodies through nested PowerShell -> SSH -> Bash quoting. Write/edit the file first, then run a simple command against it.
 - Before continuing after any interruption: `git status --short --branch`, local/origin SHA, latest checkpoint, latest CI. Do not reconstruct from chat narrative alone.
 
 ## Recovery invariant
