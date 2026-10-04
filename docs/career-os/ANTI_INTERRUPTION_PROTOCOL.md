@@ -18,6 +18,9 @@ Purpose: keep long Freeze 3 work resumable while preventing chat/tool-output lim
 - Wrap potentially noisy diagnostics with `tools/jobops-resilience/bounded-output.sh <lines> ...`.
 - Default diagnostic output budget: 80 lines per command; raise only for a specific reason.
 - Prefer one status read after a meaningful wait over repeated polling.
+- **Time-box every interactive work series.** Target wall-clock duration is 18 minutes from the first tool action. At about 18 minutes, stop starting new implementation work, persist the current state (commit or named stash + checkpoint), terminate stale/blocked observation shells, and collect only compact status.
+- **Hard stop before the observed interruption window.** By about 20 minutes, return a short progress report and wait for the user to say `??????????????????`. Do not start another CI wait, long command, build, test suite, broad search, or new implementation block after the 18-minute checkpoint boundary.
+- A background CI/job may continue after the report; record its run/job id and inspect it only in the next user-authorized series. Never keep the chat turn open merely to wait for CI.
 - Keep one pushed unit under CI and at most one prepared unpushed unit.
 - Never rerun a passed/active CI merely because the chat or remote-command transport timed out.
 - Do not keep a long-lived interactive terminal as the main work channel; use short-lived bounded commands. If blocked sessions survive longer than the work they launched, verify durable state and terminate only the stale session shells.

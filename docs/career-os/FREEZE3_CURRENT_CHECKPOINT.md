@@ -1,6 +1,6 @@
 # Freeze 3 current checkpoint
 
-Updated: 2026-10-03 21:30 EDT
+Updated: 2026-10-04 04:52 EDT
 
 ## Durable state
 
@@ -30,7 +30,15 @@ Updated: 2026-10-03 21:30 EDT
 - `f3342f0` passed full CI (`37177075551`): the F3-5 Product onboarding + UX gap audit is durable.
 - `270dde2` passed full CI (`37178139713`): the strategy-onboarding domain foundation and focused tests are green.
 - `bbd3b9b` passed full CI (`37178545823`): interruption forensics/protocol hardening is durable. The 29 stale blocked Desktop Commander session shells were removed only after Git/CI state was verified; no committed project work was lost.
-- Current prepared F3-5B unit wires a hosted strategy requirement into onboarding, creates a draft preview, requires explicit activation, keeps local/operator onboarding unchanged, and adds candidate UI + focused regression coverage.
+- `2eca0fc` passed full CI (`37179604406`): F3-5B hosted strategy onboarding is green with draft preview and explicit activation.
+- `161f9d1` passed full CI (`37180466861`): F3-5C adaptive-question service/API is green with deterministic fallback and UNKNOWN-preserving merge rules.
+- `73a96e6` passed full CI (`37180719512`): adaptive prompts are wired into candidate strategy onboarding without allowing AI to infer answers or constraints.
+- `50e34f1` passed full CI (`37182828222`): F3-5A simplified hosted candidate navigation is green after moving admin-role resolution out of ordinary PageHeader rendering.
+- `2b26269` passed full CI (`37183727561`): optional browser voice input is capability-gated, hidden when unsupported, and text remains the required path.
+- `fbf8404` passed full CI (`37183950537`): confirming the first resume creates/activates the first Master Career Profile without a hidden developer-only bootstrap step.
+- `e760795` passed full CI (`37187585818`): fresh-candidate API acceptance is green.
+- `59bcf7f` passed full CI (`37189610439`): fresh hosted candidate can sign up, configure profile/strategy, import+confirm resume, obtain active profile/strategy, and become search-ready/application-package-ready through product APIs.
+- `50eca8d` passed full CI (`37190131324`): F3-5 acceptance record is durable. F3-5 Product onboarding + UX is PASS/CLOSED.
 - Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
@@ -49,12 +57,11 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared F3-5B strategy onboarding integration once.
-2. Read its single automatic CI run with compact status only; do not redispatch.
-3. If PASS, add AI-assisted adaptive question enrichment, keeping deterministic fallback and UNKNOWN semantics; voice remains optional/capability-gated.
-4. Then restore the preserved F3-5A navigation WIP from stash and finish candidate navigation while preserving technical screens under Advanced/Admin.
-5. Finish F3-5 with a fresh hosted candidate acceptance run that requires no source/config-file edits.
-6. Keep prefilter enforcement disabled until a later explicit activation approval.
+1. Begin F3-6 Application Package Builder MVP from the evidence-based gap audit.
+2. Implement F3-6A authoritative vacancy live gate first; CLOSED must block package generation and UNKNOWN must require explicit review.
+3. Then implement normalized requirement extraction + verified candidate evidence mapping while preserving UNKNOWN as a gap.
+4. Keep AI drafting behind the evidence boundary; AI output is never evidence for candidate facts.
+5. Keep Freeze 2 production and safe-prefilter enforcement unchanged until their separate acceptance/activation decisions.
 
 ## Compact diagnostics / anti-limit rules
 
