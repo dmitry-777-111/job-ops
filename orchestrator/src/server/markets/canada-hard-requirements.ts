@@ -20,9 +20,9 @@ function hasCitizenOrPrOnlyRequirement(text: string): boolean {
   const match = text.match(mandatoryWindow) ?? text.match(reverseWindow);
   if (!match) return false;
 
-  // If the same requirement explicitly permits a visa/work permit, it is not
-  // a citizenship/PR-only gate and must not become SAFE_REJECT.
-  return !/(?:visa|work permit|legally entitled|legally eligible)/i.test(
+  // If the same requirement is framed as generic work authorization or explicitly
+  // permits a visa/work permit, it is not a proven citizenship/PR-only gate.
+  return !/(?:visa|work permit|legally entitled|legally eligible|authorized to work|authorization to work|eligible to work)/i.test(
     match[0],
   );
 }
