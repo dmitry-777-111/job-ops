@@ -162,13 +162,9 @@ describe("F3-6C truth-constrained application generation", () => {
 
     expect(targeted.basics?.summary).toBe(profile.basics?.summary);
     expect(targeted.sections?.experience).toEqual(profile.sections?.experience);
-    expect(
-      targeted.sections?.skills?.items?.map(({ id, ...item }) => item),
-    ).toEqual(
-      [
-        profile.sections?.skills?.items?.[1],
-        profile.sections?.skills?.items?.[0],
-      ].map(({ id, ...item }) => item),
-    );
+    expect(targeted.sections?.skills?.items).toEqual([
+      profile.sections?.skills?.items?.[1],
+      profile.sections?.skills?.items?.[0],
+    ]);
   });
 });
