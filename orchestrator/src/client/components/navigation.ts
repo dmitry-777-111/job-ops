@@ -54,6 +54,54 @@ export const NAV_LINKS: NavLink[] = [
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
+export const CANDIDATE_NAV_LINKS: NavLink[] = [
+  { to: "/overview", label: "Today", icon: Home },
+  {
+    to: "/jobs/ready",
+    label: "Matches",
+    icon: LayoutDashboard,
+    activePaths: [
+      "/jobs/ready",
+      "/jobs/discovered",
+      "/jobs/applied",
+      "/jobs/all",
+    ],
+  },
+  {
+    to: "/applications/in-progress",
+    label: "Applications",
+    icon: Columns3,
+    activePaths: ["/applications/in-progress"],
+  },
+  {
+    to: "/design-resume",
+    label: "Profile",
+    icon: FilePenLine,
+    activePaths: ["/design-resume"],
+  },
+  {
+    to: "/settings",
+    label: "Connections",
+    icon: Link2,
+    activePaths: ["/settings"],
+  },
+];
+
+export function resolveNavLinks(args: {
+  appMode: "local" | "hosted";
+  isSystemAdmin: boolean;
+}): NavLink[] {
+  if (args.appMode === "hosted" && !args.isSystemAdmin) {
+    return CANDIDATE_NAV_LINKS;
+  }
+
+  if (args.appMode === "hosted") {
+    return NAV_LINKS.filter(({ to }) => to !== "/tracking-inbox");
+  }
+
+  return NAV_LINKS;
+}
+
 export const isNavActive = (
   pathname: string,
   to: string,

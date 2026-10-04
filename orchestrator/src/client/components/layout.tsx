@@ -2,7 +2,12 @@
  * Shared layout components for consistent page structure.
  */
 
-import { getAppStatus, logout } from "@client/api";
+import {
+  getAppStatus,
+  getCurrentAuthUser,
+  hasAuthenticatedSession,
+  logout,
+} from "@client/api";
 import { useQuery } from "@tanstack/react-query";
 import {
   ExternalLink,
@@ -37,7 +42,7 @@ import {
   loadRememberedAuthUsers,
   type RememberedAuthUser,
 } from "../lib/remembered-auth-users";
-import { isNavActive, NAV_LINKS } from "./navigation";
+import { isNavActive, resolveNavLinks } from "./navigation";
 import { StatusBadgeIndicator } from "./StatusIndicator";
 import { Tip } from "./Tip";
 
@@ -116,10 +121,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const setNavOpen = onNavOpenChange ?? setInternalNavOpen;
   const { version, updateAvailable } = useVersionCheck();
   const { appMode } = React.useContext(AppModeContext);
-  const navLinks =
-    appMode === "hosted"
-      ? NAV_LINKS.filter(({ to }) => to !== "/tracking-inbox")
-      : NAV_LINKS;
+  const currentUserQuery = useQuery({
+    queryKey: ["auth", "me", "navigation"],
+    queryFn: getCurrentAuthUser,
+    enabled: appMode === "hosted" && hasAuthenticatedSession(),
+    retry: false,
+    staleTime: 60_000,
+  });
+  const navLinks = resolveNavLinks({
+    appMode,
+    isSystemAdmin: currentUserQuery.data?.isSystemAdmin === true,
+  });
 
   useEffect(() => {
     if (navOpen) {

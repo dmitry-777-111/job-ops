@@ -1,0 +1,54 @@
+import { describe, expect, it } from "vitest";
+import {
+  CANDIDATE_NAV_LINKS,
+  isNavActive,
+  NAV_LINKS,
+  resolveNavLinks,
+} from "./navigation";
+
+describe("candidate navigation", () => {
+  it("shows the five product destinations to a hosted candidate", () => {
+    const links = resolveNavLinks({
+      appMode: "hosted",
+      isSystemAdmin: false,
+    });
+
+    expect(links.map((link) => [link.label, link.to])).toEqual([
+      ["Today", "/overview"],
+      ["Matches", "/jobs/ready"],
+      ["Applications", "/applications/in-progress"],
+      ["Profile", "/design-resume"],
+      ["Connections", "/settings"],
+    ]);
+    expect(links).toEqual(CANDIDATE_NAV_LINKS);
+  });
+
+  it("keeps advanced navigation for a hosted system admin without hosted-only unsupported inbox", () => {
+    const links = resolveNavLinks({
+      appMode: "hosted",
+      isSystemAdmin: true,
+    });
+
+    expect(links.some((link) => link.label === "Tracer Links")).toBe(true);
+    expect(links.some((link) => link.label === "Visa Sponsors")).toBe(true);
+    expect(links.some((link) => link.label === "Watchlist")).toBe(true);
+    expect(links.some((link) => link.to === "/tracking-inbox")).toBe(false);
+  });
+
+  it("keeps the existing advanced navigation in local mode", () => {
+    expect(resolveNavLinks({ appMode: "local", isSystemAdmin: false })).toEqual(
+      NAV_LINKS,
+    );
+  });
+
+  it("keeps candidate match paths active across job views", () => {
+    const matches = CANDIDATE_NAV_LINKS.find(
+      (link) => link.label === "Matches",
+    );
+    expect(matches).toBeDefined();
+    if (!matches) throw new Error("Matches navigation link is missing");
+    expect(
+      isNavActive("/jobs/discovered/some-job", matches.to, matches.activePaths),
+    ).toBe(true);
+  });
+});
