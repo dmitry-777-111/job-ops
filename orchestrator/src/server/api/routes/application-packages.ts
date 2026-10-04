@@ -1,6 +1,10 @@
 import { notFound, toAppError } from "@infra/errors";
 import { fail, ok } from "@infra/http";
 import { getCandidateMarketPostingLiveContext } from "@server/repositories/market-inventory";
+import {
+  approveApplicationPackage,
+  evaluateStoredApplicationPackageQa,
+} from "@server/services/application-package-approval";
 import { prepareApplicationPackageDraft } from "@server/services/application-package-draft";
 import { deriveApplicationVacancyLiveGate } from "@server/services/application-package-live-gate";
 import { type Request, type Response, Router } from "express";
@@ -33,6 +37,38 @@ applicationPackagesRouter.post(
           req.body?.acknowledgeUnknownLiveState === true,
       });
       ok(res, result, 201);
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+applicationPackagesRouter.get(
+  "/:applicationPackageId/qa",
+  async (req: Request, res: Response) => {
+    try {
+      const result = await evaluateStoredApplicationPackageQa({
+        applicationPackageId: req.params.applicationPackageId,
+        acknowledgeUnknownLiveState:
+          req.query.acknowledgeUnknownLiveState === "true",
+      });
+      ok(res, result);
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+applicationPackagesRouter.post(
+  "/:applicationPackageId/approve",
+  async (req: Request, res: Response) => {
+    try {
+      const result = await approveApplicationPackage({
+        applicationPackageId: req.params.applicationPackageId,
+        acknowledgeUnknownLiveState:
+          req.body?.acknowledgeUnknownLiveState === true,
+      });
+      ok(res, result);
     } catch (error) {
       fail(res, toAppError(error));
     }
