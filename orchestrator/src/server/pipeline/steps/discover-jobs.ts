@@ -13,6 +13,10 @@ import {
 import * as settingsRepo from "@server/repositories/settings";
 import { withHostedUsageReservation } from "@server/services/hosted-usage";
 import { resolveNearbyPlaceNames } from "@server/services/proximity-search";
+import {
+  buildSharedDiscoveryFingerprint,
+  runSharedDiscovery,
+} from "@server/services/shared-discovery-coordinator";
 import { asyncPool } from "@server/utils/async-pool";
 import { listHydratedWatchlistSelectedSources } from "@server/watchlist/results";
 import type { ExtractorSourceId } from "@shared/extractors";
@@ -395,74 +399,117 @@ export async function discoverJobsStep(args: {
                 args.pipelineRunId,
               )
             : null;
-        const run = manifest.run({
-          source: grouped.sources[0],
-          selectedSources: grouped.sources,
-          settings: filteredSettings,
-          searchTerms,
-          selectedCountry: getLegacyLocationSelection(locationIntent),
+        const sourceLocationPlan = getSourceLocationPlan(
+          grouped.sources[0] as CrawlSource,
           locationIntent,
-          sourceLocationPlan: getSourceLocationPlan(
-            grouped.sources[0] as CrawlSource,
+          registry.locationCapabilitiesBySource?.[
+            grouped.sources[0] as ExtractorSourceId
+          ],
+        );
+        const resumeCheckpoint =
+          sourceRun?.checkpoint ?? recoverySourceRun?.checkpoint ?? undefined;
+        const executeManifest = () =>
+          manifest.run({
+            source: grouped.sources[0],
+            selectedSources: grouped.sources,
+            settings: filteredSettings,
+            searchTerms,
+            selectedCountry: getLegacyLocationSelection(locationIntent),
             locationIntent,
-            registry.locationCapabilitiesBySource?.[
-              grouped.sources[0] as ExtractorSourceId
-            ],
-          ),
-          getExistingJobUrls,
-          shouldCancel,
-          resumeCheckpoint:
-            sourceRun?.checkpoint ?? recoverySourceRun?.checkpoint ?? undefined,
-          onCheckpoint: async (checkpoint) => {
-            if (!sourceRun) return;
-            const coverage =
-              checkpoint && typeof checkpoint === "object"
-                ? (checkpoint as { coverageCompleted?: unknown })
-                    .coverageCompleted
-                : undefined;
-            await updateSourceRun(sourceRun.id, {
-              checkpoint,
-              coverageCompleted:
-                typeof coverage === "number" ? coverage : undefined,
-            });
-          },
-          onProgress: (event) => {
-            if (shouldCancel()) return;
-            const role =
-              searchTerms.find((term) => event.currentUrl === term) ??
-              searchTerms.find((term) =>
-                event.currentUrl?.startsWith(`${term} @`),
-              );
-            if (event.termsProcessed !== undefined && role) {
-              progressHelpers.updateFanoutTaskTerms(
-                manifest.id,
-                role,
-                event.termsProcessed,
-                event.termsTotal,
-              );
-            }
-            progressHelpers.crawlingUpdate({
-              source: manifest.id,
-              termsProcessed: event.termsProcessed,
-              termsTotal: event.termsTotal,
-              listPagesProcessed: event.listPagesProcessed,
-              listPagesTotal: event.listPagesTotal,
-              jobCardsFound: event.jobCardsFound,
-              jobPagesEnqueued: event.jobPagesEnqueued,
-              jobPagesSkipped: event.jobPagesSkipped,
-              jobPagesProcessed: event.jobPagesProcessed,
-              phase: event.phase,
-              currentUrl: event.currentUrl,
-            });
-
-            if (event.detail) {
-              updateProgress({
-                step: "crawling",
-                detail: event.detail,
+            sourceLocationPlan,
+            getExistingJobUrls,
+            shouldCancel,
+            resumeCheckpoint,
+            onCheckpoint: async (checkpoint) => {
+              if (!sourceRun) return;
+              const coverage =
+                checkpoint && typeof checkpoint === "object"
+                  ? (checkpoint as { coverageCompleted?: unknown })
+                      .coverageCompleted
+                  : undefined;
+              await updateSourceRun(sourceRun.id, {
+                checkpoint,
+                coverageCompleted:
+                  typeof coverage === "number" ? coverage : undefined,
               });
-            }
-          },
-        });
+            },
+            onProgress: (event) => {
+              if (shouldCancel()) return;
+              const role =
+                searchTerms.find((term) => event.currentUrl === term) ??
+                searchTerms.find((term) =>
+                  event.currentUrl?.startsWith(`${term} @`),
+                );
+              if (event.termsProcessed !== undefined && role) {
+                progressHelpers.updateFanoutTaskTerms(
+                  manifest.id,
+                  role,
+                  event.termsProcessed,
+                  event.termsTotal,
+                );
+              }
+              progressHelpers.crawlingUpdate({
+                source: manifest.id,
+                termsProcessed: event.termsProcessed,
+                termsTotal: event.termsTotal,
+                listPagesProcessed: event.listPagesProcessed,
+                listPagesTotal: event.listPagesTotal,
+                jobCardsFound: event.jobCardsFound,
+                jobPagesEnqueued: event.jobPagesEnqueued,
+                jobPagesSkipped: event.jobPagesSkipped,
+                jobPagesProcessed: event.jobPagesProcessed,
+                phase: event.phase,
+                currentUrl: event.currentUrl,
+              });
+
+              if (event.detail) {
+                updateProgress({
+                  step: "crawling",
+                  detail: event.detail,
+                });
+              }
+            },
+          });
+
+        const shareable =
+          manifest.capabilities?.shareablePublicDiscovery === true &&
+          args.preserveFanout !== true &&
+          resumeCheckpoint === undefined &&
+          !shouldCancel();
+        const run = shareable
+          ? (async () => {
+              const existingJobUrls = [...(await getExistingJobUrls())].sort();
+              const requiredEnv = Object.fromEntries(
+                (manifest.requiredEnvVars ?? []).map((name) => [
+                  name,
+                  process.env[name] ?? null,
+                ]),
+              );
+              const fingerprint = buildSharedDiscoveryFingerprint({
+                version: "freeze3-public-discovery-v1",
+                manifestId: manifest.id,
+                channels: grouped.sources,
+                searchTerms,
+                locationIntent,
+                sourceLocationPlan,
+                settings: filteredSettings,
+                requiredEnv,
+                existingJobUrls,
+              });
+              const { result, reuse } = await runSharedDiscovery({
+                fingerprint,
+                run: executeManifest,
+                isReusable: () => !shouldCancel(),
+              });
+              if (reuse !== "fresh") {
+                logger.info("Reused shareable public discovery result", {
+                  source: manifest.id,
+                  reuse,
+                });
+              }
+              return result;
+            })()
+          : executeManifest();
         const result = await withDiscoverySourceTimeout(run, () => {
           timedOut = true;
         });

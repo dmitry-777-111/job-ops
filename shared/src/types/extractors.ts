@@ -21,6 +21,10 @@ export interface ExtractorProgressEvent {
 
 export interface ExtractorCapabilities {
   locationEvidence?: boolean;
+  /** Public extractor output may be reused across candidate scopes only when
+   * the runtime fingerprint is identical. Private/account-specific extractors
+   * must leave this unset. */
+  shareablePublicDiscovery?: boolean;
 }
 
 export type ExtractorSourceLocationCapabilities = Omit<

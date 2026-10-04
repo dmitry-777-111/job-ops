@@ -4,8 +4,13 @@ import type { ExtractorRunResult } from "@shared/types";
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
 const DEFAULT_MAX_ENTRIES = 32;
 
+type CoordinatedResult = {
+  result: ExtractorRunResult;
+  reusable: boolean;
+};
+
 type CacheEntry = {
-  promise: Promise<ExtractorRunResult> | null;
+  promise: Promise<CoordinatedResult> | null;
   value: ExtractorRunResult | null;
   expiresAt: number;
   lastAccessedAt: number;
@@ -76,15 +81,18 @@ export async function runSharedDiscovery(args: {
   ttlMs?: number;
   maxEntries?: number;
   now?: () => number;
+  isReusable?: (result: ExtractorRunResult) => boolean;
 }): Promise<SharedDiscoveryResult> {
   const nowFn = args.now ?? Date.now;
   const ttlMs = Math.max(0, args.ttlMs ?? DEFAULT_TTL_MS);
   const maxEntries = Math.max(1, args.maxEntries ?? DEFAULT_MAX_ENTRIES);
   const now = nowFn();
+  const canReuse = (result: ExtractorRunResult) =>
+    isCleanReusableResult(result) && (args.isReusable?.(result) ?? true);
   prune(now, maxEntries);
 
   const existing = entries.get(args.fingerprint);
-  if (existing?.value && existing.expiresAt > now) {
+  if (existing?.value && existing.expiresAt > now && canReuse(existing.value)) {
     existing.lastAccessedAt = now;
     return { result: cloneResult(existing.value), reuse: "cached" };
   }
@@ -92,10 +100,10 @@ export async function runSharedDiscovery(args: {
   if (existing?.promise) {
     try {
       const joined = await existing.promise;
-      if (isCleanReusableResult(joined)) {
+      if (joined.reusable && canReuse(joined.result)) {
         const current = entries.get(args.fingerprint);
         if (current) current.lastAccessedAt = nowFn();
-        return { result: cloneResult(joined), reuse: "joined" };
+        return { result: cloneResult(joined.result), reuse: "joined" };
       }
     } catch {
       // Do not propagate another candidate's extractor failure. Fall through
@@ -103,7 +111,10 @@ export async function runSharedDiscovery(args: {
     }
   }
 
-  const promise = args.run();
+  const promise = args.run().then((result) => ({
+    result,
+    reusable: canReuse(result),
+  }));
   entries.set(args.fingerprint, {
     promise,
     value: null,
@@ -112,9 +123,9 @@ export async function runSharedDiscovery(args: {
   });
 
   try {
-    const result = await promise;
-    if (isCleanReusableResult(result)) {
-      const stored = cloneResult(result);
+    const coordinated = await promise;
+    if (coordinated.reusable) {
+      const stored = cloneResult(coordinated.result);
       entries.set(args.fingerprint, {
         promise: null,
         value: stored,
@@ -125,7 +136,7 @@ export async function runSharedDiscovery(args: {
     } else {
       entries.delete(args.fingerprint);
     }
-    return { result: cloneResult(result), reuse: "fresh" };
+    return { result: cloneResult(coordinated.result), reuse: "fresh" };
   } catch (error) {
     entries.delete(args.fingerprint);
     throw error;

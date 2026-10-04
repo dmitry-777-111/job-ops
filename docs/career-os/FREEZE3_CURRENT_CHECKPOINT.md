@@ -24,7 +24,9 @@ Updated: 2026-10-03 21:30 EDT
 - `63eeaa6` passed full CI (`37175005471`): F3-3 acceptance record is durable. F3-3 Safe Prefilter is PASS/CLOSED for shadow/audit readiness; production enforcement remains disabled pending a separate explicit activation approval.
 - `6936ca4` passed full CI (`37175486379`): hosted two-candidate private-domain isolation is green for profile, strategy, connection status, encrypted credentials, and cross-user activation attempts.
 - `03167bd` passed full CI (`37175728984`): the remaining F3-4 shared-discovery gap and safety boundary are durably documented.
-- Current prepared unit adds a bounded shared-discovery coordinator: exact opaque fingerprinting, clean-result single-flight/cache reuse, LRU-style bounded retention, cloned outputs, and no propagation/cache of challenged/degraded/failed source results.
+- `932f07f` passed full CI (`37175911187`): bounded shared-discovery coordinator is green with exact opaque fingerprinting, clean-result single-flight/cache reuse, bounded retention, cloned outputs, and no propagation/cache of challenged/degraded/failed source results.
+- Current prepared unit integrates sharing conservatively only for extractor manifests that explicitly opt in as public/shareable (initially JobSpy). Fingerprint includes exact channels, terms, location intent/plan, current settings, required-env credential context, and candidate existing-job URLs; Watchlist, resume/recovery and challenge retry flows remain outside sharing.
+- Focused local Vitest could not start because the VPS worktree intentionally lacks some frontend test dependencies; no install was attempted because root disk remains under critical pressure. Full GitHub CI remains the validation source.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -42,11 +44,17 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared shared-discovery coordinator + focused tests once.
+1. Commit/push the prepared safe public-extractor shared-discovery integration + two-candidate discovery regression once.
 2. Read its single automatic CI run; do not redispatch.
-3. If PASS, integrate it only into the safe public-extractor path with a conservative exact fingerprint (including settings and existing-job state) and Watchlist/recovery/challenge exclusions.
-4. Prove two candidates cause one heavy discovery call while downstream candidate state remains isolated.
-5. Keep prefilter enforcement disabled until a later explicit activation approval.
+3. If PASS, combine that result with the already-green private-domain isolation regression and write the F3-4 acceptance record.
+4. Keep prefilter enforcement disabled until a later explicit activation approval.
+
+## Compact diagnostics / anti-limit rules
+
+- Never emit a full GitHub Actions job log into chat/tool output. Query run -> failed job -> steps first; if log text is required, filter it inside the tool call and emit only the focused failure window.
+- Keep shell reads bounded (`head`/`tail`/targeted `grep`/small `sed` ranges); do not dump whole large files or recursive results.
+- Long commands run via the resilience wrapper or background process; status checks return compact state only.
+- Work proceeds in small committed series with a durable checkpoint after each validated unit, so a chat/tool interruption cannot erase completed work.
 
 ## Safety / no-repeat rules
 

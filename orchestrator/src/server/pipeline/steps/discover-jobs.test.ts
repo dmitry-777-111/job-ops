@@ -1,4 +1,5 @@
 import { runWithRequestContext } from "@infra/request-context";
+import { resetSharedDiscoveryCoordinatorForTests } from "@server/services/shared-discovery-coordinator";
 import type { PipelineConfig } from "@shared/types";
 import type { ExtractorRuntimeContext } from "@shared/types/extractors";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -46,6 +47,7 @@ describe("discoverJobsStep", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetProgress();
+    resetSharedDiscoveryCoordinatorForTests();
   });
 
   it("aggregates source errors for enabled sources", async () => {
@@ -1282,5 +1284,77 @@ describe("discoverJobsStep", () => {
     await expect(getExistingJobUrls()).resolves.toEqual([
       "https://example.com/existing",
     ]);
+  });
+  it("reuses one clean shareable public extractor result across two candidate scopes", async () => {
+    const settingsRepo = await import("@server/repositories/settings");
+    const jobsRepo = await import("@server/repositories/jobs");
+    const registryModule = await import("@server/extractors/registry");
+
+    const jobspyManifest = {
+      id: "jobspy",
+      displayName: "JobSpy",
+      providesSources: ["linkedin"],
+      capabilities: {
+        locationEvidence: true,
+        shareablePublicDiscovery: true,
+      },
+      run: vi.fn().mockResolvedValue({
+        success: true,
+        jobs: [
+          {
+            source: "linkedin",
+            title: "Field Service Engineer",
+            employer: "Shared OEM",
+            jobUrl: "https://example.com/shared-public-job",
+            location: "Toronto, Ontario, Canada",
+            locationEvidence: {
+              location: "Toronto, Ontario, Canada",
+              country: "canada",
+              city: "Toronto",
+              source: "linkedin",
+            },
+          },
+        ],
+        sourceErrors: [],
+      }),
+    };
+
+    vi.mocked(settingsRepo.getAllSettings).mockResolvedValue({
+      searchTerms: JSON.stringify(["field service engineer"]),
+      jobspyCountryIndeed: "canada",
+      searchCities: "Toronto, ON",
+      locationMatchStrictness: "flexible",
+    } as any);
+    vi.mocked(jobsRepo.getAllJobUrls).mockResolvedValue([]);
+    vi.mocked(registryModule.getExtractorRegistry).mockResolvedValue({
+      manifests: new Map([["jobspy", jobspyManifest as any]]),
+      manifestBySource: new Map([["linkedin", jobspyManifest as any]]),
+      availableSources: ["linkedin"],
+    } as any);
+
+    const runFor = (userId: string) =>
+      runWithRequestContext(
+        {
+          requestId: `shared-discovery-${userId}`,
+          tenantId: "tenant_default",
+          userId,
+        },
+        () =>
+          discoverJobsStep({
+            mergedConfig: {
+              ...baseConfig,
+              sources: ["linkedin"],
+            },
+          }),
+      );
+
+    const alice = await runFor("alice");
+    const bob = await runFor("bob");
+
+    expect(jobspyManifest.run).toHaveBeenCalledTimes(1);
+    expect(alice.discoveredJobs).toHaveLength(1);
+    expect(bob.discoveredJobs).toHaveLength(1);
+    expect(bob.discoveredJobs).toEqual(alice.discoveredJobs);
+    expect(bob.discoveredJobs).not.toBe(alice.discoveredJobs);
   });
 });

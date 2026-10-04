@@ -124,6 +124,26 @@ describe("shared discovery coordinator", () => {
     expect(second.result.error).toBeUndefined();
   });
 
+  it("allows the caller to veto reuse when candidate cancellation state changed", async () => {
+    let cancelled = false;
+    const run = vi.fn(async () => ({ success: true, jobs: [] }));
+    const first = await runSharedDiscovery({
+      fingerprint: "cancel-veto",
+      run,
+      isReusable: () => !cancelled,
+    });
+    expect(first.reuse).toBe("fresh");
+
+    cancelled = true;
+    const second = await runSharedDiscovery({
+      fingerprint: "cancel-veto",
+      run,
+      isReusable: () => !cancelled,
+    });
+    expect(second.reuse).toBe("fresh");
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+
   it("does not share different exact fingerprints", async () => {
     const run = vi.fn(async () => cleanResult());
     await runSharedDiscovery({ fingerprint: "candidate-a", run });
