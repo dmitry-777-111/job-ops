@@ -1,4 +1,5 @@
 import { logger } from "@infra/logger";
+import { updateCandidateEvaluation } from "@server/repositories/candidate-evaluations";
 import * as jobsRepo from "@server/repositories/jobs";
 import * as settingsRepo from "@server/repositories/settings";
 import {
@@ -6,6 +7,7 @@ import {
   ScoringUnavailableError,
   scoreJobSuitability,
 } from "@server/services/scorer";
+import { prepareVersionedScoringBatch } from "@server/services/versioned-delta-scoring";
 import * as visaSponsors from "@server/services/visa-sponsors/index";
 import { asyncPool } from "@server/utils/async-pool";
 import type { Job } from "@shared/types";
@@ -33,9 +35,35 @@ export async function scoreJobsStep(args: {
   pipelineRunId?: string;
 }): Promise<{ unprocessedJobs: Job[]; scoredJobs: ScoredJob[] }> {
   logger.info("Running scoring step");
-  const unprocessedJobs = args.pipelineRunId
-    ? await jobsRepo.getUnscoredDiscoveredJobsForPipelineRun(args.pipelineRunId)
-    : await jobsRepo.getUnscoredDiscoveredJobs();
+  const versionedBatch = args.pipelineRunId
+    ? await prepareVersionedScoringBatch({
+        pipelineRunId: args.pipelineRunId,
+        scoringInstructions: args.scoringInstructions,
+      })
+    : null;
+  const unprocessedJobs = versionedBatch
+    ? versionedBatch.targets.map((target) => target.job)
+    : args.pipelineRunId
+      ? await jobsRepo.getUnscoredDiscoveredJobsForPipelineRun(
+          args.pipelineRunId,
+        )
+      : await jobsRepo.getUnscoredDiscoveredJobs();
+  const evaluationIdByJobId = new Map(
+    versionedBatch?.targets.map((target) => [
+      target.job.id,
+      target.evaluationId,
+    ]) ?? [],
+  );
+  const scoringProfile = versionedBatch?.profile ?? args.profile;
+
+  if (versionedBatch) {
+    logger.info("Versioned delta scoring batch prepared", {
+      pending: versionedBatch.targets.length,
+      seededFromLegacy: versionedBatch.seededFromLegacy,
+      reusedCompleted: versionedBatch.reusedCompleted,
+      scoringPolicyVersion: versionedBatch.scoringPolicyVersion,
+    });
+  }
 
   // Check if auto-skip threshold is configured
   const autoSkipThresholdRaw = await settingsRepo.getSetting(
@@ -96,29 +124,36 @@ export async function scoreJobsStep(args: {
       const scoringResultPromise = args.hostedUsageReserved
         ? scoreJobSuitability(
             job,
-            args.profile,
+            scoringProfile,
             scoringInstructions
               ? { scoringInstructions, skipHostedUsage: true }
               : { skipHostedUsage: true },
           )
         : scoringInstructions
-          ? scoreJobSuitability(job, args.profile, { scoringInstructions })
-          : scoreJobSuitability(job, args.profile);
+          ? scoreJobSuitability(job, scoringProfile, { scoringInstructions })
+          : scoreJobSuitability(job, scoringProfile);
       let scoringResult: Awaited<typeof scoringResultPromise>;
       try {
         scoringResult = await scoringResultPromise;
       } catch (error) {
-        // Configuration errors still abort the pool — every remaining job
+        // Configuration errors still abort the pool ??? every remaining job
         // would fail the same way until the user fixes their settings.
         if (!(error instanceof ScoringUnavailableError)) throw error;
         failed += 1;
         completed += 1;
         if (scoredJobs.length === 0 && failed >= SYSTEMIC_FAILURE_THRESHOLD) {
           throw new LlmNotConfiguredError(
-            `AI scoring failed for the first ${failed} jobs (${error.message}). Check your LLM configuration in Settings → Integrations, then resume scoring.`,
+            `AI scoring failed for the first ${failed} jobs (${error.message}). Check your LLM configuration in Settings ??? Integrations, then resume scoring.`,
           );
         }
-        logger.warn("Job scoring failed — leaving unscored and continuing", {
+        const evaluationId = evaluationIdByJobId.get(job.id);
+        if (evaluationId) {
+          await updateCandidateEvaluation(evaluationId, {
+            status: "failed_retryable",
+            suitabilityReason: error.message,
+          });
+        }
+        logger.warn("Job scoring failed ??? leaving unscored and continuing", {
           jobId: job.id,
           title: job.title,
           error: error.message,
@@ -171,6 +206,15 @@ export async function scoreJobsStep(args: {
         sponsorMatchNames,
         ...(shouldAutoSkip ? { status: "skipped" } : {}),
       });
+
+      const evaluationId = evaluationIdByJobId.get(job.id);
+      if (evaluationId) {
+        await updateCandidateEvaluation(evaluationId, {
+          status: "scored",
+          suitabilityScore: score,
+          suitabilityReason: reason,
+        });
+      }
 
       if (shouldAutoSkip) {
         logger.info("Auto-skipped job due to low score", {
