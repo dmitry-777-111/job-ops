@@ -111,8 +111,6 @@ describe.sequential("F3-5 fresh hosted candidate acceptance", () => {
     expect(strategyRes.status).toBe(200);
 
     const resumeJson = buildDefaultReactiveResumeDocument();
-    resumeJson.basics.name = "Fresh Candidate";
-    resumeJson.basics.headline = "Field Service Technician";
     const importRes = await postJson(
       baseUrl,
       "/api/design-resume/import/file",
