@@ -20,6 +20,7 @@ import { migrateLegacyIntegrationCredentialsToVault } from "./services/credentia
 import { initializeDemoModeServices } from "./services/demo-mode";
 import { applyStoredEnvOverrides } from "./services/envSettings";
 import { initializeHistoricalServerEventReplaySafely } from "./services/historical-product-analytics";
+import { startPipelineRunDispatcher } from "./services/pipeline-run-dispatcher-runtime";
 import { initialize as initializeVisaSponsors } from "./services/visa-sponsors/index";
 
 const AUTH_SESSION_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
@@ -126,6 +127,17 @@ async function startServer() {
       logger.warn("Failed to initialize backup service", {
         error: sanitizeUnknown(error),
       });
+    }
+
+    if (process.env.CAREER_OS_PIPELINE_DISPATCHER_ENABLED === "true") {
+      startPipelineRunDispatcher();
+      logger.info(
+        "Candidate pipeline dispatcher enabled for this server process",
+      );
+    } else {
+      logger.info(
+        "Candidate pipeline dispatcher disabled for this server process",
+      );
     }
 
     try {

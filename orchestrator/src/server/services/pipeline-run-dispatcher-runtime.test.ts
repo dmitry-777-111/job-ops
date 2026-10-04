@@ -24,7 +24,7 @@ afterEach(() => {
 
 describe("pipeline dispatcher runtime", () => {
   it("does not overlap a second tick while the first is still running", async () => {
-    let release: (() => void) | null = null;
+    let release!: () => void;
     vi.mocked(dispatchReadyCandidateRunRequests).mockImplementationOnce(
       async () =>
         await new Promise((resolve) => {
@@ -36,7 +36,7 @@ describe("pipeline dispatcher runtime", () => {
     const second = await runPipelineDispatcherTick();
     expect(second).toEqual({ skipped: true, dispatched: 0 });
 
-    release?.();
+    release();
     await expect(first).resolves.toEqual({ skipped: false, dispatched: 0 });
     expect(dispatchReadyCandidateRunRequests).toHaveBeenCalledTimes(1);
   });

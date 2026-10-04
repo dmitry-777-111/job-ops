@@ -5,8 +5,8 @@ Updated: 2026-10-03 20:34 EDT
 ## Durable state
 
 - Branch: `freeze3-dev`
-- Last pushed commit: `5cf56a0` — fair cross-candidate run dispatcher
-- Automatic CI for `5cf56a0`: GitHub Actions run `37165263019`; inspect this existing run only, do not redispatch.
+- Last pushed commit: `9eea53e` — single-owner pipeline dispatcher runtime
+- Automatic CI for `9eea53e`: GitHub Actions run `37165481990`; orchestrator typecheck exposed one test-only callable inference error in the dispatcher-runtime test. The local startup-wiring unit now includes the minimal type-safe test fix; do not rebuild the runtime block.
 - Freeze 2 production remains untouched.
 - R0 recovery remains independent in `career-os-pipeline-recovery`; do not restart or duplicate it.
 
@@ -23,20 +23,17 @@ The durable anti-repeat mechanism is now:
 
 ## Local next unit
 
-Prepared but not yet pushed while `5cf56a0` CI is active:
-- process-owned pipeline dispatcher runtime;
-- one interval owner only;
-- no overlapping dispatcher ticks;
-- bounded 10s minimum / 60s default interval;
-- clean start/stop and unit tests.
+Prepared but not yet pushed while `9eea53e` CI is active:
+- startup wiring behind `CAREER_OS_PIPELINE_DISPATCHER_ENABLED=true`;
+- disabled by default, so no accidental second scheduler owner;
+- interval remains controlled by the validated dispatcher runtime.
 
 ## Next exact actions
 
-1. Read terminal result of CI run `37165263019`.
-2. If PASS: commit/push the already prepared dispatcher-runtime unit once; automatic CI validates it.
-3. If FAIL: read only the failing job/log, apply the minimal fix to `5cf56a0`, then continue the same local dispatcher-runtime unit without rebuilding it.
-4. After dispatcher-runtime validation, wire it into v3 startup behind one explicit owner/config gate; do not alter Freeze2 production.
-5. Continue F3-1 with disk/log safeguards and the controlled interrupted-vs-uninterrupted equivalence test.
+1. Read terminal result of CI run `37165481990`.
+2. If PASS: commit/push the already prepared startup-wiring unit once; automatic CI validates it.
+3. If FAIL: read only the failing job/log, apply the minimal fix to `9eea53e`, then continue the same startup-wiring unit without rebuilding it.
+4. After startup-wiring validation, continue F3-1 with disk/log safeguards and the controlled interrupted-vs-uninterrupted equivalence test.
 
 ## Safety / no-repeat rules
 
