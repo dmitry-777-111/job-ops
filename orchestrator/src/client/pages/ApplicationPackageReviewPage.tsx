@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   approveApplicationPackage,
+  exportApplicationPackage,
   getApplicationPackageReview,
 } from "@/client/api";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,38 @@ export function ApplicationPackageReviewPage() {
         error instanceof Error
           ? error.message
           : "Could not approve the application package.",
+      );
+    },
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: () =>
+      exportApplicationPackage(applicationPackageId ?? "", {
+        acknowledgeUnknownLiveState: acknowledgeUnknown,
+      }),
+    onSuccess: async (result) => {
+      const blob = new Blob(
+        [JSON.stringify(result.artifact.document, null, 2)],
+        { type: result.artifact.mediaType },
+      );
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = result.artifact.fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Application package exported.");
+      await queryClient.invalidateQueries({
+        queryKey: ["application-package-review", applicationPackageId],
+      });
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not export the application package.",
       );
     },
   });
@@ -268,23 +301,42 @@ export function ApplicationPackageReviewPage() {
           {review.qa.hardGapCount} hard gap(s), {review.qa.gapCount} total
           gap(s)
         </div>
-        <Button
-          type="button"
-          disabled={
-            isApproved ||
-            !review.qa.pass ||
-            unknownNeedsAcknowledgement ||
-            approveMutation.isPending
-          }
-          onClick={() => approveMutation.mutate()}
-        >
-          <CheckCircle2 className="h-4 w-4" />
-          {isApproved
-            ? "Approved"
-            : approveMutation.isPending
-              ? "Approving???"
-              : "Approve package"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            disabled={
+              isApproved ||
+              !review.qa.pass ||
+              unknownNeedsAcknowledgement ||
+              approveMutation.isPending
+            }
+            onClick={() => approveMutation.mutate()}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {isApproved
+              ? "Approved"
+              : approveMutation.isPending
+                ? "Approving???"
+                : "Approve package"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={
+              !isApproved ||
+              !review.qa.pass ||
+              unknownNeedsAcknowledgement ||
+              exportMutation.isPending
+            }
+            onClick={() => exportMutation.mutate()}
+          >
+            {exportMutation.isPending
+              ? "Exporting???"
+              : applicationPackage.status === "exported"
+                ? "Export again"
+                : "Export package"}
+          </Button>
+        </div>
       </div>
     </main>
   );

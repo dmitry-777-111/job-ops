@@ -116,3 +116,27 @@ export async function approveApplicationPackage(
     }),
   });
 }
+
+export interface ApplicationPackageExportArtifact {
+  fileName: string;
+  mediaType: "application/json";
+  document: Record<string, unknown>;
+}
+
+export async function exportApplicationPackage(
+  applicationPackageId: string,
+  input?: { acknowledgeUnknownLiveState?: boolean },
+): Promise<{
+  applicationPackage: ApplicationPackage;
+  artifact: ApplicationPackageExportArtifact;
+}> {
+  return fetchApi<{
+    applicationPackage: ApplicationPackage;
+    artifact: ApplicationPackageExportArtifact;
+  }>("/application-packages/" + applicationPackageId + "/export", {
+    method: "POST",
+    body: JSON.stringify({
+      acknowledgeUnknownLiveState: input?.acknowledgeUnknownLiveState === true,
+    }),
+  });
+}

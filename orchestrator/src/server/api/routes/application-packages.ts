@@ -6,6 +6,7 @@ import {
   evaluateStoredApplicationPackageQa,
 } from "@server/services/application-package-approval";
 import { prepareApplicationPackageDraft } from "@server/services/application-package-draft";
+import { exportApplicationPackage } from "@server/services/application-package-export";
 import {
   getApplicationPackageJobFlow,
   prepareApplicationPackageForJob,
@@ -122,6 +123,22 @@ applicationPackagesRouter.post(
           req.body?.acknowledgeUnknownLiveState === true,
       });
       ok(res, result, 201);
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+applicationPackagesRouter.post(
+  "/:applicationPackageId/export",
+  async (req: Request, res: Response) => {
+    try {
+      const result = await exportApplicationPackage({
+        applicationPackageId: req.params.applicationPackageId,
+        acknowledgeUnknownLiveState:
+          req.body?.acknowledgeUnknownLiveState === true,
+      });
+      ok(res, result);
     } catch (error) {
       fail(res, toAppError(error));
     }
