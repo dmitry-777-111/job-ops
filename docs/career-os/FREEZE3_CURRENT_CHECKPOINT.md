@@ -1,6 +1,6 @@
 # Freeze 3 current checkpoint
 
-Updated: 2026-10-04 04:52 EDT
+Updated: 2026-10-04 — F3-7 audit series
 
 ## Durable state
 
@@ -55,7 +55,7 @@ Updated: 2026-10-04 04:52 EDT
 - `4ed8b9a` passed full CI (`37221487307`): job-facing package facade is green.
 - `735db7f` passed full CI (`37221909072`): candidate Prepare application / review / approval UI is green.
 - `2172a7d` passed full CI (`37222245114`): approved-package export re-runs QA, marks the package exported, and provides the candidate export artifact.
-- Final F3-6 truth-regression and prepare -> review -> approve -> export acceptance tests are prepared and are the next single commit.
+- bf68d75 full CI 37222619720 is verified completed/success. F3-6 truth regression and product API acceptance are PASS/CLOSED.
 - Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
@@ -74,11 +74,8 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit the prepared F3-6F truth regression plus fresh product-API prepare -> review -> approve -> export acceptance flow.
-2. Run its single automatic full CI; do not redispatch it.
-3. If the acceptance CI is green, update FREEZE3_F3_6_ACCEPTANCE.md with that evidence, refresh this checkpoint and mark F3-6 PASS/CLOSED.
-4. Only then move to the next Freeze 3 phase from the master plan.
-5. Keep Freeze 2 production and safe-prefilter enforcement unchanged until their separate acceptance/activation decisions.
+F3-6 is PASS/CLOSED. Follow FREEZE3_F3_7_AUDIT.md for F3-7 only.
+Create protected current production snapshot, migrate an isolated working copy, record actual drill evidence. Disk/resource acceptance currently FAILS (92% root usage); no cutover, builds, installs or destructive cleanup. Preserve Freeze 2 and disabled production prefilter enforcement.
 
 ## Compact diagnostics / anti-limit rules
 

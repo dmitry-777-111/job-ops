@@ -1,6 +1,6 @@
 # Freeze 3 ??? F3-6 Application Package Builder acceptance
 
-Status: acceptance candidate; no production cutover.
+Status: PASS/CLOSED. Exact commit bf68d75 full CI 37222619720 verified completed/success on 2026-10-04; no production cutover.
 
 ## Acceptance scope
 
@@ -44,7 +44,7 @@ The package is version-pinned to vacancy/profile/strategy/generation-policy inpu
 
 ## Final acceptance regressions
 
-Before F3-6 is marked PASS/CLOSED, the final regression must prove:
+The final regression at bf68d75, covered by successful full CI 37222619720, closes these gates:
 
 1. high-risk unsupported facts (licence, citizenship/work authorization, language, years of experience, software and achievements) remain gaps and never appear in generated documents;
 2. fresh product API flow completes prepare -> review -> approve -> export;
