@@ -31,7 +31,7 @@ function verifiedFact(factKey: JobVerifiedFact["factKey"]): JobVerifiedFact {
     jobId: "job-1",
     factKey,
     evidence: {
-      kind: "requirement",
+      kind: factKey,
       sourceType: "manual_verified",
       verifiedBy: "user",
       note: "verified evidence",
