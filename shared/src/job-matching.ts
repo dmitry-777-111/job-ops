@@ -312,6 +312,18 @@ export function deduplicateJobsByTitleAndEmployer(
 
     const match = merged.find((entry) => {
       if (!entry.normalizedTitle || !entry.normalizedEmployer) return false;
+
+      // A source-specific external ID is authoritative within one source.
+      // Equal IDs are the same posting even if text changed; different IDs
+      // must never be collapsed by fuzzy title/employer similarity.
+      if (incoming.source === entry.job.source) {
+        const incomingSourceJobId = incoming.sourceJobId?.trim();
+        const existingSourceJobId = entry.job.sourceJobId?.trim();
+        if (incomingSourceJobId && existingSourceJobId) {
+          return incomingSourceJobId === existingSourceJobId;
+        }
+      }
+
       const titleScore = calculateSimilarity(
         normalizedTitle,
         entry.normalizedTitle,

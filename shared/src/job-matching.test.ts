@@ -114,6 +114,48 @@ describe("deduplicateJobsByTitleAndEmployer", () => {
     expect(result).toHaveLength(1);
   });
 
+  it("does not fuzzy-merge distinct source IDs from the same source", () => {
+    const first = makeJob({
+      source: "indeed",
+      sourceJobId: "req-100",
+      title: "Maintenance Technician",
+      employer: "Acme Manufacturing",
+      jobUrl: "https://example.com/jobs/100",
+    });
+    const second = makeJob({
+      source: "indeed",
+      sourceJobId: "req-101",
+      title: "Maintenance Technician",
+      employer: "Acme Manufacturing",
+      jobUrl: "https://example.com/jobs/101",
+    });
+
+    const result = deduplicateJobsByTitleAndEmployer([first, second]);
+    expect(result).toHaveLength(2);
+  });
+
+  it("merges the same source ID even when listing text changed", () => {
+    const first = makeJob({
+      source: "indeed",
+      sourceJobId: "req-100",
+      title: "Maintenance Technician",
+      employer: "Acme Manufacturing",
+      jobUrl: "https://example.com/jobs/100?view=old",
+    });
+    const second = makeJob({
+      source: "indeed",
+      sourceJobId: "req-100",
+      title: "Senior Industrial Maintenance Technician",
+      employer: "Acme Manufacturing Canada",
+      jobUrl: "https://example.com/jobs/100",
+      salary: "$40/hour",
+    });
+
+    const result = deduplicateJobsByTitleAndEmployer([first, second]);
+    expect(result).toHaveLength(1);
+    expect(result[0].salary).toBe("$40/hour");
+  });
+
   it("keeps both jobs when employers differ significantly", () => {
     const first = makeJob({ title: "Backend Engineer", employer: "Acme Labs" });
     const second = makeJob({
