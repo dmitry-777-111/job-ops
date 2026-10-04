@@ -20,13 +20,20 @@ const mocks = vi.hoisted(() => ({
   activateDynamicEmployersFromJobs: vi.fn(),
 }));
 
-vi.mock("node:fs", () => ({
-  promises: {
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs")>();
+  const promises = {
+    ...actual.promises,
     readFile: mocks.readFile,
     writeFile: mocks.writeFile,
     rename: mocks.rename,
-  },
-}));
+  };
+  return {
+    ...actual,
+    default: { ...actual.default, promises },
+    promises,
+  };
+});
 vi.mock("@server/config/dataDir", () => ({ getDataDir: () => "/tmp" }));
 vi.mock("@infra/logger", () => ({
   logger: {
