@@ -1,7 +1,6 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runWithRequestContext } from "@infra/request-context";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const TENANT_ID = "tenant_default";
@@ -10,6 +9,7 @@ const VAULT_KEY = "11".repeat(32);
 describe.sequential("hosted candidate private-domain isolation", () => {
   let tempDir: string;
   let closeDb: () => void;
+  let runWithRequestContext: typeof import("@infra/request-context").runWithRequestContext;
   let aliceId: string;
   let bobId: string;
 
@@ -24,6 +24,7 @@ describe.sequential("hosted candidate private-domain isolation", () => {
 
     await import("../db/migrate");
     ({ closeDb } = await import("../db/index"));
+    ({ runWithRequestContext } = await import("@infra/request-context"));
     const { createHostedTenantUser } = await import("./users");
     const alice = await createHostedTenantUser({
       username: "alice",
