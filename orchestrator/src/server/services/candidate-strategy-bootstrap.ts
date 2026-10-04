@@ -50,6 +50,120 @@ function uniqueNonEmpty(values: string[]): string[] {
   );
 }
 
+export type CandidateStrategyBehaviorProjection = {
+  country: string | null;
+  searchTerms: string[];
+  cities: string[];
+  workplaceTypes: string[];
+  locationSearchMode: string | null;
+  locationRadiusMiles: number | null;
+  locationSearchScope: string | null;
+  locationMatchStrictness: string | null;
+  blockedCompanyKeywords: string[];
+  scoringInstructions: string;
+  penalizeMissingSalary: boolean;
+  missingSalaryPenalty: number | null;
+  autoSkipScoreThreshold: number | null;
+};
+
+function constraintById(
+  constraints: CandidateConstraint[],
+  id: string,
+): CandidateConstraint | undefined {
+  return constraints.find((constraint) => constraint.id === id);
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+export function projectLegacyCandidateStrategyBehavior(
+  snapshot: LegacyCandidateStrategySnapshot,
+): CandidateStrategyBehaviorProjection {
+  return {
+    country: snapshot.country.trim().toLowerCase() || null,
+    searchTerms: uniqueNonEmpty(snapshot.searchTerms),
+    cities: uniqueNonEmpty(snapshot.searchCities.split("|")),
+    workplaceTypes: [...snapshot.workplaceTypes],
+    locationSearchMode: snapshot.locationSearchMode,
+    locationRadiusMiles: snapshot.locationRadiusMiles,
+    locationSearchScope: snapshot.locationSearchScope,
+    locationMatchStrictness: snapshot.locationMatchStrictness,
+    blockedCompanyKeywords: uniqueNonEmpty(snapshot.blockedCompanyKeywords),
+    scoringInstructions: snapshot.scoringInstructions.trim(),
+    penalizeMissingSalary: snapshot.penalizeMissingSalary,
+    missingSalaryPenalty: snapshot.penalizeMissingSalary
+      ? snapshot.missingSalaryPenalty
+      : null,
+    autoSkipScoreThreshold: snapshot.autoSkipScoreThreshold,
+  };
+}
+
+export function projectMigratedCandidateStrategyBehavior(input: {
+  targetMarkets: string[];
+  targetRoleFamilies: string[];
+  constraints: CandidateConstraint[];
+  freeformNotes: string | null;
+}): CandidateStrategyBehaviorProjection {
+  const geography = objectValue(
+    constraintById(input.constraints, "legacy-search-geography")?.value,
+  );
+  const blocked = constraintById(
+    input.constraints,
+    "legacy-blocked-company-keywords",
+  );
+  const salaryPenalty = constraintById(
+    input.constraints,
+    "legacy-missing-salary-penalty",
+  );
+  const autoSkip = constraintById(
+    input.constraints,
+    "legacy-auto-skip-score-threshold",
+  );
+  const scoring = constraintById(
+    input.constraints,
+    "legacy-scoring-instructions",
+  );
+
+  return {
+    country:
+      typeof geography.country === "string"
+        ? geography.country
+        : (input.targetMarkets[0] ?? null),
+    searchTerms: [...input.targetRoleFamilies],
+    cities: stringArray(geography.cities),
+    workplaceTypes: stringArray(geography.workplaceTypes),
+    locationSearchMode:
+      typeof geography.mode === "string" ? geography.mode : null,
+    locationRadiusMiles:
+      typeof geography.radiusMiles === "number" ? geography.radiusMiles : null,
+    locationSearchScope:
+      typeof geography.scope === "string" ? geography.scope : null,
+    locationMatchStrictness:
+      typeof geography.matchStrictness === "string"
+        ? geography.matchStrictness
+        : null,
+    blockedCompanyKeywords: stringArray(blocked?.value),
+    scoringInstructions:
+      typeof scoring?.value === "string"
+        ? scoring.value
+        : (input.freeformNotes?.trim() ?? ""),
+    penalizeMissingSalary: Boolean(salaryPenalty),
+    missingSalaryPenalty:
+      typeof salaryPenalty?.value === "number" ? salaryPenalty.value : null,
+    autoSkipScoreThreshold:
+      typeof autoSkip?.value === "number" ? autoSkip.value : null,
+  };
+}
+
 export function deriveLegacyCandidateStrategyDraft(
   snapshot: LegacyCandidateStrategySnapshot,
   effectiveAt: string,

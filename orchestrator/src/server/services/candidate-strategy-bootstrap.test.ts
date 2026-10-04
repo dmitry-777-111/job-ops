@@ -4,6 +4,8 @@ import {
   bootstrapCurrentCandidateStrategy,
   deriveLegacyCandidateStrategyDraft,
   type LegacyCandidateStrategySnapshot,
+  projectLegacyCandidateStrategyBehavior,
+  projectMigratedCandidateStrategyBehavior,
 } from "./candidate-strategy-bootstrap";
 
 const mocks = vi.hoisted(() => ({
@@ -132,6 +134,21 @@ describe("legacy candidate strategy bootstrap", () => {
       expect.objectContaining({
         cities: ["Toronto, ON", "Calgary, AB"],
       }),
+    );
+  });
+
+  it("produces an equivalent behavior projection for migrated legacy settings", () => {
+    const snapshot: LegacyCandidateStrategySnapshot = {
+      ...base,
+      blockedCompanyKeywords: ["staffing"],
+      penalizeMissingSalary: true,
+      missingSalaryPenalty: 9,
+      autoSkipScoreThreshold: 40,
+    };
+    const draft = deriveLegacyCandidateStrategyDraft(snapshot, effectiveAt);
+
+    expect(projectMigratedCandidateStrategyBehavior(draft)).toEqual(
+      projectLegacyCandidateStrategyBehavior(snapshot),
     );
   });
 
