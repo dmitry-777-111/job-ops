@@ -12,7 +12,8 @@ Updated: 2026-10-03 21:30 EDT
 - `f46d896` passed full CI (`37168586940`): F3-2 legacy strategy bootstrap is green.
 - `e1f87df` passed full CI (`37168809285`): profile/strategy versioning repository coverage and live migration preview are green.
 - `b8ca148` passed full CI (`37169023123`): legacy-vs-migrated strategy behavior projection is machine-checked.
-- Current prepared unit applies the legacy and migrated location/search configuration to the frozen 1,274-row R0 corpus and requires identical accepted job IDs plus identical search terms.
+- `8ffab66` passed full CI (`37169232837`): the frozen 1,274-row R0 corpus produces identical accepted IDs under legacy and migrated search/location configuration.
+- F3-2 Candidate/Strategy Domain is now ready to be recorded as PASS/CLOSED.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -30,10 +31,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared R0 search-equivalence test once.
+1. Commit/push the F3-2 acceptance record once.
 2. Read its single automatic CI run; do not redispatch.
-3. If PASS, write the F3-2 acceptance record from the existing evidence and close the phase.
-4. Do not activate or deploy the new domain in Freeze 2 production during development.
+3. If PASS, begin F3-3 Safe Prefilter in shadow mode using the frozen R0 dataset and regression corpus.
+4. No prefilter may affect production decisions until false-negative and decision-worthy regression gates pass.
 
 ## Safety / no-repeat rules
 
