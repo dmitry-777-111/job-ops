@@ -45,6 +45,7 @@ import {
 } from "./onboarding/analytics";
 import { BaseResumeStep } from "./onboarding/components/BaseResumeStep";
 import { LlmConnectionStep } from "./onboarding/components/LlmConnectionStep";
+import { VoiceTextInputButton } from "./onboarding/components/VoiceTextInputButton";
 import type { ValidationState } from "./onboarding/types";
 import { useOnboardingFlow } from "./onboarding/useOnboardingFlow";
 
@@ -1052,11 +1053,24 @@ function StrategyStep(props: {
           "Career priority or context (optional)",
         )}
       >
-        <Input
-          value={props.careerPriority}
-          onChange={(event) => props.onCareerPriorityChange(event.target.value)}
-          placeholder="Higher income first; PR remains important but should not force a low-pay path"
-        />
+        <div className="space-y-2">
+          <Input
+            value={props.careerPriority}
+            onChange={(event) =>
+              props.onCareerPriorityChange(event.target.value)
+            }
+            placeholder="Higher income first; PR remains important but should not force a low-pay path"
+          />
+          <VoiceTextInputButton
+            onTranscript={(transcript) =>
+              props.onCareerPriorityChange(
+                [props.careerPriority.trim(), transcript]
+                  .filter(Boolean)
+                  .join(" "),
+              )
+            }
+          />
+        </div>
       </Field>
       <div className="flex items-center justify-between border-t pt-6">
         <Button
