@@ -10,9 +10,7 @@
     "data_files_verified": 24,
     "baseline_db_sha256": "94da157dfa86b4e7d9d33852b3e6bb626f4a8d57427d8675999309265aaf525e",
     "baseline": {
-      "integrity_check": [
-        "ok"
-      ],
+      "integrity_check": ["ok"],
       "foreign_key_violations": 0,
       "foreign_keys_connection_enabled": 1,
       "counts": {
@@ -65,9 +63,7 @@
     "non_db_consistency": "all file hashes unchanged across SQLite snapshot; no atomic cross-file transaction claimed"
   },
   "migration": {
-    "integrity_check": [
-      "ok"
-    ],
+    "integrity_check": ["ok"],
     "foreign_key_violations": 0,
     "foreign_keys_validation_connection": 1,
     "legacy_count_changes": {},

@@ -116,15 +116,11 @@
   },
   "databaseChecks": {
     "startup": {
-      "integrity": [
-        "ok"
-      ],
+      "integrity": ["ok"],
       "fkViolations": 0
     },
     "working": {
-      "integrity": [
-        "ok"
-      ],
+      "integrity": ["ok"],
       "fkViolations": 0
     }
   },

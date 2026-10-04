@@ -45,6 +45,10 @@ vi.mock("../services/scorer", () => ({
   scoreJobSuitability: vi.fn(),
 }));
 
+vi.mock("@server/services/versioned-delta-scoring", () => ({
+  prepareVersionedScoringBatch: vi.fn().mockResolvedValue(null),
+}));
+
 // Mock the jobs repository
 vi.mock("../repositories/jobs", () => ({
   updateJob: vi.fn(),

@@ -13,7 +13,7 @@ import {
   getLatestMarketPostingVersionId,
   getMarketPostingVersion,
 } from "@server/repositories/market-inventory";
-import type { Job } from "@shared/types";
+import type { CreateJobInput, Job } from "@shared/types";
 
 export interface VersionedScoringTarget {
   job: Job;
@@ -34,6 +34,48 @@ export function buildScoringPolicyVersion(
   const normalized = scoringInstructions?.trim() ?? "";
   const digest = createHash("sha256").update(normalized).digest("hex");
   return `freeze3-score-${digest.slice(0, 16)}`;
+}
+
+function toCreateJobInput(job: Job): CreateJobInput {
+  return {
+    source: job.source,
+    sourceJobId: job.sourceJobId ?? undefined,
+    title: job.title,
+    employer: job.employer,
+    employerUrl: job.employerUrl ?? undefined,
+    jobUrl: job.jobUrl,
+    applicationLink: job.applicationLink ?? undefined,
+    deadline: job.deadline ?? undefined,
+    salary: job.salary ?? undefined,
+    location: job.location ?? undefined,
+    jobDescription: job.jobDescription ?? undefined,
+    jobUrlDirect: job.jobUrlDirect ?? undefined,
+    datePosted: job.datePosted ?? undefined,
+    jobType: job.jobType ?? undefined,
+    salarySource: job.salarySource ?? undefined,
+    salaryInterval: job.salaryInterval ?? undefined,
+    salaryMinAmount: job.salaryMinAmount ?? undefined,
+    salaryMaxAmount: job.salaryMaxAmount ?? undefined,
+    salaryCurrency: job.salaryCurrency ?? undefined,
+    isRemote: job.isRemote ?? undefined,
+    jobLevel: job.jobLevel ?? undefined,
+    jobFunction: job.jobFunction ?? undefined,
+    listingType: job.listingType ?? undefined,
+    emails: job.emails ?? undefined,
+    companyIndustry: job.companyIndustry ?? undefined,
+    companyLogo: job.companyLogo ?? undefined,
+    companyUrlDirect: job.companyUrlDirect ?? undefined,
+    companyAddresses: job.companyAddresses ?? undefined,
+    companyNumEmployees: job.companyNumEmployees ?? undefined,
+    companyRevenue: job.companyRevenue ?? undefined,
+    companyDescription: job.companyDescription ?? undefined,
+    skills: job.skills ?? undefined,
+    experienceRange: job.experienceRange ?? undefined,
+    companyRating: job.companyRating ?? undefined,
+    companyReviewsCount: job.companyReviewsCount ?? undefined,
+    vacancyCount: job.vacancyCount ?? undefined,
+    workFromHomeType: job.workFromHomeType ?? undefined,
+  };
 }
 
 function jobWithPostingSnapshot(
@@ -57,6 +99,11 @@ function jobWithPostingSnapshot(
     datePosted: snapshot.datePosted ?? job.datePosted,
     deadline: snapshot.deadline ?? job.deadline,
     applicationLink: snapshot.sourceUrl || job.applicationLink,
+    // A fresh immutable evaluation tuple must never inherit the legacy cached
+    // score. The prior result remains auditable in candidate_evaluations.
+    suitabilityScore: null,
+    suitabilityReason: null,
+    jobBrief: null,
   };
 }
 
@@ -115,7 +162,7 @@ export async function prepareVersionedScoringBatch(input: {
     }
 
     const legacyFingerprint = buildMarketPostingContentFingerprint(
-      marketPostingInputFromJob(legacyJob),
+      marketPostingInputFromJob(toCreateJobInput(legacyJob)),
     );
     const hasLegacyScore =
       typeof legacyJob.suitabilityScore === "number" &&

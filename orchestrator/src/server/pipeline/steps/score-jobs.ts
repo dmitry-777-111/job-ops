@@ -136,14 +136,14 @@ export async function scoreJobsStep(args: {
       try {
         scoringResult = await scoringResultPromise;
       } catch (error) {
-        // Configuration errors still abort the pool ??? every remaining job
+        // Configuration errors still abort the pool — every remaining job
         // would fail the same way until the user fixes their settings.
         if (!(error instanceof ScoringUnavailableError)) throw error;
         failed += 1;
         completed += 1;
         if (scoredJobs.length === 0 && failed >= SYSTEMIC_FAILURE_THRESHOLD) {
           throw new LlmNotConfiguredError(
-            `AI scoring failed for the first ${failed} jobs (${error.message}). Check your LLM configuration in Settings ??? Integrations, then resume scoring.`,
+            `AI scoring failed for the first ${failed} jobs (${error.message}). Check your LLM configuration in Settings → Integrations, then resume scoring.`,
           );
         }
         const evaluationId = evaluationIdByJobId.get(job.id);
@@ -153,11 +153,14 @@ export async function scoreJobsStep(args: {
             suitabilityReason: error.message,
           });
         }
-        logger.warn("Job scoring failed ??? leaving unscored and continuing", {
-          jobId: job.id,
-          title: job.title,
-          error: error.message,
-        });
+        logger.warn(
+          "Job scoring failed \u2014 leaving unscored and continuing",
+          {
+            jobId: job.id,
+            title: job.title,
+            error: error.message,
+          },
+        );
         progressHelpers.scoringJob(
           completed,
           unprocessedJobs.length,

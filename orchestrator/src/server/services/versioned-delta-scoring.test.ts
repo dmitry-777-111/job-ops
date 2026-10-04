@@ -1,6 +1,7 @@
 import type {
   CandidateEvaluation,
   CandidateStrategyProfile,
+  CreateJobInput,
   Job,
   MarketPostingVersion,
   MasterCareerProfileVersion,
@@ -45,8 +46,7 @@ import {
   prepareVersionedScoringBatch,
 } from "./versioned-delta-scoring";
 
-const job = {
-  id: "job-1",
+const jobInput: CreateJobInput = {
   source: "linkedin",
   sourceJobId: "src-1",
   title: "Field Service Engineer",
@@ -55,6 +55,11 @@ const job = {
   applicationLink: "https://example.com/jobs/1",
   location: "Toronto, ON",
   jobDescription: "PLC knowledge is required.",
+};
+
+const job = {
+  id: "job-1",
+  ...jobInput,
   datePosted: null,
   deadline: null,
   salary: null,
@@ -96,7 +101,7 @@ function postingVersion(
   description = job.jobDescription,
 ): MarketPostingVersion {
   const snapshot = {
-    ...marketPostingInputFromJob(job),
+    ...marketPostingInputFromJob(jobInput),
     description,
   };
   return {
@@ -189,6 +194,8 @@ describe("F3-7 versioned delta scoring preparation", () => {
     expect(batch?.targets[0]?.job.jobDescription).toBe(
       "PLC and commissioning experience are required.",
     );
+    expect(batch?.targets[0]?.job.suitabilityScore).toBeNull();
+    expect(batch?.targets[0]?.job.suitabilityReason).toBeNull();
     expect(mocks.updateCandidateEvaluation).not.toHaveBeenCalled();
   });
 

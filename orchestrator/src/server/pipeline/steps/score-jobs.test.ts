@@ -35,6 +35,10 @@ vi.mock("@server/services/visa-sponsors/index", () => ({
   calculateSponsorMatchSummary: vi.fn(),
 }));
 
+vi.mock("@server/services/versioned-delta-scoring", () => ({
+  prepareVersionedScoringBatch: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("../progress", () => ({
   updateProgress: vi.fn(),
   progressHelpers: {
