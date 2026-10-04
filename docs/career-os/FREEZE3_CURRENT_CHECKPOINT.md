@@ -20,7 +20,8 @@ Updated: 2026-10-03 21:30 EDT
 - `a6e3356` passed full CI (`37170657515`) with an initial 13-reject Canada hard-evidence shadow result (1.0204% savings, max score 38, zero selected/score>=50 rejects).
 - Semantic audit then found three phrases too broad for irreversible rejection; before any activation, the local parser was tightened to 10 safe rejects (0.7849%), still zero selected/score>=50 rejects.
 - `1fd1e23` added the tightened parser, audit record, and staged rollout controller, but its single CI run `37170981072` failed only two focused tests: generic "authorized to work in Canada (Canadian Citizen or Permanent Resident)" wording was still being misclassified, producing 12 rejects instead of the audited 10.
-- Current local repair excludes generic work-authorization framing from the citizen/PR-only hard signal. Independent deterministic replay on the 25-row evidence corpus returns exactly 10 rejects, max historical score 38, zero `ready` rejects, and zero score>=50 rejects.
+- `e19bb90` passed full CI (`37174790740`): generic work-authorization framing is excluded from the citizen/PR-only hard signal. Final deterministic result is exactly 10 SAFE_REJECT cases, max historical score 38, zero `ready` rejects, zero score>=50 rejects, and 10/10 manual audit coverage.
+- F3-3 Safe Prefilter is PASS/CLOSED for shadow/audit readiness. Production enforcement remains disabled pending a separate explicit activation approval.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -38,10 +39,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the minimal work-authorization false-positive repair once.
+1. Commit/push the F3-3 acceptance record once.
 2. Read its single automatic CI run; do not redispatch.
-3. If PASS, record the exact final 10-reject metrics and close the F3-3 acceptance gate while keeping production enforcement disabled.
-4. No prefilter may affect production decisions without a later explicit activation approval.
+3. If PASS, begin F3-4 Multi-user <=5 from the existing tenancy/private-scope foundation.
+4. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Safety / no-repeat rules
 
