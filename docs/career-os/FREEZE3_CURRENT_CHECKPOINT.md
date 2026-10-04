@@ -23,17 +23,18 @@ The durable anti-repeat mechanism is now:
 
 ## Local next unit
 
-Prepared but not yet pushed while `9eea53e` CI is active:
-- startup wiring behind `CAREER_OS_PIPELINE_DISPATCHER_ENABLED=true`;
-- disabled by default, so no accidental second scheduler owner;
-- interval remains controlled by the validated dispatcher runtime.
+Prepared next after dispatcher startup validation:
+- disk-pressure guard with 80% warning, 85% optional-heavy-work block, 90% critical state;
+- startup visibility of current disk pressure;
+- no automatic destructive cleanup.
 
 ## Next exact actions
 
 1. Read terminal result of CI run `37165481990`.
 2. If PASS: commit/push the already prepared startup-wiring unit once; automatic CI validates it.
 3. If FAIL: read only the failing job/log, apply the minimal fix to `9eea53e`, then continue the same startup-wiring unit without rebuilding it.
-4. After startup-wiring validation, continue F3-1 with disk/log safeguards and the controlled interrupted-vs-uninterrupted equivalence test.
+4. After startup-wiring validation, commit/push the prepared disk-pressure guard.
+5. Then complete log safeguards and the controlled interrupted-vs-uninterrupted equivalence test.
 
 ## Safety / no-repeat rules
 

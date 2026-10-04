@@ -21,6 +21,7 @@ import { initializeDemoModeServices } from "./services/demo-mode";
 import { applyStoredEnvOverrides } from "./services/envSettings";
 import { initializeHistoricalServerEventReplaySafely } from "./services/historical-product-analytics";
 import { startPipelineRunDispatcher } from "./services/pipeline-run-dispatcher-runtime";
+import { getDiskPressureSnapshot } from "./services/resource-guard";
 import { initialize as initializeVisaSponsors } from "./services/visa-sponsors/index";
 
 const AUTH_SESSION_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
@@ -125,6 +126,21 @@ async function startServer() {
       }
     } catch (error) {
       logger.warn("Failed to initialize backup service", {
+        error: sanitizeUnknown(error),
+      });
+    }
+
+    try {
+      const disk = await getDiskPressureSnapshot();
+      if (disk.level === "critical" || disk.level === "blocked") {
+        logger.warn("Disk pressure blocks optional heavy work", disk);
+      } else if (disk.level === "warning") {
+        logger.warn("Disk pressure warning", disk);
+      } else {
+        logger.debug("Disk pressure healthy", disk);
+      }
+    } catch (error) {
+      logger.warn("Failed to read disk pressure", {
         error: sanitizeUnknown(error),
       });
     }
