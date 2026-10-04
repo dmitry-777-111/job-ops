@@ -5,6 +5,7 @@ import { candidateRouter } from "./routes/candidate";
 
 import { Router } from "express";
 import { appStatusRouter } from "./routes/app-status";
+import { applicationPackagesRouter } from "./routes/application-packages";
 import { authRouter } from "./routes/auth";
 import { backupRouter } from "./routes/backup";
 import { billingRouter } from "./routes/billing";
@@ -32,6 +33,7 @@ import { workspacesRouter } from "./routes/workspaces";
 export const apiRouter = Router();
 
 apiRouter.use("/app", appStatusRouter);
+apiRouter.use("/application-packages", applicationPackagesRouter);
 apiRouter.use("/billing", billingRouter);
 apiRouter.use("/jobs", jobsRouter);
 apiRouter.use("/jobs/:id/chat", ghostwriterRouter);

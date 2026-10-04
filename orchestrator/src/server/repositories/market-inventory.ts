@@ -8,6 +8,7 @@ import type {
   MarketObservationAuthority,
   MarketPosting,
   MarketPostingInput,
+  MarketPostingObservation,
   MarketPostingStatus,
 } from "@shared/types";
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -386,4 +387,61 @@ export async function attachMarketPostingToCandidate(args: {
     updatedAt: now,
   });
   return id;
+}
+
+function mapObservation(
+  row: typeof marketPostingObservations.$inferSelect,
+): MarketPostingObservation {
+  return {
+    id: row.id,
+    marketPostingId: row.marketPostingId,
+    source: row.source,
+    authority: row.authority as MarketObservationAuthority,
+    sourceJobId: row.sourceJobId,
+    sourceUrl: row.sourceUrl,
+    observationKey: row.observationKey,
+    observedAt: row.observedAt,
+    sourceUpdatedAt: row.sourceUpdatedAt,
+    isLive: row.isLive,
+    payloadFingerprint: row.payloadFingerprint,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export async function getCandidateMarketPostingLiveContext(
+  marketPostingId: string,
+): Promise<{
+  posting: MarketPosting;
+  observations: MarketPostingObservation[];
+} | null> {
+  const [candidatePosting] = await db
+    .select({ id: candidateMarketPostings.id })
+    .from(candidateMarketPostings)
+    .where(
+      and(
+        privateDataScopeFilter(candidateMarketPostings),
+        eq(candidateMarketPostings.marketPostingId, marketPostingId),
+      ),
+    )
+    .limit(1);
+
+  if (!candidatePosting) return null;
+
+  const [postingRow] = await db
+    .select()
+    .from(marketPostings)
+    .where(eq(marketPostings.id, marketPostingId))
+    .limit(1);
+  if (!postingRow) return null;
+
+  const observations = await db
+    .select()
+    .from(marketPostingObservations)
+    .where(eq(marketPostingObservations.marketPostingId, marketPostingId));
+
+  return {
+    posting: mapPosting(postingRow),
+    observations: observations.map(mapObservation),
+  };
 }
