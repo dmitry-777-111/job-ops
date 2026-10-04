@@ -34,6 +34,7 @@ describe("OverviewPipelineRunsSection", () => {
         errorMessage: null,
       },
       nextScheduledRun: null,
+      worker: null,
     });
     vi.mocked(api.getPipelineRuns).mockResolvedValue([
       {
@@ -175,6 +176,7 @@ describe("OverviewPipelineRunsSection", () => {
         errorMessage: null,
       },
       nextScheduledRun: null,
+      worker: null,
     });
     vi.mocked(api.getPipelineRuns).mockResolvedValue([
       {
