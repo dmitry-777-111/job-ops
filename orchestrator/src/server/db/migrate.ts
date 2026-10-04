@@ -2224,6 +2224,35 @@ function ensureCandidateProfileAndStrategyTables(): void {
   `);
 }
 
+function ensurePipelineRunRequestsTable(): void {
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS pipeline_run_requests (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      status TEXT NOT NULL DEFAULT 'queued' CHECK(status IN ('queued','claimed','completed','failed','cancelled')),
+      trigger TEXT NOT NULL DEFAULT 'manual',
+      requested_config TEXT NOT NULL,
+      priority INTEGER NOT NULL DEFAULT 0,
+      available_at TEXT NOT NULL,
+      claimed_at TEXT,
+      pipeline_run_id TEXT,
+      completed_at TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (pipeline_run_id) REFERENCES pipeline_runs(id) ON DELETE SET NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pipeline_run_requests_one_outstanding_per_owner
+      ON pipeline_run_requests(tenant_id, coalesce(user_id, ''))
+      WHERE status IN ('queued','claimed');
+    CREATE INDEX IF NOT EXISTS idx_pipeline_run_requests_queue
+      ON pipeline_run_requests(status, priority, available_at, created_at);
+  `);
+}
+
 function ensurePipelineRunLeasesTable(): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS pipeline_run_leases (
@@ -2362,6 +2391,7 @@ rebuildAccountSubscriptionsKey();
 ensureTenantColumns();
 seedLegacyOwnerFromBasicAuth();
 ensurePrivateUserColumns();
+ensurePipelineRunRequestsTable();
 ensurePipelineRunLeasesTable();
 ensureApplicationPackagesTable();
 ensureExternalConnectionsTable();

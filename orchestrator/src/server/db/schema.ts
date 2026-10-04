@@ -776,6 +776,48 @@ export const pipelineRuns = sqliteTable("pipeline_runs", {
   resultSummary: text("result_summary", { mode: "json" }),
 });
 
+export const pipelineRunRequests = sqliteTable(
+  "pipeline_run_requests",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    status: text("status", {
+      enum: ["queued", "claimed", "completed", "failed", "cancelled"],
+    })
+      .notNull()
+      .default("queued"),
+    trigger: text("trigger").notNull().default("manual"),
+    requestedConfig: text("requested_config", { mode: "json" }).notNull(),
+    priority: integer("priority").notNull().default(0),
+    availableAt: text("available_at").notNull(),
+    claimedAt: text("claimed_at"),
+    pipelineRunId: text("pipeline_run_id").references(() => pipelineRuns.id, {
+      onDelete: "set null",
+    }),
+    completedAt: text("completed_at"),
+    errorMessage: text("error_message"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    oneOutstandingPerOwner: uniqueIndex(
+      "idx_pipeline_run_requests_one_outstanding_per_owner",
+    )
+      .on(table.tenantId, sql`coalesce(${table.userId}, '')`)
+      .where(sql`${table.status} IN ('queued','claimed')`),
+    queueIndex: index("idx_pipeline_run_requests_queue").on(
+      table.status,
+      table.priority,
+      table.availableAt,
+      table.createdAt,
+    ),
+  }),
+);
+
 export const pipelineRunLeases = sqliteTable(
   "pipeline_run_leases",
   {
@@ -2094,6 +2136,8 @@ export type NewJobDocumentRow = typeof jobDocuments.$inferInsert;
 export type InterviewRow = typeof interviews.$inferSelect;
 export type NewInterviewRow = typeof interviews.$inferInsert;
 export type PipelineRunRow = typeof pipelineRuns.$inferSelect;
+export type PipelineRunRequestRow = typeof pipelineRunRequests.$inferSelect;
+export type NewPipelineRunRequestRow = typeof pipelineRunRequests.$inferInsert;
 export type PipelineRunLeaseRow = typeof pipelineRunLeases.$inferSelect;
 export type NewPipelineRunLeaseRow = typeof pipelineRunLeases.$inferInsert;
 export type NewPipelineRunRow = typeof pipelineRuns.$inferInsert;
