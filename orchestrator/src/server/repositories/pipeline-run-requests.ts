@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { PipelineConfig } from "@shared/types";
-import { and, desc, eq, lte } from "drizzle-orm";
+import { and, asc, desc, eq, lte } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
   getPrivateDataScope,
@@ -122,6 +122,51 @@ export async function enqueuePipelineRunRequest(input: {
     .limit(1);
   if (!created) throw new Error("Failed to load queued pipeline request.");
   return { request: mapRow(created), created: true };
+}
+
+export interface PipelineRunRequestOwner {
+  tenantId: string;
+  userId: string | null;
+}
+
+/**
+ * System-internal fairness view: list candidate owners with ready queued work,
+ * at most once per owner, ordered by priority and age. The returned owner IDs
+ * are used only to establish explicit request context before touching private
+ * candidate data.
+ */
+export async function listReadyPipelineRunRequestOwners(
+  limit = 5,
+): Promise<PipelineRunRequestOwner[]> {
+  const now = new Date().toISOString();
+  const rows = await db
+    .select({
+      tenantId: pipelineRunRequests.tenantId,
+      userId: pipelineRunRequests.userId,
+    })
+    .from(pipelineRunRequests)
+    .where(
+      and(
+        eq(pipelineRunRequests.status, "queued"),
+        lte(pipelineRunRequests.availableAt, now),
+      ),
+    )
+    .orderBy(
+      desc(pipelineRunRequests.priority),
+      asc(pipelineRunRequests.availableAt),
+      asc(pipelineRunRequests.createdAt),
+    );
+
+  const seen = new Set<string>();
+  const owners: PipelineRunRequestOwner[] = [];
+  for (const row of rows) {
+    const key = `${row.tenantId}\u001f${row.userId ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    owners.push({ tenantId: row.tenantId, userId: row.userId });
+    if (owners.length >= Math.max(1, limit)) break;
+  }
+  return owners;
 }
 
 export async function getOutstandingPipelineRunRequest(): Promise<PipelineRunRequest | null> {
