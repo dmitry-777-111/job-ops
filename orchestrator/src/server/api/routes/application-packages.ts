@@ -7,6 +7,7 @@ import {
 } from "@server/services/application-package-approval";
 import { prepareApplicationPackageDraft } from "@server/services/application-package-draft";
 import { deriveApplicationVacancyLiveGate } from "@server/services/application-package-live-gate";
+import { getApplicationPackageReview } from "@server/services/application-package-review";
 import { type Request, type Response, Router } from "express";
 
 export const applicationPackagesRouter = Router();
@@ -67,6 +68,22 @@ applicationPackagesRouter.post(
         applicationPackageId: req.params.applicationPackageId,
         acknowledgeUnknownLiveState:
           req.body?.acknowledgeUnknownLiveState === true,
+      });
+      ok(res, result);
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+applicationPackagesRouter.get(
+  "/:applicationPackageId/review",
+  async (req: Request, res: Response) => {
+    try {
+      const result = await getApplicationPackageReview({
+        applicationPackageId: req.params.applicationPackageId,
+        acknowledgeUnknownLiveState:
+          req.query.acknowledgeUnknownLiveState === "true",
       });
       ok(res, result);
     } catch (error) {

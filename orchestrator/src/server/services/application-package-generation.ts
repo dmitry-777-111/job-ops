@@ -101,6 +101,24 @@ export function buildEvidenceBoundedCoverLetter(input: {
   return lines.join("\n");
 }
 
+export function describeTargetedCvChangesFromMaster(input: {
+  profile: ResumeProfile;
+  targetedCvJson: Record<string, unknown>;
+}): string[] {
+  const targetedProfile = input.targetedCvJson as ResumeProfile;
+  const originalSkillIds =
+    input.profile.sections?.skills?.items?.map((item) => item.id) ?? [];
+  const targetedSkillIds =
+    targetedProfile.sections?.skills?.items?.map((item) => item.id) ?? [];
+  const skillsReordered =
+    originalSkillIds.length === targetedSkillIds.length &&
+    originalSkillIds.some((id, index) => id !== targetedSkillIds[index]);
+
+  return skillsReordered
+    ? ["sections.skills.items: reordered by verified vacancy relevance"]
+    : [];
+}
+
 export function buildTruthConstrainedApplicationDraft(input: {
   posting: MarketPosting;
   profile: ResumeProfile;
@@ -112,14 +130,6 @@ export function buildTruthConstrainedApplicationDraft(input: {
     input.evidenceMap,
   );
 
-  const originalSkillIds =
-    input.profile.sections?.skills?.items?.map((item) => item.id) ?? [];
-  const targetedSkillIds =
-    targetedProfile.sections?.skills?.items?.map((item) => item.id) ?? [];
-  const skillsReordered =
-    originalSkillIds.length === targetedSkillIds.length &&
-    originalSkillIds.some((id, index) => id !== targetedSkillIds[index]);
-
   return {
     targetedCvJson: targetedProfile as Record<string, unknown>,
     coverLetter: buildEvidenceBoundedCoverLetter({
@@ -128,8 +138,9 @@ export function buildTruthConstrainedApplicationDraft(input: {
       evidenceMap: input.evidenceMap,
     }),
     formAnswers: {},
-    changedFromMaster: skillsReordered
-      ? ["sections.skills.items: reordered by verified vacancy relevance"]
-      : [],
+    changedFromMaster: describeTargetedCvChangesFromMaster({
+      profile: input.profile,
+      targetedCvJson: targetedProfile as Record<string, unknown>,
+    }),
   };
 }

@@ -10,6 +10,7 @@ import type {
   MarketPostingInput,
   MarketPostingObservation,
   MarketPostingStatus,
+  MarketPostingVersion,
 } from "@shared/types";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "../db";
@@ -457,4 +458,25 @@ export async function getLatestMarketPostingVersionId(
     .limit(1);
 
   return row?.id ?? null;
+}
+
+export async function getMarketPostingVersion(
+  marketPostingVersionId: string,
+): Promise<MarketPostingVersion | null> {
+  const [row] = await db
+    .select()
+    .from(marketPostingVersions)
+    .where(eq(marketPostingVersions.id, marketPostingVersionId))
+    .limit(1);
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    marketPostingId: row.marketPostingId,
+    version: row.version,
+    contentFingerprint: row.contentFingerprint,
+    snapshot: row.snapshot as MarketPostingInput,
+    createdAt: row.createdAt,
+  };
 }
