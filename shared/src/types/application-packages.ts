@@ -8,6 +8,27 @@ export const APPLICATION_PACKAGE_STATUSES = [
 export type ApplicationPackageStatus =
   (typeof APPLICATION_PACKAGE_STATUSES)[number];
 
+export const APPLICATION_REQUIREMENT_CATEGORIES = [
+  "skill",
+  "experience",
+  "education",
+  "licence",
+  "language",
+  "work_authorization",
+  "travel",
+  "other",
+] as const;
+export type ApplicationRequirementCategory =
+  (typeof APPLICATION_REQUIREMENT_CATEGORIES)[number];
+
+export interface ApplicationRequirementItem {
+  key: string;
+  text: string;
+  category: ApplicationRequirementCategory;
+  mandatory: boolean | null;
+  sourceText: string;
+}
+
 export interface ApplicationEvidenceItem {
   requirementKey: string;
   requirementText: string;
