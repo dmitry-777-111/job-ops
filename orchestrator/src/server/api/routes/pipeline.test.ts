@@ -48,6 +48,7 @@ describe.sequential("Pipeline API routes", () => {
     expect(body.ok).toBe(true);
     expect(body.data.isRunning).toBe(false);
     expect(body.data.lastRun).toBeNull();
+    expect(body.data.worker).toBeNull();
   });
 
   it("detects the country at a selected map point", async () => {

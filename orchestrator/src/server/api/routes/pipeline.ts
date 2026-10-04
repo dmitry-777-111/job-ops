@@ -28,6 +28,7 @@ import {
   subscribeToProgress,
 } from "@server/pipeline/index";
 import * as pipelineRepo from "@server/repositories/pipeline";
+import { getActivePipelineRunLease } from "@server/repositories/pipeline-run-leases";
 import * as pipelineSearchPresetsRepo from "@server/repositories/pipeline-search-presets";
 import { trackCanonicalActivationEvent } from "@server/services/activation-funnel";
 import {
@@ -130,11 +131,21 @@ function resolveRequestOrigin(req: Request): string | null {
 pipelineRouter.get("/status", async (_req: Request, res: Response) => {
   try {
     const { isRunning } = getPipelineStatus();
-    const lastRun = await pipelineRepo.getLatestPipelineRun();
+    const [lastRun, activeLease] = await Promise.all([
+      pipelineRepo.getLatestPipelineRun(),
+      getActivePipelineRunLease(),
+    ]);
     const data: PipelineStatusResponse = {
-      isRunning,
+      isRunning: isRunning || Boolean(activeLease),
       lastRun,
       nextScheduledRun: null,
+      worker: activeLease
+        ? {
+            pipelineRunId: activeLease.pipelineRunId,
+            heartbeatAt: activeLease.heartbeatAt,
+            expiresAt: activeLease.expiresAt,
+          }
+        : null,
     };
     ok(res, data);
   } catch (error) {

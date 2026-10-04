@@ -275,6 +275,11 @@ export interface PipelineStatusResponse {
   isRunning: boolean;
   lastRun: PipelineRun | null;
   nextScheduledRun: string | null;
+  worker: {
+    pipelineRunId: string;
+    heartbeatAt: string;
+    expiresAt: string;
+  } | null;
 }
 
 export type PipelineSearchPresetMode =
