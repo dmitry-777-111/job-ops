@@ -14,7 +14,8 @@ Updated: 2026-10-03 21:30 EDT
 - `b8ca148` passed full CI (`37169023123`): legacy-vs-migrated strategy behavior projection is machine-checked.
 - `8ffab66` passed full CI (`37169232837`): the frozen 1,274-row R0 corpus produces identical accepted IDs under legacy and migrated search/location configuration.
 - `d4b39a1` passed full CI (`37169388118`): F3-2 Candidate/Strategy Domain is durably recorded as PASS/CLOSED.
-- Current prepared unit starts F3-3 Safe Prefilter in shadow-only mode with evidence-backed hard rejection rules and UNKNOWN-to-AI behavior.
+- `1cf2569` passed full CI (`37169856874`): F3-3 shadow-only safe prefilter foundation is green after the single type-only test-fixture repair.
+- Current prepared unit runs that prefilter against the frozen 1,274-row R0 corpus and rejects the phase if any known selected job or any scored job at >=50 is falsely safe-rejected.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -32,9 +33,9 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared F3-3 shadow prefilter foundation once.
-2. Read its single automatic CI run; do not redispatch.
-3. If PASS, run the shadow rule set against the frozen R0 dataset and regression corpus to measure savings and false-negative risk.
+1. Commit/push the prepared R0 shadow prefilter regression test once.
+2. Read its single automatic CI run and extract the printed savings summary; do not redispatch.
+3. If PASS, record the observed savings/false-negative result and decide whether the rule set is strong enough for staged activation or needs more evidence-backed rules.
 4. No prefilter may affect production decisions until false-negative and decision-worthy regression gates pass.
 
 ## Safety / no-repeat rules
