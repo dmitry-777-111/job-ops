@@ -142,7 +142,7 @@ export const OnboardingPage: React.FC = () => {
   }, [bootstrapState, trackStarted]);
 
   if (bootstrapState === "checking") {
-    return <LoadingState message="Preparing your workspace???" />;
+    return <LoadingState message="Preparing your workspace..." />;
   }
   if (bootstrapState === "error") {
     return (
@@ -265,7 +265,7 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
               </div>
               <div className="flex justify-end">
                 <Button type="submit" disabled={busy}>
-                  {busy ? "Creating account???" : "Create account"}
+                  {busy ? "Creating account..." : "Create account"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -354,6 +354,13 @@ function LaunchSetup({
   const modelRequirement = getRequirement(status, "model");
   const resumeRequirement = getRequirement(status, "resume");
   const activeRequirement = getRequirement(status, activeStep);
+  const strategyQuestionsQuery = useQuery({
+    queryKey: ["onboarding", "strategy", "questions"],
+    queryFn: () => api.getOnboardingStrategyQuestions({}),
+    enabled: activeStep === "strategy" && !strategyPreview,
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 
   useEffect(() => {
     if (!status || onboarding.checking) return;
@@ -425,7 +432,7 @@ function LaunchSetup({
     return <Navigate to="/jobs/ready" replace />;
   }
   if (onboarding.checking) {
-    return <LoadingState message="Loading your setup???" />;
+    return <LoadingState message="Loading your setup..." />;
   }
 
   const resumeSource =
@@ -565,7 +572,7 @@ function LaunchSetup({
       <PageHeader
         icon={Sparkles}
         title="Set up Job Ops"
-        subtitle="A few focused choices, then you???re in. You can review the strategy before it becomes active."
+        subtitle="A few focused choices, then you're in. You can review the strategy before it becomes active."
       />
       <PageMain>
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
@@ -646,6 +653,10 @@ function LaunchSetup({
                   usTravel={usTravel}
                   careerPriority={careerPriority}
                   preview={strategyPreview}
+                  adaptiveQuestions={
+                    strategyQuestionsQuery.data?.questions ?? []
+                  }
+                  adaptiveSource={strategyQuestionsQuery.data?.source ?? null}
                   busy={strategyBusy}
                   onTargetRolesChange={setTargetRoles}
                   onExcludedRolesChange={setExcludedRoles}
@@ -778,7 +789,7 @@ function StepActions({
         <span />
       )}
       <Button type="button" onClick={() => void onContinue()} disabled={busy}>
-        {busy ? "Saving???" : label}
+        {busy ? "Saving..." : label}
         <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
@@ -891,6 +902,8 @@ function StrategyStep(props: {
   usTravel: "" | "open" | "limited" | "avoid";
   careerPriority: string;
   preview: api.CandidateStrategyOnboardingPreviewResponse["preview"];
+  adaptiveQuestions: api.CandidateStrategyOnboardingQuestion[];
+  adaptiveSource: "ai" | "deterministic" | null;
   busy: boolean;
   onTargetRolesChange: (value: string) => void;
   onExcludedRolesChange: (value: string) => void;
@@ -902,6 +915,14 @@ function StrategyStep(props: {
   onPrepare: () => void | Promise<void>;
   onActivate: () => void | Promise<void>;
 }) {
+  const adaptiveById = new Map(
+    props.adaptiveQuestions.map((question) => [question.id, question]),
+  );
+  const promptFor = (
+    id: api.CandidateStrategyOnboardingQuestion["id"],
+    fallback: string,
+  ) => adaptiveById.get(id)?.prompt ?? fallback;
+
   if (props.preview) {
     return (
       <StepShell
@@ -955,7 +976,7 @@ function StrategyStep(props: {
             onClick={() => void props.onActivate()}
             disabled={props.busy}
           >
-            {props.busy ? "Confirming???" : "Confirm strategy"}
+            {props.busy ? "Confirming..." : "Confirm strategy"}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
@@ -970,7 +991,9 @@ function StrategyStep(props: {
       description="Use plain text. Unknown optional answers stay unknown; they are not converted into hard exclusions. You will review a draft before it becomes active."
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Target roles or role families">
+        <Field
+          label={promptFor("target_roles", "Target roles or role families")}
+        >
           <Input
             value={props.targetRoles}
             onChange={(event) => props.onTargetRolesChange(event.target.value)}
@@ -986,7 +1009,12 @@ function StrategyStep(props: {
             placeholder="Pure sales, narrow maintenance-only roles"
           />
         </Field>
-        <Field label="Minimum annual compensation in CAD (optional)">
+        <Field
+          label={promptFor(
+            "compensation_floor",
+            "Minimum annual compensation in CAD (optional)",
+          )}
+        >
           <Input
             type="number"
             min="0"
@@ -997,7 +1025,7 @@ function StrategyStep(props: {
             placeholder="70000"
           />
         </Field>
-        <Field label="United States travel">
+        <Field label={promptFor("us_travel", "United States travel")}>
           <div className="grid grid-cols-3 gap-2">
             {(
               [
@@ -1018,7 +1046,12 @@ function StrategyStep(props: {
           </div>
         </Field>
       </div>
-      <Field label="Career priority or context (optional)">
+      <Field
+        label={promptFor(
+          "career_priority",
+          "Career priority or context (optional)",
+        )}
+      >
         <Input
           value={props.careerPriority}
           onChange={(event) => props.onCareerPriorityChange(event.target.value)}
@@ -1040,7 +1073,7 @@ function StrategyStep(props: {
           onClick={() => void props.onPrepare()}
           disabled={props.busy || props.targetRoles.trim().length === 0}
         >
-          {props.busy ? "Preparing???" : "Review strategy"}
+          {props.busy ? "Preparing..." : "Review strategy"}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
@@ -1071,7 +1104,7 @@ function ResumeStep({
       <StepShell
         eyebrow="Your resume"
         title="Load the resume Job Ops should use"
-        description="Upload a file or connect Reactive Resume. After parsing, you???ll review the result before anything is marked complete."
+        description="Upload a file or connect Reactive Resume. After parsing, you'll review the result before anything is marked complete."
       >
         <BaseResumeStep
           allowReactiveResume

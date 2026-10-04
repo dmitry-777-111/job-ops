@@ -20,6 +20,7 @@ vi.mock("@/client/api", () => ({
   getAuthBootstrapStatus: vi.fn(),
   hasAuthenticatedSession: vi.fn(() => true),
   getProfile: vi.fn(),
+  getOnboardingStrategyQuestions: vi.fn(),
   saveOnboardingProfile: vi.fn(),
   saveOnboardingStrategyDraft: vi.fn(),
   setupFirstAdmin: vi.fn(),
@@ -226,7 +227,7 @@ async function renderPage() {
     </MemoryRouter>,
   );
   await screen.findByText(
-    "A few focused choices, then you???re in. You can review the strategy before it becomes active.",
+    "A few focused choices, then you're in. You can review the strategy before it becomes active.",
   );
 }
 
@@ -245,6 +246,10 @@ describe("OnboardingPage", () => {
         userEditableLlmSettings: true,
       },
       hostedTenantConfigured: false,
+    });
+    vi.mocked(api.getOnboardingStrategyQuestions).mockResolvedValue({
+      source: "deterministic",
+      questions: [],
     });
     vi.mocked(useDesignResume).mockReturnValue({
       document: null,
@@ -357,6 +362,17 @@ describe("OnboardingPage", () => {
       error: null,
       refetch: vi.fn(),
     } as ReturnType<typeof useOnboardingStatus>);
+    vi.mocked(api.getOnboardingStrategyQuestions).mockResolvedValue({
+      source: "ai",
+      questions: [
+        {
+          id: "target_roles",
+          prompt: "Which field-service or adjacent roles should we prioritize?",
+          required: true,
+          reason: "The active career profile is field-service oriented.",
+        },
+      ],
+    });
     vi.mocked(api.saveOnboardingStrategyDraft).mockResolvedValue({
       preview: {
         draft: {
@@ -386,6 +402,11 @@ describe("OnboardingPage", () => {
     vi.mocked(api.activateOnboardingStrategy).mockResolvedValue(resumeStatus);
 
     await renderPage();
+    expect(
+      await screen.findByText(
+        "Which field-service or adjacent roles should we prioritize?",
+      ),
+    ).toBeInTheDocument();
     fireEvent.change(
       screen.getByPlaceholderText(
         "Field Service Engineer, Commissioning, Technical Support",

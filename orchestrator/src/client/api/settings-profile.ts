@@ -217,6 +217,27 @@ export type CandidateStrategyOnboardingQuestion = {
   reason: string;
 };
 
+export type CandidateStrategyAdaptiveQuestionsResponse = {
+  questions: CandidateStrategyOnboardingQuestion[];
+  source: "ai" | "deterministic";
+};
+
+export async function getOnboardingStrategyQuestions(input: {
+  targetRoleFamilies?: string[];
+  excludedRoleFamilies?: string[];
+  compensationFloorCadAnnual?: number | null;
+  usTravel?: "open" | "limited" | "avoid" | null;
+  careerPriority?: string | null;
+}): Promise<CandidateStrategyAdaptiveQuestionsResponse> {
+  return fetchApi<CandidateStrategyAdaptiveQuestionsResponse>(
+    "/onboarding/actions/strategy/questions",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
+
 export type CandidateStrategyOnboardingPreviewResponse = {
   preview: {
     draft: CandidateStrategyProfile;
