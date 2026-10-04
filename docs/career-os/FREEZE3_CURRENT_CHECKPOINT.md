@@ -25,8 +25,10 @@ Updated: 2026-10-03 21:30 EDT
 - `6936ca4` passed full CI (`37175486379`): hosted two-candidate private-domain isolation is green for profile, strategy, connection status, encrypted credentials, and cross-user activation attempts.
 - `03167bd` passed full CI (`37175728984`): the remaining F3-4 shared-discovery gap and safety boundary are durably documented.
 - `932f07f` passed full CI (`37175911187`): bounded shared-discovery coordinator is green with exact opaque fingerprinting, clean-result single-flight/cache reuse, bounded retention, cloned outputs, and no propagation/cache of challenged/degraded/failed source results.
-- Current prepared unit integrates sharing conservatively only for extractor manifests that explicitly opt in as public/shareable (initially JobSpy). Fingerprint includes exact channels, terms, location intent/plan, current settings, required-env credential context, and candidate existing-job URLs; Watchlist, resume/recovery and challenge retry flows remain outside sharing.
-- Focused local Vitest could not start because the VPS worktree intentionally lacks some frontend test dependencies; no install was attempted because root disk remains under critical pressure. Full GitHub CI remains the validation source.
+- `7f7bf7f` passed full CI (`37176478379`): safe public discovery reuse is integrated behind explicit extractor opt-in (initially JobSpy), and the two-candidate regression proves one heavy extractor execution for identical shareable discovery.
+- `06922d7` passed full CI (`37176824585`): F3-4 Multi-user <=5 acceptance and the anti-interruption protocol/tooling are durable. F3-4 is PASS/CLOSED.
+- Current prepared unit is the F3-5 Product onboarding + UX gap audit. Resume upload/import and basic search onboarding already exist; adaptive strategy questions, candidate strategy confirmation, simplified candidate navigation, and hiding advanced diagnostics are the remaining product gaps.
+- Focused local Vitest cannot start in this VPS worktree because some frontend test dependencies are intentionally absent; no install is permitted while root disk remains under critical pressure. Full GitHub CI remains authoritative.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -44,10 +46,11 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the anti-interruption tooling + F3-4 acceptance record once.
+1. Commit/push the F3-5 gap audit once.
 2. Read its single automatic CI run with `compact-ci.sh`; do not redispatch.
-3. If PASS, begin F3-5 Product onboarding + UX from the existing signup/profile/settings/navigation foundation.
-4. Keep prefilter enforcement disabled until a later explicit activation approval.
+3. If PASS, implement the F3-5 strategy-onboarding domain step first: adaptive missing-dimension questions, text input, draft creation, confirmation, and explicit activation.
+4. Then simplify candidate navigation while preserving technical screens under Advanced/Admin; voice remains optional/capability-gated.
+5. Keep prefilter enforcement disabled until a later explicit activation approval.
 
 ## Compact diagnostics / anti-limit rules
 
