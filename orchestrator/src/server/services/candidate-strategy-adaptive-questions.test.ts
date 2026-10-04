@@ -120,7 +120,7 @@ describe("candidate strategy adaptive questions", () => {
     const answers = {
       targetRoleFamilies: ["Commissioning"],
       compensationFloorCadAnnual: null,
-      usTravel: null as const,
+      usTravel: null,
     };
     const result = await generateCandidateStrategyAdaptiveQuestions(answers);
 
