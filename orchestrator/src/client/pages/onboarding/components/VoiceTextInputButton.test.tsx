@@ -47,7 +47,7 @@ describe("VoiceTextInputButton", () => {
   });
 
   it("returns a final transcript when browser capability is available", () => {
-    let instance: FakeRecognitionInstance | null = null;
+    const instances: FakeRecognitionInstance[] = [];
     class FakeRecognition {
       lang = "";
       continuous = false;
@@ -59,7 +59,7 @@ describe("VoiceTextInputButton", () => {
       stop = vi.fn();
 
       constructor() {
-        instance = this;
+        instances.push(this);
       }
     }
 
@@ -75,8 +75,8 @@ describe("VoiceTextInputButton", () => {
       screen.getByRole("button", { name: "Add strategy context by voice" }),
     );
 
-    expect(instance?.start).toHaveBeenCalledTimes(1);
-    instance?.onresult?.({
+    expect(instances[0]?.start).toHaveBeenCalledTimes(1);
+    instances[0]?.onresult?.({
       results: [
         { 0: { transcript: "  higher income with customer contact  " } },
       ],
