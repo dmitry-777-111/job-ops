@@ -18,6 +18,15 @@ function scopeFilter() {
   return privateDataScopeFilter(candidateEvaluations);
 }
 
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    /UNIQUE constraint failed|SQLITE_CONSTRAINT_UNIQUE|SQLITE_CONSTRAINT_PRIMARYKEY/i.test(
+      error.message,
+    )
+  );
+}
+
 function mapRow(
   row: typeof candidateEvaluations.$inferSelect,
 ): CandidateEvaluation {
@@ -106,22 +115,32 @@ export async function ensureCandidateEvaluation(input: {
   const scope = getPrivateDataScope();
   const now = new Date().toISOString();
   const id = randomUUID();
-  await db.insert(candidateEvaluations).values({
-    id,
-    tenantId: scope.tenantId,
-    userId: scope.userId,
-    marketPostingId: input.marketPostingId,
-    marketPostingVersionId: input.marketPostingVersionId,
-    profileVersionId: input.profileVersionId,
-    strategyVersionId: input.strategyVersionId,
-    scoringPolicyVersion: input.scoringPolicyVersion,
-    prefilterDisposition: "not_evaluated",
-    hardGateOutcome: "unknown",
-    status: "pending",
-    uncertainties: [],
-    createdAt: now,
-    updatedAt: now,
-  });
+  try {
+    await db.insert(candidateEvaluations).values({
+      id,
+      tenantId: scope.tenantId,
+      userId: scope.userId,
+      marketPostingId: input.marketPostingId,
+      marketPostingVersionId: input.marketPostingVersionId,
+      profileVersionId: input.profileVersionId,
+      strategyVersionId: input.strategyVersionId,
+      scoringPolicyVersion: input.scoringPolicyVersion,
+      prefilterDisposition: "not_evaluated",
+      hardGateOutcome: "unknown",
+      status: "pending",
+      uncertainties: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+  } catch (error) {
+    if (!isUniqueConstraintError(error)) throw error;
+
+    // A concurrent worker may have won the immutable input-tuple insert.
+    // Reuse that row instead of launching a second evaluation / AI call.
+    const winner = await findCandidateEvaluation(input);
+    if (!winner) throw error;
+    return { evaluation: winner, created: false };
+  }
 
   const created = await findCandidateEvaluation(input);
   if (!created) throw new Error("Failed to load created candidate evaluation.");
