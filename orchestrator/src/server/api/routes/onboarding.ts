@@ -2,7 +2,11 @@ import { notFound } from "@infra/errors";
 import { asyncRoute, ok, okWithMeta } from "@infra/http";
 import { isDemoMode } from "@server/config/demo";
 import { activateCandidateStrategyVersion } from "@server/repositories/candidate-strategy";
-import { createCandidateStrategyOnboardingPreview } from "@server/services/candidate-strategy-onboarding";
+import { generateCandidateStrategyAdaptiveQuestions } from "@server/services/candidate-strategy-adaptive-questions";
+import {
+  createCandidateStrategyOnboardingPreview,
+  deriveCandidateStrategyQuestions,
+} from "@server/services/candidate-strategy-onboarding";
 import { suggestOnboardingSearchTerms } from "@server/services/onboarding-search-terms";
 import {
   confirmOnboardingResumeAction,
@@ -61,6 +65,25 @@ const strategyDraftActionSchema = z.object({
   careerPriority: z.string().trim().max(5000).nullable().optional(),
 });
 
+const strategyQuestionsActionSchema = z.object({
+  targetRoleFamilies: z
+    .array(z.string().trim().min(1).max(200))
+    .max(100)
+    .optional(),
+  excludedRoleFamilies: z
+    .array(z.string().trim().min(1).max(200))
+    .max(100)
+    .optional(),
+  compensationFloorCadAnnual: z
+    .number()
+    .nonnegative()
+    .max(1_000_000)
+    .nullable()
+    .optional(),
+  usTravel: z.enum(["open", "limited", "avoid"]).nullable().optional(),
+  careerPriority: z.string().trim().max(5000).nullable().optional(),
+});
+
 const strategyActivateActionSchema = z.object({
   versionId: z.string().trim().min(1).max(200),
 });
@@ -87,6 +110,24 @@ onboardingRouter.post(
       profileActionSchema.parse(req.body ?? {}),
     );
     ok(res, data);
+  }),
+);
+
+onboardingRouter.post(
+  "/actions/strategy/questions",
+  asyncRoute(async (req: Request, res: Response) => {
+    const input = strategyQuestionsActionSchema.parse(req.body ?? {});
+    if (isDemoMode()) {
+      return okWithMeta(
+        res,
+        {
+          questions: deriveCandidateStrategyQuestions(input),
+          source: "deterministic" as const,
+        },
+        { simulated: true },
+      );
+    }
+    ok(res, await generateCandidateStrategyAdaptiveQuestions(input));
   }),
 );
 
