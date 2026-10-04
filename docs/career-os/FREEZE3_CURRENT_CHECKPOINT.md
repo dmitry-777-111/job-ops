@@ -74,8 +74,10 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-F3-6 is PASS/CLOSED. Follow FREEZE3_F3_7_AUDIT.md for F3-7 only.
-Create protected current production snapshot, migrate an isolated working copy, record actual drill evidence. Disk/resource acceptance currently FAILS (92% root usage); no cutover, builds, installs or destructive cleanup. Preserve Freeze 2 and disabled production prefilter enforcement.
+F3-6 PASS/CLOSED at bf68d75 (full CI 37222619720 success).
+F3-7 partial: snapshot, migration, integrity/counts and actual backup/restore PASS. See FREEZE3_F3_7_AUDIT.md and evidence/F3_7_SERIES1.json.
+Freeze 3 startup NOT PASS/INCONCLUSIVE; daily-delta NOT RUN; resource acceptance FAIL (93% disk). Explicit rollback: PASS: restored pre-migration DB and Freeze 2 image reached HTTP health in 60.03 seconds.
+Reuse /opt/career-os-next/f3-7-acceptance-20261004; do not recopy production or repeat green phases. Resolve capacity safely, complete remaining runtime/delta/resource gates, then final acceptance only on full PASS. No cutover/tag and no production prefilter activation.
 
 ## Compact diagnostics / anti-limit rules
 

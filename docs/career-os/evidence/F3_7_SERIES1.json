@@ -1,0 +1,201 @@
+{
+  "baseline_code_sha": "bf68d750d82fe2b711d879c291bc62b95077cc5d",
+  "baseline_ci": {
+    "run": 37222619720,
+    "conclusion": "success"
+  },
+  "snapshot": {
+    "snapshot_utc": "2026-10-04T18:58:50Z",
+    "elapsed_seconds": 1.33,
+    "data_files_verified": 24,
+    "baseline_db_sha256": "94da157dfa86b4e7d9d33852b3e6bb626f4a8d57427d8675999309265aaf525e",
+    "baseline": {
+      "integrity_check": [
+        "ok"
+      ],
+      "foreign_key_violations": 0,
+      "foreign_keys_connection_enabled": 1,
+      "counts": {
+        "tenants": 1,
+        "users": 1,
+        "tenant_memberships": 1,
+        "account_subscriptions": 0,
+        "hosted_usage_counters": 0,
+        "hosted_usage_reservations": 0,
+        "watchlist_checks": 0,
+        "watchlist_seen_jobs": 0,
+        "watchlist_selected_sources": 0,
+        "analytics_install_state": 1,
+        "analytics_server_event_replays": 0,
+        "analytics_milestones": 2,
+        "auth_sessions": 0,
+        "pipeline_search_presets": 0,
+        "design_resume_documents": 1,
+        "design_resume_assets": 0,
+        "job_documents": 0,
+        "job_chat_threads": 0,
+        "job_chat_messages": 0,
+        "job_chat_runs": 0,
+        "stage_events": 1,
+        "tasks": 0,
+        "job_notes": 0,
+        "interviews": 0,
+        "post_application_sync_runs": 4,
+        "tracer_click_events": 0,
+        "app_data_migrations": 1,
+        "job_verified_facts": 0,
+        "job_immigration_profiles": 0,
+        "human_bridge_companies": 0,
+        "job_human_bridge_companies": 0,
+        "human_bridge_contacts": 0,
+        "pipeline_source_runs": 0,
+        "pipeline_issues": 0,
+        "pipeline_issue_occurrences": 0,
+        "dynamic_employers": 10,
+        "dynamic_employer_events": 10,
+        "pipeline_runs": 5,
+        "jobs": 1275,
+        "watchlist_job_states": 0,
+        "post_application_integrations": 1,
+        "post_application_messages": 7,
+        "tracer_links": 0,
+        "settings": 24
+      }
+    },
+    "non_db_consistency": "all file hashes unchanged across SQLite snapshot; no atomic cross-file transaction claimed"
+  },
+  "migration": {
+    "integrity_check": [
+      "ok"
+    ],
+    "foreign_key_violations": 0,
+    "foreign_keys_validation_connection": 1,
+    "legacy_count_changes": {},
+    "counts": {
+      "tenants": 1,
+      "users": 1,
+      "tenant_memberships": 1,
+      "account_subscriptions": 0,
+      "hosted_usage_counters": 0,
+      "hosted_usage_reservations": 0,
+      "watchlist_checks": 0,
+      "watchlist_seen_jobs": 0,
+      "watchlist_selected_sources": 0,
+      "analytics_install_state": 1,
+      "analytics_server_event_replays": 0,
+      "analytics_milestones": 2,
+      "auth_sessions": 0,
+      "pipeline_search_presets": 0,
+      "design_resume_documents": 1,
+      "design_resume_assets": 0,
+      "job_documents": 0,
+      "job_chat_threads": 0,
+      "job_chat_messages": 0,
+      "job_chat_runs": 0,
+      "stage_events": 1,
+      "tasks": 0,
+      "job_notes": 0,
+      "interviews": 0,
+      "post_application_sync_runs": 4,
+      "tracer_click_events": 0,
+      "app_data_migrations": 1,
+      "job_verified_facts": 0,
+      "job_immigration_profiles": 0,
+      "human_bridge_companies": 0,
+      "job_human_bridge_companies": 0,
+      "human_bridge_contacts": 0,
+      "pipeline_source_runs": 0,
+      "pipeline_issues": 0,
+      "pipeline_issue_occurrences": 0,
+      "dynamic_employers": 10,
+      "dynamic_employer_events": 10,
+      "pipeline_runs": 5,
+      "jobs": 1275,
+      "watchlist_job_states": 0,
+      "pipeline_run_requests": 0,
+      "pipeline_run_leases": 0,
+      "application_packages": 0,
+      "external_connections": 0,
+      "market_postings": 0,
+      "market_posting_identities": 0,
+      "market_posting_versions": 0,
+      "market_posting_observations": 0,
+      "candidate_market_postings": 0,
+      "credential_secrets": 0,
+      "candidate_profile_versions": 0,
+      "candidate_strategy_versions": 0,
+      "candidate_evaluations": 0,
+      "pipeline_run_items": 0,
+      "post_application_integrations": 1,
+      "post_application_messages": 7,
+      "tracer_links": 0,
+      "settings": 24
+    },
+    "private_domain_checks": {
+      "candidate_profile_versions": {
+        "rows": 0,
+        "missing_tenant": 0,
+        "unknown_user": 0,
+        "duplicate_active_owners": 0
+      },
+      "candidate_strategy_versions": {
+        "rows": 0,
+        "missing_tenant": 0,
+        "unknown_user": 0,
+        "duplicate_active_owners": 0
+      },
+      "candidate_evaluations": {
+        "rows": 0,
+        "missing_tenant": 0,
+        "unknown_user": 0
+      },
+      "candidate_market_postings": {
+        "rows": 0,
+        "missing_tenant": 0,
+        "unknown_user": 0
+      },
+      "application_packages": {
+        "rows": 0,
+        "missing_tenant": 0,
+        "unknown_user": 0
+      },
+      "external_connections": {
+        "rows": 0,
+        "missing_tenant": 0,
+        "unknown_user": 0
+      }
+    },
+    "baseline_hash_unchanged": true,
+    "limitation": "Empty new tables validate schema/absence of orphans only; runtime tenant isolation inherited from F3-4, not re-proven here. Connection foreign_keys=1 does not establish every runtime connection policy."
+  },
+  "backup_restore": {
+    "backup_service": "Freeze 3 createBackup(manual)",
+    "backup_elapsed_ms": 807.9224839999999,
+    "restore_elapsed_seconds": 0.324,
+    "all_schema_data_logical_digest_equal": true,
+    "post_backup_write_removed": true,
+    "integrity_check": "ok",
+    "foreign_key_violations": 0,
+    "rollback_data_restore": {
+      "byte_identical_to_freeze2_snapshot": true,
+      "logical_digest_equal": true,
+      "freeze2_runtime_startup": "NOT RUN; data restore alone does not close rollback gate"
+    }
+  },
+  "freeze3_startup": {
+    "health": false,
+    "runtime": "Freeze 3 sources over existing Freeze 2 dependency image; not immutable Freeze 3 image acceptance",
+    "oom": false,
+    "result": "NOT PASS: bounded observation ended before HTTP health; stopped intentionally; no application failure diagnosis established"
+  },
+  "rollback_startup": {
+    "health": true,
+    "image": "sha256:335efe1eff9b23e129cf5689cf25ae1dd9b92a5f588d0aa26124c53b78d8c40e",
+    "production_mounts": false,
+    "network": "none",
+    "elapsed_seconds": 60.033
+  },
+  "resource_gate": "FAIL: root filesystem 93%, about 2.4GiB free; no cleanup performed",
+  "daily_delta": "NOT RUN",
+  "production": "Freeze 2 remained healthy; no production writes/deploys performed"
+}
