@@ -9,7 +9,8 @@ Updated: 2026-10-03 21:30 EDT
 - `810f4b4` passed full CI (`37167544876`): source identity / fuzzy-dedupe hardening is PASS.
 - `608946f` passed full CI (`37168123251`): delta/idempotency is race-safe and F3-1 is closed.
 - `dc6519c` passed full CI (`37168368363`): F3-0 baseline/evidence and F3-1 acceptance are durably closed.
-- Current local unit begins F3-2 by bootstrapping the active legacy strategy/settings into the versioned Candidate Strategy domain without reinterpreting the existing scoring instructions.
+- `f46d896` passed full CI (`37168586940`): F3-2 legacy strategy bootstrap is green.
+- Current prepared unit adds repository-level profile/strategy versioning coverage plus a read-only migration preview of the live legacy settings.
 - Freeze 2 production remains untouched and remains rollback.
 - R0 recovery is terminal and must not be restarted or rescored.
 - VPS root filesystem remains in critical-pressure territory; no dependency install, image build, or destructive cleanup without a separate rollback-safe decision.
@@ -27,9 +28,9 @@ F3-1 Reliability Foundation is PASS/CLOSED. See `FREEZE3_F3_1_ACCEPTANCE.md`.
 
 ## Next exact actions
 
-1. Commit/push the prepared F3-2 legacy-strategy bootstrap unit once.
+1. Commit/push the prepared candidate-domain repository tests + migration-preview evidence once.
 2. Read its single automatic CI run; do not redispatch.
-3. If PASS, validate the migrated representation against the current Dmitrii settings and continue F3-2 with profile/strategy repository isolation/versioning tests and behavior-equivalence coverage.
+3. If PASS, finish the F3-2 gap audit: repository isolation/version semantics, market-adapter boundary, and behavior-equivalence gate against the current settings.
 4. Do not activate or deploy the new domain in Freeze 2 production during development.
 
 ## Safety / no-repeat rules
