@@ -74,7 +74,9 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({
     <AppModeContext.Provider
       value={{
         appMode,
-        isPending: appStatusQuery.isPending,
+        isPending:
+          appStatusQuery.isPending ||
+          (hasAuthenticatedSession() && currentUserQuery.isPending),
         isSystemAdmin: currentUserQuery.data?.isSystemAdmin === true,
       }}
     >

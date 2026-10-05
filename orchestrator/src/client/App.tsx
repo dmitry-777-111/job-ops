@@ -21,6 +21,7 @@ import { useAnalyticsIdentity } from "./hooks/useAnalyticsIdentity";
 import { useDemoInfo } from "./hooks/useDemoInfo";
 import { setAuthNavigator } from "./lib/auth-navigation";
 import { ApplicationPackageReviewPage } from "./pages/ApplicationPackageReviewPage";
+import { CandidateHomePage } from "./pages/CandidateHomePage";
 import { DesignResumePage } from "./pages/DesignResumePage";
 import { GmailOauthCallbackPage } from "./pages/GmailOauthCallbackPage";
 import { HomePage } from "./pages/HomePage";
@@ -175,7 +176,7 @@ export const App: React.FC = () => {
                 ))}
 
                 {/* Application routes */}
-                <Route path="/overview" element={<HomePage />} />
+                <Route path="/overview" element={<OverviewRoute />} />
                 <Route
                   path="/oauth/gmail/callback"
                   element={<GmailOauthCallbackPage />}
@@ -230,4 +231,10 @@ function TrackingInboxRoute() {
     return <Navigate to="/overview" replace />;
   }
   return <TrackingInboxPage />;
+}
+
+function OverviewRoute() {
+  const { isPending, isSystemAdmin } = React.useContext(AppModeContext);
+  if (isPending) return null;
+  return isSystemAdmin ? <HomePage /> : <CandidateHomePage />;
 }
