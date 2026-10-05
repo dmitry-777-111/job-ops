@@ -3,6 +3,7 @@ import { marketPostingInputFromJob } from "@server/market-inventory/from-job";
 import { buildMarketPostingContentFingerprint } from "@server/market-inventory/identity";
 import {
   ensureCandidateEvaluation,
+  hasCandidateEvaluationForMarketPosting,
   updateCandidateEvaluation,
 } from "@server/repositories/candidate-evaluations";
 import { getActiveMasterCareerProfile } from "@server/repositories/candidate-profile";
@@ -148,6 +149,8 @@ export async function prepareVersionedScoringBatch(input: {
     );
     if (!postingVersion) continue;
 
+    const hadPriorEvaluation =
+      await hasCandidateEvaluationForMarketPosting(marketPostingId);
     const ensured = await ensureCandidateEvaluation({
       marketPostingId,
       marketPostingVersionId,
@@ -170,6 +173,7 @@ export async function prepareVersionedScoringBatch(input: {
 
     if (
       ensured.created &&
+      !hadPriorEvaluation &&
       hasLegacyScore &&
       legacyFingerprint === postingVersion.contentFingerprint
     ) {

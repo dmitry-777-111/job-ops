@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   getLatestMarketPostingVersionId: vi.fn(),
   getMarketPostingVersion: vi.fn(),
   ensureCandidateEvaluation: vi.fn(),
+  hasCandidateEvaluationForMarketPosting: vi.fn(),
   updateCandidateEvaluation: vi.fn(),
 }));
 
@@ -36,6 +37,8 @@ vi.mock("@server/repositories/market-inventory", () => ({
 }));
 vi.mock("@server/repositories/candidate-evaluations", () => ({
   ensureCandidateEvaluation: mocks.ensureCandidateEvaluation,
+  hasCandidateEvaluationForMarketPosting:
+    mocks.hasCandidateEvaluationForMarketPosting,
   updateCandidateEvaluation: mocks.updateCandidateEvaluation,
 }));
 
@@ -153,6 +156,7 @@ describe("F3-7 versioned delta scoring preparation", () => {
     );
     mocks.getLatestMarketPostingVersionId.mockResolvedValue("posting-v1");
     mocks.getMarketPostingVersion.mockResolvedValue(postingVersion());
+    mocks.hasCandidateEvaluationForMarketPosting.mockResolvedValue(false);
     mocks.ensureCandidateEvaluation.mockResolvedValue({
       evaluation: evaluation("pending"),
       created: true,
@@ -196,6 +200,21 @@ describe("F3-7 versioned delta scoring preparation", () => {
     );
     expect(batch?.targets[0]?.job.suitabilityScore).toBeNull();
     expect(batch?.targets[0]?.job.suitabilityReason).toBeNull();
+    expect(mocks.updateCandidateEvaluation).not.toHaveBeenCalled();
+  });
+
+  it("does not seed a fresh tuple from legacy score after dependent inputs changed", async () => {
+    mocks.hasCandidateEvaluationForMarketPosting.mockResolvedValue(true);
+
+    const batch = await prepareVersionedScoringBatch({
+      pipelineRunId: "run-1",
+      scoringInstructions: "policy revision",
+    });
+
+    expect(batch?.seededFromLegacy).toBe(0);
+    expect(batch?.targets).toHaveLength(1);
+    expect(batch?.targets[0]?.job.id).toBe(job.id);
+    expect(batch?.targets[0]?.job.suitabilityScore).toBeNull();
     expect(mocks.updateCandidateEvaluation).not.toHaveBeenCalled();
   });
 

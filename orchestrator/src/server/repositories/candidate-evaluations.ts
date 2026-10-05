@@ -55,6 +55,22 @@ function mapRow(
   };
 }
 
+export async function hasCandidateEvaluationForMarketPosting(
+  marketPostingId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: candidateEvaluations.id })
+    .from(candidateEvaluations)
+    .where(
+      and(
+        scopeFilter(),
+        eq(candidateEvaluations.marketPostingId, marketPostingId),
+      ),
+    )
+    .limit(1);
+  return Boolean(row);
+}
+
 export async function findCandidateEvaluation(input: {
   marketPostingVersionId: string;
   profileVersionId: string;
