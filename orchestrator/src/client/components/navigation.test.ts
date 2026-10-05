@@ -35,8 +35,14 @@ describe("candidate navigation", () => {
     expect(links.some((link) => link.to === "/tracking-inbox")).toBe(false);
   });
 
-  it("keeps the existing advanced navigation in local mode", () => {
+  it("keeps the simplified candidate navigation in local mode", () => {
     expect(resolveNavLinks({ appMode: "local", isSystemAdmin: false })).toEqual(
+      CANDIDATE_NAV_LINKS,
+    );
+  });
+
+  it("keeps the advanced local navigation for a system admin", () => {
+    expect(resolveNavLinks({ appMode: "local", isSystemAdmin: true })).toEqual(
       NAV_LINKS,
     );
   });

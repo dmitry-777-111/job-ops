@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useVersionCheck } from "../hooks/useVersionCheck";
+import { PRODUCT_BRAND } from "../lib/product-brand";
 import { queryKeys } from "../lib/queryKeys";
 import {
   loadRememberedAuthUsers,
@@ -44,6 +45,7 @@ import {
 } from "../lib/remembered-auth-users";
 import { isNavActive, resolveNavLinks } from "./navigation";
 import { StatusBadgeIndicator } from "./StatusIndicator";
+import { ThemeToggle } from "./ThemeToggle";
 import { Tip } from "./Tip";
 
 export const AppModeContext = React.createContext({
@@ -63,7 +65,7 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({
   const currentUserQuery = useQuery({
     queryKey: ["auth", "me", "app-mode"],
     queryFn: getCurrentAuthUser,
-    enabled: appMode === "hosted" && hasAuthenticatedSession(),
+    enabled: hasAuthenticatedSession(),
     retry: false,
     staleTime: 60_000,
   });
@@ -175,7 +177,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </SheetTrigger>
             <SheetContent side="left" className="w-64 flex flex-col">
               <SheetHeader>
-                <SheetTitle>JobOps</SheetTitle>
+                <SheetTitle>{PRODUCT_BRAND.name}</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2">
                 {navLinks.map(({ to, label, icon: NavIcon, activePaths }) => (
@@ -299,6 +301,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
+          <ThemeToggle />
           {actions}
         </div>
       </div>

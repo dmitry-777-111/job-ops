@@ -91,7 +91,7 @@ export function resolveNavLinks(args: {
   appMode: "local" | "hosted";
   isSystemAdmin: boolean;
 }): NavLink[] {
-  if (args.appMode === "hosted" && !args.isSystemAdmin) {
+  if (!args.isSystemAdmin) {
     return CANDIDATE_NAV_LINKS;
   }
 
