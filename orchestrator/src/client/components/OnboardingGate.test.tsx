@@ -4,6 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { AppModeContext } from "./layout";
 import { OnboardingGate } from "./OnboardingGate";
 
 vi.mock("@client/api", () => ({
@@ -33,6 +34,54 @@ const createWrapper = () => {
 describe("OnboardingGate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("bypasses onboarding for a system admin", async () => {
+    const { getAuthBootstrapStatus } = await import("@client/api");
+    vi.mocked(useOnboardingStatus).mockReturnValue({
+      checking: false,
+      complete: false,
+    } as any);
+
+    render(
+      <AppModeContext.Provider
+        value={{ appMode: "local", isPending: false, isSystemAdmin: true }}
+      >
+        <MemoryRouter initialEntries={["/overview"]}>
+          <OnboardingGate />
+          <Routes>
+            <Route path="/overview" element={<div>overview</div>} />
+            <Route path="/onboarding" element={<div>onboarding</div>} />
+          </Routes>
+        </MemoryRouter>
+      </AppModeContext.Provider>,
+      { wrapper: createWrapper() },
+    );
+
+    expect(screen.getByText("overview")).toBeInTheDocument();
+    expect(screen.queryByText("onboarding")).not.toBeInTheDocument();
+    expect(useOnboardingStatus).not.toHaveBeenCalled();
+    expect(getAuthBootstrapStatus).not.toHaveBeenCalled();
+  });
+
+  it("redirects a system admin away from the onboarding page", async () => {
+    render(
+      <AppModeContext.Provider
+        value={{ appMode: "local", isPending: false, isSystemAdmin: true }}
+      >
+        <MemoryRouter initialEntries={["/onboarding"]}>
+          <OnboardingGate />
+          <Routes>
+            <Route path="/overview" element={<div>overview</div>} />
+            <Route path="/onboarding" element={<div>onboarding</div>} />
+          </Routes>
+        </MemoryRouter>
+      </AppModeContext.Provider>,
+      { wrapper: createWrapper() },
+    );
+
+    expect(await screen.findByText("overview")).toBeInTheDocument();
+    expect(screen.queryByText("onboarding")).not.toBeInTheDocument();
   });
 
   it("redirects incomplete users to the onboarding page", async () => {

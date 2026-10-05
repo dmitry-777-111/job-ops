@@ -31,6 +31,10 @@ vi.mock("./pages/HomePage", () => ({
   HomePage: () => <div>overview</div>,
 }));
 
+vi.mock("./pages/CandidateHomePage", () => ({
+  CandidateHomePage: () => <div>overview</div>,
+}));
+
 vi.mock("./pages/InProgressBoardPage", () => ({
   InProgressBoardPage: () => null,
 }));

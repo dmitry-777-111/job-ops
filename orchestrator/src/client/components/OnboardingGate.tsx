@@ -1,13 +1,16 @@
 import { useOnboardingStatus } from "@client/hooks/useOnboardingStatus";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { getAuthBootstrapStatus } from "@/client/api";
 import { useSettings } from "@/client/hooks/useSettings";
+import { AppModeContext } from "./layout";
 
 export const OnboardingGate: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isPending: isAuthContextPending, isSystemAdmin } =
+    useContext(AppModeContext);
   const [setupRequired, setSetupRequired] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -20,6 +23,8 @@ export const OnboardingGate: React.FC = () => {
 
   useEffect(() => {
     if (
+      isAuthContextPending ||
+      isSystemAdmin ||
       location.pathname === "/onboarding" ||
       location.pathname === "/sign-in" ||
       location.pathname === "/offline"
@@ -43,7 +48,18 @@ export const OnboardingGate: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [location.pathname]);
+  }, [isAuthContextPending, isSystemAdmin, location.pathname]);
+
+  if (isAuthContextPending) {
+    return null;
+  }
+
+  if (isSystemAdmin) {
+    if (location.pathname === "/onboarding") {
+      return <Navigate to="/overview" replace />;
+    }
+    return null;
+  }
 
   if (location.pathname === "/onboarding" && !navigator.onLine) {
     return <Navigate to="/offline" replace />;
