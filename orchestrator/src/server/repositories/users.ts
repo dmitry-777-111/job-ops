@@ -146,11 +146,14 @@ export async function createPrivateWorkspaceUser(input: {
   displayName?: string | null;
   isSystemAdmin?: boolean;
   useDefaultTenant?: boolean;
+  tenantId?: string;
 }): Promise<PublicUser> {
   const now = new Date().toISOString();
   const username = normalizeUsername(input.username);
   const userId = randomUUID();
-  const tenantId = input.useDefaultTenant ? DEFAULT_TENANT_ID : randomUUID();
+  const tenantId =
+    input.tenantId ??
+    (input.useDefaultTenant ? DEFAULT_TENANT_ID : randomUUID());
   const tenantName = input.displayName?.trim() || username;
   const tenantSlug = input.useDefaultTenant
     ? "default"
@@ -158,7 +161,16 @@ export async function createPrivateWorkspaceUser(input: {
   const { passwordHash, passwordSalt } = await hashPassword(input.password);
 
   db.transaction((tx) => {
-    if (input.useDefaultTenant) {
+    if (input.tenantId) {
+      const existingTenant = tx
+        .select({ id: tenants.id })
+        .from(tenants)
+        .where(eq(tenants.id, input.tenantId))
+        .get();
+      if (!existingTenant) {
+        throw new Error("Target workspace does not exist");
+      }
+    } else if (input.useDefaultTenant) {
       tx.insert(tenants)
         .values({
           id: DEFAULT_TENANT_ID,

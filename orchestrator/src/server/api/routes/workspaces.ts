@@ -1,6 +1,10 @@
 import { badRequest, conflict, forbidden, notFound } from "@infra/errors";
 import { asyncRoute, fail, ok } from "@infra/http";
-import { getUserId, isSystemAdmin } from "@infra/request-context";
+import {
+  getUserId,
+  isSystemAdmin,
+  requireTenantId,
+} from "@infra/request-context";
 import { getJobOpsAppConfig } from "@server/config/app-mode";
 import * as authSessionsRepo from "@server/repositories/auth-sessions";
 import * as usersRepo from "@server/repositories/users";
@@ -14,6 +18,7 @@ const createUserSchema = z.object({
   password: z.string().min(8).max(500),
   displayName: z.string().trim().min(1).max(120).optional(),
   isSystemAdmin: z.boolean().optional(),
+  useCurrentWorkspace: z.boolean().optional().default(false),
 });
 
 const resetPasswordSchema = z.object({
@@ -79,6 +84,9 @@ workspacesRouter.post(
         password: parsed.data.password,
         displayName: parsed.data.displayName ?? parsed.data.username,
         isSystemAdmin: parsed.data.isSystemAdmin ?? false,
+        tenantId: parsed.data.useCurrentWorkspace
+          ? requireTenantId()
+          : undefined,
       });
       ok(res, { user }, 201);
       return;

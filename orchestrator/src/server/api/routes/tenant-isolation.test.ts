@@ -140,6 +140,48 @@ describe.sequential("Tenant isolation", () => {
     expect(adamPdf.status).toBe(404);
   });
 
+  it("can attach a trusted email login to the current local workspace", async () => {
+    const adminToken = await login(baseUrl, "admin", "secret");
+    const sharedJob = await importManualJob(
+      baseUrl,
+      adminToken,
+      "Shared Existing Role",
+    );
+
+    const createRes = await fetch(`${baseUrl}/api/workspaces/users`, {
+      method: "POST",
+      headers: authHeaders(adminToken),
+      body: JSON.stringify({
+        username: "trusted@example.com",
+        displayName: "Trusted User",
+        password: "test-password-123",
+        useCurrentWorkspace: true,
+      }),
+    });
+    expect(createRes.status).toBe(201);
+
+    const created = (await createRes.json()) as {
+      data: { user: { workspaceId: string; isSystemAdmin: boolean } };
+    };
+    expect(created.data.user).toMatchObject({
+      workspaceId: "tenant_default",
+      isSystemAdmin: false,
+    });
+
+    const userToken = await login(
+      baseUrl,
+      "trusted@example.com",
+      "test-password-123",
+    );
+    const userJobs = await fetch(`${baseUrl}/api/jobs`, {
+      headers: { Authorization: `Bearer ${userToken}` },
+    }).then((res) => res.json());
+
+    expect(userJobs.data.jobs.map((job: { id: string }) => job.id)).toContain(
+      sharedJob.id,
+    );
+  });
+
   it("returns 409 when creating a duplicate workspace username", async () => {
     const adminToken = await login(baseUrl, "admin", "secret");
 

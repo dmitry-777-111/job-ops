@@ -30,6 +30,7 @@ function AccountManagementSection() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [useCurrentWorkspace, setUseCurrentWorkspace] = useState(false);
   const [resetPasswordByUserId, setResetPasswordByUserId] = useState<
     Record<string, string>
   >({});
@@ -51,6 +52,7 @@ function AccountManagementSection() {
       setUsername("");
       setDisplayName("");
       setPassword("");
+      setUseCurrentWorkspace(false);
       await queryClient.invalidateQueries({ queryKey: workspaceUsersQueryKey });
       toast.success("User created");
     },
@@ -104,7 +106,8 @@ function AccountManagementSection() {
       <div className="space-y-1">
         <div className="text-sm font-semibold">Workspace Users</div>
         <p className="text-sm text-muted-foreground">
-          Each user gets a private workspace with isolated jobs and settings.
+          Use an email address as the login. New users get a private workspace
+          by default; attach only trusted users to your current workspace.
         </p>
       </div>
 
@@ -117,7 +120,9 @@ function AccountManagementSection() {
         <Input
           value={username}
           onChange={(event) => setUsername(event.currentTarget.value)}
-          placeholder="Username"
+          placeholder="Email"
+          type="email"
+          inputMode="email"
           autoComplete="off"
         />
         <Input
@@ -134,6 +139,7 @@ function AccountManagementSection() {
               username,
               displayName: displayName || username,
               password,
+              useCurrentWorkspace,
             })
           }
           disabled={
@@ -145,6 +151,25 @@ function AccountManagementSection() {
           Create
         </Button>
       </div>
+
+      <label className="flex items-start gap-2 rounded-md border border-border/60 bg-muted/20 p-3 text-sm">
+        <input
+          type="checkbox"
+          checked={useCurrentWorkspace}
+          onChange={(event) =>
+            setUseCurrentWorkspace(event.currentTarget.checked)
+          }
+          className="mt-0.5 h-4 w-4"
+        />
+        <span>
+          <span className="block font-medium">Use my current workspace</span>
+          <span className="block text-xs text-muted-foreground">
+            Use this only for your own personal login or another trusted user
+            who should see the same existing jobs and settings. Leave it off for
+            independent users.
+          </span>
+        </span>
+      </label>
 
       <div className="divide-y divide-border rounded-md border border-border">
         {users.map((user) => {

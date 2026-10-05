@@ -172,6 +172,7 @@ export async function createWorkspaceUser(input: {
   password: string;
   displayName?: string;
   isSystemAdmin?: boolean;
+  useCurrentWorkspace?: boolean;
 }): Promise<AuthUser> {
   const result = await fetchApi<{ user: AuthUser }>("/workspaces/users", {
     method: "POST",
