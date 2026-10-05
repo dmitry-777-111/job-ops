@@ -12,7 +12,7 @@ import type {
   MarketPostingStatus,
   MarketPostingVersion,
 } from "@shared/types";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { db, schema } from "../db";
 import {
   getPrivateDataScope,
@@ -21,6 +21,7 @@ import {
 
 const {
   candidateMarketPostings,
+  jobs,
   marketPostingIdentities,
   marketPostingObservations,
   marketPostings,
@@ -495,5 +496,47 @@ export async function getCandidateMarketPostingIdForLegacyJob(
     )
     .limit(1);
 
-  return row?.marketPostingId ?? null;
+  if (row?.marketPostingId) return row.marketPostingId;
+
+  // More than one legacy job can resolve to the same canonical market posting.
+  // candidate_market_postings intentionally stores only one legacy compatibility
+  // pointer, so duplicate legacy rows need a safe observation-based fallback.
+  const [legacyJob] = await db
+    .select({
+      source: jobs.source,
+      sourceJobId: jobs.sourceJobId,
+      jobUrl: jobs.jobUrl,
+    })
+    .from(jobs)
+    .where(and(privateDataScopeFilter(jobs), eq(jobs.id, legacyJobId)))
+    .limit(1);
+
+  if (!legacyJob) return null;
+
+  const observationIdentity = legacyJob.sourceJobId
+    ? or(
+        eq(marketPostingObservations.sourceUrl, legacyJob.jobUrl),
+        and(
+          eq(marketPostingObservations.source, legacyJob.source),
+          eq(marketPostingObservations.sourceJobId, legacyJob.sourceJobId),
+        ),
+      )
+    : eq(marketPostingObservations.sourceUrl, legacyJob.jobUrl);
+
+  const [fallback] = await db
+    .select({ marketPostingId: candidateMarketPostings.marketPostingId })
+    .from(candidateMarketPostings)
+    .innerJoin(
+      marketPostingObservations,
+      eq(
+        marketPostingObservations.marketPostingId,
+        candidateMarketPostings.marketPostingId,
+      ),
+    )
+    .where(
+      and(privateDataScopeFilter(candidateMarketPostings), observationIdentity),
+    )
+    .limit(1);
+
+  return fallback?.marketPostingId ?? null;
 }
