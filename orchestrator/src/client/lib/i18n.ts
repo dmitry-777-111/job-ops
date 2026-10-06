@@ -790,6 +790,90 @@ const translations: Record<
   },
   Русский: { es: "Ruso", fr: "Russe", ru: "Русский", de: "Russisch" },
   Deutsch: { es: "Alemán", fr: "Allemand", ru: "Немецкий", de: "Deutsch" },
+  "Where do you want to work?": {
+    es: "¿Dónde quieres trabajar?",
+    fr: "Où voulez-vous travailler ?",
+    ru: "Где вы хотите работать?",
+    de: "Wo möchten Sie arbeiten?",
+  },
+  "These preferences seed new runs and help The JobAgent prioritize location-aware and visa-sponsor sources. You can change them later.":
+    {
+      es: "Estas preferencias orientan las nuevas búsquedas y ayudan a The JobAgent a priorizar fuentes según la ubicación y el patrocinio de visado. Puedes cambiarlas más adelante.",
+      fr: "Ces préférences orientent les nouvelles recherches et aident The JobAgent à prioriser les sources selon la localisation et le parrainage de visa. Vous pourrez les modifier plus tard.",
+      ru: "Эти настройки задают направление новых поисков и помогают The JobAgent учитывать географию и возможность визового спонсорства. Их можно изменить позже.",
+      de: "Diese Einstellungen steuern neue Suchläufe und helfen The JobAgent, Standort- und Visa-Sponsoring-Quellen zu priorisieren. Sie können sie später ändern.",
+    },
+  "Country or market": {
+    es: "País o mercado",
+    fr: "Pays ou marché",
+    ru: "Страна или рынок",
+    de: "Land oder Markt",
+  },
+  "Preferred cities or regions (optional)": {
+    es: "Ciudades o regiones preferidas (opcional)",
+    fr: "Villes ou régions préférées (facultatif)",
+    ru: "Предпочтительные города или регионы (необязательно)",
+    de: "Bevorzugte Städte oder Regionen (optional)",
+  },
+  "Select country": {
+    es: "Seleccionar país",
+    fr: "Sélectionner un pays",
+    ru: "Выберите страну",
+    de: "Land auswählen",
+  },
+  "Search country...": {
+    es: "Buscar país...",
+    fr: "Rechercher un pays...",
+    ru: "Поиск страны...",
+    de: "Land suchen...",
+  },
+  "No matching countries.": {
+    es: "No hay países coincidentes.",
+    fr: "Aucun pays correspondant.",
+    ru: "Подходящие страны не найдены.",
+    de: "Keine passenden Länder.",
+  },
+  "London, Manchester": {
+    es: "Londres, Mánchester",
+    fr: "Londres, Manchester",
+    ru: "Лондон, Манчестер",
+    de: "London, Manchester",
+  },
+  "Workplace style": {
+    es: "Modalidad de trabajo",
+    fr: "Mode de travail",
+    ru: "Формат работы",
+    de: "Arbeitsform",
+  },
+  Remote: { es: "Remoto", fr: "À distance", ru: "Удалённо", de: "Remote" },
+  Hybrid: { es: "Híbrido", fr: "Hybride", ru: "Гибрид", de: "Hybrid" },
+  Onsite: { es: "Presencial", fr: "Sur site", ru: "На месте", de: "Vor Ort" },
+  "I need employer visa sponsorship": {
+    es: "Necesito patrocinio de visa del empleador",
+    fr: "J’ai besoin d’un parrainage de visa par l’employeur",
+    ru: "Мне требуется визовое спонсорство работодателя",
+    de: "Ich benötige Visa-Sponsoring durch den Arbeitgeber",
+  },
+  "The JobAgent will show sponsor information and favor sponsor-aware sources when available.":
+    {
+      es: "The JobAgent mostrará información sobre patrocinio y priorizará fuentes que la tengan en cuenta cuando estén disponibles.",
+      fr: "The JobAgent affichera les informations de parrainage et privilégiera les sources qui les prennent en compte lorsqu’elles sont disponibles.",
+      ru: "The JobAgent покажет информацию о спонсорстве и при наличии будет отдавать приоритет источникам, где это учитывается.",
+      de: "The JobAgent zeigt Sponsoring-Informationen an und bevorzugt entsprechende Quellen, sofern verfügbar.",
+    },
+  "Save and continue": {
+    es: "Guardar y continuar",
+    fr: "Enregistrer et continuer",
+    ru: "Сохранить и продолжить",
+    de: "Speichern und weiter",
+  },
+  Back: { es: "Atrás", fr: "Retour", ru: "Назад", de: "Zurück" },
+  "Saving...": {
+    es: "Guardando...",
+    fr: "Enregistrement...",
+    ru: "Сохраняем...",
+    de: "Speichern...",
+  },
 };
 
 export function translateUi(text: string, language: InterfaceLanguage): string {

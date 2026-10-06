@@ -295,9 +295,10 @@ function Field({
   label: string;
   children: React.ReactNode;
 }) {
+  const interfaceLanguage = useInterfaceLanguage();
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      <Label>{translateUi(label, interfaceLanguage)}</Label>
       {children}
     </div>
   );
@@ -766,15 +767,18 @@ function StepShell({
   description: string;
   children: React.ReactNode;
 }) {
+  const interfaceLanguage = useInterfaceLanguage();
   return (
     <div className="space-y-7">
       <div className="space-y-2">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {eyebrow}
+          {translateUi(eyebrow, interfaceLanguage)}
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {translateUi(title, interfaceLanguage)}
+        </h2>
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          {description}
+          {translateUi(description, interfaceLanguage)}
         </p>
       </div>
       {children}
@@ -793,18 +797,21 @@ function StepActions({
   busy: boolean;
   label: string;
 }) {
+  const interfaceLanguage = useInterfaceLanguage();
   return (
     <div className="flex items-center justify-between border-t pt-6">
       {onBack ? (
         <Button type="button" variant="ghost" onClick={onBack} disabled={busy}>
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {translateUi("Back", interfaceLanguage)}
         </Button>
       ) : (
         <span />
       )}
       <Button type="button" onClick={() => void onContinue()} disabled={busy}>
-        {busy ? "Saving..." : label}
+        {busy
+          ? translateUi("Saving...", interfaceLanguage)
+          : translateUi(label, interfaceLanguage)}
         <ArrowRight className="h-4 w-4" />
       </Button>
     </div>
@@ -825,6 +832,7 @@ function ProfileStep(props: {
   onVisaChange: (value: boolean) => void;
   onContinue: () => void;
 }) {
+  const interfaceLanguage = useInterfaceLanguage();
   const toggle = (value: "remote" | "hybrid" | "onsite") =>
     props.onWorkplaceTypesChange(
       props.workplaceTypes.includes(value)
@@ -843,14 +851,17 @@ function ProfileStep(props: {
             value={props.country}
             options={COUNTRY_OPTIONS}
             onValueChange={props.onCountryChange}
-            placeholder="Select country"
-            searchPlaceholder="Search country..."
-            emptyText="No matching countries."
+            placeholder={translateUi("Select country", interfaceLanguage)}
+            searchPlaceholder={translateUi(
+              "Search country...",
+              interfaceLanguage,
+            )}
+            emptyText={translateUi("No matching countries.", interfaceLanguage)}
             triggerClassName="h-10 w-full"
             ariaLabel={
               props.country
                 ? formatCountryLabel(props.country)
-                : "Select country"
+                : translateUi("Select country", interfaceLanguage)
             }
             allowCustomValue={false}
           />
@@ -859,12 +870,12 @@ function ProfileStep(props: {
           <Input
             value={props.cities}
             onChange={(event) => props.onCitiesChange(event.target.value)}
-            placeholder="London, Manchester"
+            placeholder={translateUi("London, Manchester", interfaceLanguage)}
           />
         </Field>
       </div>
       <div className="space-y-3">
-        <Label>Workplace style</Label>
+        <Label>{translateUi("Workplace style", interfaceLanguage)}</Label>
         <div className="grid gap-3 sm:grid-cols-3">
           {(["remote", "hybrid", "onsite"] as const).map((value) => (
             <Label
@@ -877,7 +888,14 @@ function ProfileStep(props: {
                 checked={props.workplaceTypes.includes(value)}
                 onCheckedChange={() => toggle(value)}
               />
-              {value}
+              {translateUi(
+                value === "remote"
+                  ? "Remote"
+                  : value === "hybrid"
+                    ? "Hybrid"
+                    : "Onsite",
+                interfaceLanguage,
+              )}
             </Label>
           ))}
         </div>
@@ -893,11 +911,14 @@ function ProfileStep(props: {
         />
         <span>
           <span className="block text-sm font-medium">
-            I need employer visa sponsorship
+            {translateUi("I need employer visa sponsorship", interfaceLanguage)}
           </span>
           <span className="block text-sm text-muted-foreground">
-            {PRODUCT_BRAND.name} will show sponsor information and favor
-            sponsor-aware sources when available.
+            {translateUi(
+              PRODUCT_BRAND.name +
+                " will show sponsor information and favor sponsor-aware sources when available.",
+              interfaceLanguage,
+            )}
           </span>
         </span>
       </Label>
