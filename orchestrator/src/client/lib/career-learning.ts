@@ -47,7 +47,7 @@ function ratio(numerator: number, denominator: number) {
 }
 
 function percent(value: number) {
-  return String(Math.round(value * 100)) + "%";
+  return `${String(Math.round(value * 100))}%`;
 }
 
 function confidenceFor(sample: number, moderateAt: number, strongAt: number) {
@@ -81,6 +81,20 @@ export function buildCareerLearningInsights(
   const debriefs = qualified.filter(({ events }) =>
     events.some((event) => Boolean(event.metadata?.interviewDebrief?.trim())),
   );
+
+  const rejectionReasons = new Map<string, number>();
+  for (const { events } of qualified) {
+    for (const event of events) {
+      const reason = event.metadata?.reasonCode?.trim();
+      if (
+        event.outcome === "rejected" &&
+        reason &&
+        reason.toLowerCase() !== "unknown"
+      ) {
+        rejectionReasons.set(reason, (rejectionReasons.get(reason) ?? 0) + 1);
+      }
+    }
+  }
 
   const insights: CareerLearningInsight[] = [];
 
@@ -140,6 +154,46 @@ export function buildCareerLearningInsights(
           ? "Compare interview debriefs with actual outcomes. Look for repeated questions, weak examples, technical gaps and employer concerns; practice the next answer before changing target roles."
           : "Start capturing a short interview debrief after each conversation. Without what was actually discussed, the system should not guess why the interview failed.",
     });
+  }
+
+  if (interviewed.length > debriefs.length) {
+    insights.push({
+      stage: "interview",
+      confidence: "emerging",
+      title: "Interview evidence is incomplete",
+      evidence:
+        String(interviewed.length - debriefs.length) +
+        " interview-stage application(s) do not yet have a debrief.",
+      recommendation:
+        "After each interview, add a short debrief: what they asked, what felt difficult and what signals you noticed. The JobAgent should compare that account with the later outcome instead of guessing.",
+    });
+  }
+
+  const repeatedReason = [...rejectionReasons.entries()].sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+  if (repeatedReason && repeatedReason[1] >= 3) {
+    const [reason, count] = repeatedReason;
+    const knownReasonTotal = [...rejectionReasons.values()].reduce(
+      (sum, value) => sum + value,
+      0,
+    );
+    if (count / knownReasonTotal >= 0.5) {
+      insights.push({
+        stage: "market_entry",
+        confidence: confidenceFor(count, 3, 5),
+        title: "A repeated explicit rejection reason is forming",
+        evidence:
+          reason +
+          " appears in " +
+          String(count) +
+          " of " +
+          String(knownReasonTotal) +
+          " rejections with a known reason.",
+        recommendation:
+          "Treat this as stronger evidence than an inferred cause, but still verify whether the same blocker appears across different employers and role families before changing career direction.",
+      });
+    }
   }
 
   if (finalStage.length >= 2 && offers.length === 0) {

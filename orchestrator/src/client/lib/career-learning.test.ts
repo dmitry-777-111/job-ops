@@ -7,9 +7,9 @@ function job(id: string, score = 80): JobListItem {
     id,
     source: "test",
     sourceJobId: null,
-    title: "Role " + id,
+    title: `Role ${id}`,
     employer: "Employer",
-    jobUrl: "https://example.com/" + id,
+    jobUrl: `https://example.com/${id}`,
     applicationLink: null,
     datePosted: null,
     deadline: null,
@@ -56,7 +56,7 @@ function event(
 describe("buildCareerLearningInsights", () => {
   it("does not overreact to a small sample", () => {
     const input = Array.from({ length: 4 }, (_, i) => ({
-      job: job("j" + i),
+      job: job(`j${i}`),
       events: [],
     }));
     expect(buildCareerLearningInsights(input)).toEqual([]);
@@ -64,7 +64,7 @@ describe("buildCareerLearningInsights", () => {
 
   it("flags weak market-entry conversion only after enough qualified applications", () => {
     const input = Array.from({ length: 10 }, (_, i) => ({
-      job: job("j" + i),
+      job: job(`j${i}`),
       events: i === 0 ? [event("j0-e1", "recruiter_screen")] : [],
     }));
     const insights = buildCareerLearningInsights(input);
@@ -76,11 +76,11 @@ describe("buildCareerLearningInsights", () => {
 
   it("separates screening friction from interview friction", () => {
     const input = Array.from({ length: 6 }, (_, i) => ({
-      job: job("j" + i),
+      job: job(`j${i}`),
       events:
         i < 5
           ? [
-              event("j" + i + "-s", "recruiter_screen"),
+              event(`j${i}-s`, "recruiter_screen"),
               ...(i === 0
                 ? [event("j0-i", "technical_interview", "PLC question")]
                 : []),
@@ -94,20 +94,48 @@ describe("buildCareerLearningInsights", () => {
 
   it("uses interview debrief evidence before suggesting interview review", () => {
     const input = Array.from({ length: 3 }, (_, i) => ({
-      job: job("j" + i),
+      job: job(`j${i}`),
       events: [
         event(
-          "j" + i + "-i",
+          `j${i}-i`,
           "technical_interview",
           "Repeated PLC and travel questions",
         ),
       ],
     }));
-    const [insight] = buildCareerLearningInsights(input);
-    expect(insight).toMatchObject({
+    const insights = buildCareerLearningInsights(input);
+    const interview = insights.find((item) =>
+      item.title.includes("enough evidence to review"),
+    );
+    expect(interview).toMatchObject({
       stage: "interview",
       confidence: "moderate",
     });
-    expect(insight?.recommendation).toMatch(/debriefs/i);
+    expect(interview?.recommendation).toMatch(/debriefs/i);
+  });
+
+  it("does not count low-fit applications toward the trigger sample", () => {
+    const input = Array.from({ length: 12 }, (_, i) => ({
+      job: job(`j${i}`, i < 9 ? 80 : 50),
+      events: [],
+    }));
+    expect(buildCareerLearningInsights(input)).toEqual([]);
+  });
+
+  it("surfaces a repeated explicit rejection reason only after three confirmations", () => {
+    const input = Array.from({ length: 4 }, (_, i) => ({
+      job: job(`j${i}`),
+      events: [
+        {
+          ...event(`j${i}-r`, "closed"),
+          outcome: "rejected" as const,
+          metadata: { reasonCode: i < 3 ? "Visa" : "Skills" },
+        },
+      ],
+    }));
+    const insights = buildCareerLearningInsights(input);
+    expect(
+      insights.find((item) => item.title.includes("explicit rejection reason")),
+    ).toMatchObject({ confidence: "moderate" });
   });
 });

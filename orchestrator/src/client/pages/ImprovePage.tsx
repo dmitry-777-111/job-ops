@@ -75,7 +75,7 @@ export function ImprovePage() {
     const result: Insight[] = [
       ...learningInsights.map((insight) => ({
         title: insight.title,
-        evidence: insight.evidence + " Confidence: " + insight.confidence + ".",
+        evidence: `${insight.evidence} Confidence: ${insight.confidence}.`,
         recommendation: insight.recommendation,
       })),
       ...(learningInsights.length === 0
@@ -196,7 +196,9 @@ export function ImprovePage() {
                       variant="outline"
                       size="sm"
                       className="mt-4"
-                      onClick={() => navigate(insight.action!.path)}
+                      onClick={() =>
+                        insight.action && navigate(insight.action.path)
+                      }
                     >
                       {insight.action.label}
                       <ArrowRight className="h-4 w-4" />
