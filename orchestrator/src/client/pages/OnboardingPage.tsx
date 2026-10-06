@@ -21,13 +21,15 @@ import {
   EyeOff,
   FileCheck2,
   MapPin,
-  Sparkles,
   UserPlus,
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as api from "@/client/api";
+import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
+import { PathfinderMark } from "@/client/components/PathfinderMark";
+import { translateUi } from "@/client/lib/i18n";
 import { PRODUCT_BRAND } from "@/client/lib/product-brand";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { Button } from "@/components/ui/button";
@@ -170,7 +172,7 @@ function LoadingState({ message }: { message: string }) {
   return (
     <>
       <PageHeader
-        icon={Sparkles}
+        icon={PathfinderMark}
         title={`Set up ${PRODUCT_BRAND.name}`}
         subtitle={message}
       />
@@ -209,6 +211,7 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
         credential_length_bucket: getTextLengthBucket(password),
       });
       onComplete();
+      window.location.replace("/overview");
     } catch (error) {
       trackProductEvent("onboarding_account_create_completed", {
         result: "error",
@@ -311,6 +314,7 @@ function LaunchSetup({
   ) => void;
 }) {
   const queryClient = useQueryClient();
+  const interfaceLanguage = useInterfaceLanguage();
   const onboarding = useOnboardingStatus();
   const flow = useOnboardingFlow();
   const designResume = useDesignResume();
@@ -578,7 +582,7 @@ function LaunchSetup({
   return (
     <>
       <PageHeader
-        icon={Sparkles}
+        icon={PathfinderMark}
         title={`Set up ${PRODUCT_BRAND.name}`}
         subtitle="A few focused choices, then you're in. You can review the strategy before it becomes active."
       />
@@ -616,7 +620,7 @@ function LaunchSetup({
                   </span>
                   <span>
                     <span className="block text-sm font-medium">
-                      {stepTitle(step)}
+                      {translateUi(stepTitle(step), interfaceLanguage)}
                     </span>
                     <span
                       className={cn(
@@ -626,11 +630,14 @@ function LaunchSetup({
                           : "text-muted-foreground",
                       )}
                     >
-                      {complete
-                        ? "Complete"
-                        : step === status?.nextRequirementId
-                          ? "Up next"
-                          : "Locked"}
+                      {translateUi(
+                        complete
+                          ? "Complete"
+                          : step === status?.nextRequirementId
+                            ? "Up next"
+                            : "Locked",
+                        interfaceLanguage,
+                      )}
                     </span>
                   </span>
                 </button>

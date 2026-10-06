@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   getResume: vi.fn(),
   getSetting: vi.fn(),
   isDemoMode: vi.fn(),
+  isSystemAdmin: vi.fn(),
   validateLlmCredentials: vi.fn(),
   validateResumeSchema: vi.fn(),
   validateRxResumeCredentials: vi.fn(),
@@ -90,16 +91,17 @@ vi.mock("@server/services/settings-update", () => ({
   applySettingsUpdates: mocks.applySettingsUpdates,
 }));
 
+vi.mock("@infra/request-context", () => ({
+  getRequestId: vi.fn(() => "test-request"),
+  isSystemAdmin: mocks.isSystemAdmin,
+}));
+
 vi.mock("@infra/logger", () => ({
   logger: {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
   },
-}));
-
-vi.mock("@infra/request-context", () => ({
-  getRequestId: vi.fn(() => "req-1"),
 }));
 
 import {
@@ -113,6 +115,7 @@ import {
 describe("onboarding status engine", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.isSystemAdmin.mockReturnValue(true);
     mocks.getJobOpsAppStatus.mockReturnValue({
       appMode: "local",
       capabilities: {
@@ -242,6 +245,29 @@ describe("onboarding status engine", () => {
       primaryAction: "connect_model",
     });
     expect(mocks.applySettingsUpdates).not.toHaveBeenCalled();
+  });
+
+  it("does not expose model setup as a candidate onboarding requirement", async () => {
+    mocks.isSystemAdmin.mockReturnValue(false);
+    mocks.getSetting.mockImplementation(async (key: string) => {
+      const values: Record<string, string | null> = {
+        llmApiKey: null,
+        llmProvider: "codex",
+        llmBaseUrl: "",
+        model: "gpt-5.6-luna",
+        onboardingProfileCompleted: "1",
+        onboardingLlmCompleted: null,
+        onboardingResumeConfirmedSource: "local:doc-1",
+      };
+      return values[key] ?? null;
+    });
+
+    const status = await getOnboardingStatus();
+
+    expect(status.requirements.some((item) => item.id === "model")).toBe(false);
+    expect(status.complete).toBe(true);
+    expect(status.nextRequirementId).toBeNull();
+    expect(mocks.validateLlmCredentials).not.toHaveBeenCalled();
   });
 
   it("validates and persists legacy onboarding state once", async () => {

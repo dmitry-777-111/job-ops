@@ -37,13 +37,19 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useVersionCheck } from "../hooks/useVersionCheck";
+import { translateUi } from "../lib/i18n";
 import { PRODUCT_BRAND } from "../lib/product-brand";
 import { queryKeys } from "../lib/queryKeys";
 import {
   loadRememberedAuthUsers,
   type RememberedAuthUser,
 } from "../lib/remembered-auth-users";
+import {
+  InterfaceLanguageMenu,
+  useInterfaceLanguage,
+} from "./LanguagePreferencesMenu";
 import { isNavActive, resolveNavLinks } from "./navigation";
+import { PathfinderMark } from "./PathfinderMark";
 import { StatusBadgeIndicator } from "./StatusIndicator";
 import { ThemeToggle } from "./ThemeToggle";
 import { Tip } from "./Tip";
@@ -67,7 +73,8 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({
     queryFn: getCurrentAuthUser,
     enabled: hasAuthenticatedSession(),
     retry: false,
-    staleTime: 60_000,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   return (
@@ -134,6 +141,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   const navOpen = controlledNavOpen ?? internalNavOpen;
   const setNavOpen = onNavOpenChange ?? setInternalNavOpen;
   const { version, updateAvailable } = useVersionCheck();
+  const interfaceLanguage = useInterfaceLanguage();
   const { appMode, isSystemAdmin } = React.useContext(AppModeContext);
   const navLinks = resolveNavLinks({
     appMode,
@@ -179,7 +187,16 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </SheetTrigger>
             <SheetContent side="left" className="w-64 flex flex-col">
               <SheetHeader>
-                <SheetTitle>{PRODUCT_BRAND.name}</SheetTitle>
+                <SheetTitle className="flex items-center gap-2">
+                  <PathfinderMark className="h-5 w-5" />
+                  <span>{PRODUCT_BRAND.name}</span>
+                </SheetTitle>
+                {!isSystemAdmin ? (
+                  <div className="text-xs text-muted-foreground">
+                    {translateUi("AI-assisted", interfaceLanguage)} career
+                    intelligence
+                  </div>
+                ) : null}
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2">
                 {navLinks.map(({ to, label, icon: NavIcon, activePaths }) => (
@@ -195,7 +212,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     )}
                   >
                     <NavIcon className="h-4 w-4" />
-                    {label}
+                    {translateUi(label, interfaceLanguage)}
                   </button>
                 ))}
               </nav>
@@ -298,8 +315,17 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             <Icon className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="min-w-0 leading-tight">
-            <div className="text-sm font-semibold tracking-tight">{title}</div>
-            <div className="text-xs text-muted-foreground">{subtitle}</div>
+            <div className="flex flex-wrap items-center gap-2 text-sm font-semibold tracking-tight">
+              <span>{translateUi(title, interfaceLanguage)}</span>
+              {!isSystemAdmin ? (
+                <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {translateUi("AI-assisted", interfaceLanguage)}
+                </span>
+              ) : null}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {translateUi(subtitle, interfaceLanguage)}
+            </div>
           </div>
           {badge && (
             <Badge variant="outline" className="uppercase tracking-wide">
@@ -310,6 +336,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         </div>
 
         <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
+          <InterfaceLanguageMenu />
           <ThemeToggle />
           {actions}
         </div>

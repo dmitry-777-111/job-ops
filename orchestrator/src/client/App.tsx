@@ -22,6 +22,7 @@ import { useDemoInfo } from "./hooks/useDemoInfo";
 import { setAuthNavigator } from "./lib/auth-navigation";
 import { ApplicationPackageReviewPage } from "./pages/ApplicationPackageReviewPage";
 import { CandidateHomePage } from "./pages/CandidateHomePage";
+import { CandidateSettingsPage } from "./pages/CandidateSettingsPage";
 import { DesignResumePage } from "./pages/DesignResumePage";
 import { GmailOauthCallbackPage } from "./pages/GmailOauthCallbackPage";
 import { HomePage } from "./pages/HomePage";
@@ -201,7 +202,7 @@ export const App: React.FC = () => {
                 <Route path="/improve" element={<ImprovePage />} />
                 <Route path="/offline" element={<OfflinePage />} />
                 <Route path="/sign-in" element={<SignInPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/settings" element={<SettingsRoute />} />
                 <Route path="/tracer-links" element={<TracerLinksPage />} />
                 <Route path="/visa-sponsors" element={<VisaSponsorsPage />} />
                 <Route
@@ -239,4 +240,10 @@ function OverviewRoute() {
   const { isPending, isSystemAdmin } = React.useContext(AppModeContext);
   if (isPending) return null;
   return isSystemAdmin ? <HomePage /> : <CandidateHomePage />;
+}
+
+function SettingsRoute() {
+  const { isPending, isSystemAdmin } = React.useContext(AppModeContext);
+  if (isPending) return null;
+  return isSystemAdmin ? <SettingsPage /> : <CandidateSettingsPage />;
 }
