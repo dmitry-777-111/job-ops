@@ -1224,6 +1224,12 @@ const translations: Record<
     ru: "https://example.com/ваш-профиль",
     de: "https://example.com/ihr-profil",
   },
+  "Or drag and drop a resume file here.": {
+    es: "O arrastra y suelta aquí un archivo de currículum.",
+    fr: "Ou glissez-déposez ici un fichier de CV.",
+    ru: "Или перетащите файл резюме сюда.",
+    de: "Oder ziehen Sie eine Lebenslaufdatei hierher.",
+  },
 };
 
 export function translateUi(text: string, language: InterfaceLanguage): string {

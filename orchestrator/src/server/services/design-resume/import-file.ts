@@ -18,7 +18,10 @@ import { CodexClient } from "@server/services/llm/codex/client";
 import { GeminiCliClient } from "@server/services/llm/gemini-cli/client";
 import type { JsonSchemaDefinition } from "@server/services/llm/types";
 import { resolveLlmRuntimeSettings } from "@server/services/modelSelection";
-import { normalizeReactiveResumeV5Document } from "@server/services/rxresume/document";
+import {
+  buildDefaultReactiveResumeDocument,
+  normalizeReactiveResumeV5Document,
+} from "@server/services/rxresume/document";
 import {
   getResumeSchemaValidationMessage,
   safeParseV5ResumeData,
@@ -945,6 +948,39 @@ function repairLikelyJson(candidate: string): string {
     .replace(/,\s*([}\]])/g, "$1")
     .replaceAll("\u0000", "")
     .trim();
+}
+
+function buildLocalTextFallbackResume(
+  documentText: string,
+  fileName: string,
+): DesignResumeJson {
+  const resume = buildDefaultReactiveResumeDocument() as DesignResumeJson;
+  const lines = documentText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const email =
+    documentText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? "";
+  const phone =
+    documentText.match(/(?:\+?\d[\d().\s-]{7,}\d)/)?.[0]?.trim() ?? "";
+  const fileStem = fileName
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_-]+/g, " ")
+    .trim();
+  const firstLine = lines[0] ?? "";
+  const plausibleName =
+    firstLine.length > 1 && firstLine.length <= 80 && !firstLine.includes("@")
+      ? firstLine
+      : fileStem;
+
+  resume.basics.name = plausibleName || "Imported resume";
+  resume.basics.headline = lines[1]?.slice(0, 160) ?? "";
+  resume.basics.email = email;
+  resume.basics.phone = phone;
+  resume.summary.content = documentText.slice(0, 20_000);
+  resume.summary.title = "Imported resume text";
+
+  return sanitizeNormalizedResume(resume);
 }
 
 function parseImportedResumeJson(content: string): unknown {
@@ -1915,8 +1951,35 @@ export async function importDesignResumeFromFile(
   }
 
   if (providerRequiresApiKey(provider) && !runtime.apiKey) {
+    const localText =
+      mediaType === DOCX_MIME
+        ? await extractResumeDocxText(decoded)
+        : mediaType === "application/pdf"
+          ? await extractResumePdfText(decoded)
+          : null;
+
+    if (localText) {
+      const normalized = ensureImportedProjectIds(
+        buildLocalTextFallbackResume(localText, fileName),
+      );
+      const saved = await replaceCurrentDesignResumeDocument({
+        importedAt: new Date().toISOString(),
+        resumeJson: normalized,
+        sourceMode: null,
+        sourceResumeId: null,
+      });
+      logger.info("Design resume imported with local text fallback", {
+        requestId: requestId ?? null,
+        fileName,
+        mediaType,
+        documentTextChars: localText.length,
+        documentId: saved.id,
+      });
+      return saved;
+    }
+
     throw serviceUnavailable(
-      "Configure an LLM API key in Settings or set LLM_API_KEY in your environment before importing a resume file.",
+      "The resume could not be imported without an available AI service.",
     );
   }
 

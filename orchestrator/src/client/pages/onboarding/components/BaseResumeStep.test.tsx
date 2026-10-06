@@ -39,6 +39,25 @@ describe("BaseResumeStep", () => {
     vi.useRealTimers();
   });
 
+  it("imports a resume dropped onto the upload zone", () => {
+    const onImportResumeFile = vi.fn().mockResolvedValue(undefined);
+    render(
+      <BaseResumeStep
+        {...defaultProps}
+        onImportResumeFile={onImportResumeFile}
+      />,
+    );
+
+    const file = new File(["resume"], "resume.pdf", {
+      type: "application/pdf",
+    });
+    fireEvent.drop(screen.getByTestId("resume-drop-zone"), {
+      dataTransfer: { files: [file] },
+    });
+
+    expect(onImportResumeFile).toHaveBeenCalledWith(file);
+  });
+
   it("shows optimistic resume import progress while a file import is running", () => {
     vi.useFakeTimers();
 

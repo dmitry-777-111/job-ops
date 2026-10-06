@@ -119,6 +119,46 @@ describe("importDesignResumeFromFile", () => {
     );
   });
 
+  it("imports a text PDF locally when an API-key provider has no API key", async () => {
+    modelSelection.resolveLlmRuntimeSettings.mockResolvedValue({
+      provider: "openai",
+      model: "gpt-4.1",
+      baseUrl: null,
+      apiKey: null,
+    });
+    vi.mocked(pdfParse).mockResolvedValue(
+      makePdfParseResult(
+        "Dmitrii Kolpachnikov\nIndustrial Maintenance Technician\ndmitrii@example.com\n+1 416 555 1212",
+      ),
+    );
+
+    const result = await importDesignResumeFromFile({
+      fileName: "dmitrii-resume.pdf",
+      mediaType: "application/pdf",
+      dataBase64: Buffer.from("pdf-bytes").toString("base64"),
+    });
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(
+      designResumeService.replaceCurrentDesignResumeDocument,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resumeJson: expect.objectContaining({
+          basics: expect.objectContaining({
+            name: "Dmitrii Kolpachnikov",
+            email: "dmitrii@example.com",
+          }),
+          summary: expect.objectContaining({
+            content: expect.stringContaining(
+              "Industrial Maintenance Technician",
+            ),
+          }),
+        }),
+      }),
+    );
+    expect(result.resumeJson.basics.name).toBe("Dmitrii Kolpachnikov");
+  });
+
   it("imports Reactive Resume JSON directly without model extraction", async () => {
     const resumeJson = buildDefaultReactiveResumeDocument() as DesignResumeJson;
     resumeJson.basics.name = "Jordan Park";

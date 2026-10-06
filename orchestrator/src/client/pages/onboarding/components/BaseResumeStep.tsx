@@ -161,6 +161,7 @@ export const BaseResumeStep: React.FC<{
   onTemplateResumeChange,
 }) => {
   const interfaceLanguage = useInterfaceLanguage();
+  const [isDraggingResume, setIsDraggingResume] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const effectiveResumeSetupMode = allowReactiveResume
     ? resumeSetupMode
@@ -277,7 +278,48 @@ export const BaseResumeStep: React.FC<{
               selectedProvider={selectedProvider}
             />
           ) : (
-            <div className="rounded-lg border border-border/60 bg-muted/10 p-5">
+            <div
+              data-testid="resume-drop-zone"
+              role="button"
+              tabIndex={0}
+              aria-label={translateUi("Upload resume file", interfaceLanguage)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              className={cn(
+                "rounded-lg border border-border/60 bg-muted/10 p-5 transition-colors",
+                isDraggingResume && "border-primary bg-primary/5",
+              )}
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setIsDraggingResume(true);
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                setIsDraggingResume(true);
+              }}
+              onDragLeave={(event) => {
+                if (
+                  !event.currentTarget.contains(
+                    event.relatedTarget as Node | null,
+                  )
+                ) {
+                  setIsDraggingResume(false);
+                }
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setIsDraggingResume(false);
+                const file = event.dataTransfer.files?.[0];
+                if (file && !isBusy) {
+                  void onImportResumeFile(file);
+                }
+              }}
+            >
               <div className="space-y-2">
                 <div className="text-sm font-medium">{uploadTitle}</div>
                 <p className="text-sm text-muted-foreground">
@@ -296,6 +338,12 @@ export const BaseResumeStep: React.FC<{
                 </Button>
                 <div className="text-xs text-muted-foreground">
                   {supportedFormats}
+                </div>
+                <div className="w-full text-xs text-muted-foreground">
+                  {translateUi(
+                    "Or drag and drop a resume file here.",
+                    interfaceLanguage,
+                  )}
                 </div>
               </div>
             </div>
