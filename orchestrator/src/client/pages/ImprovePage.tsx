@@ -1,9 +1,11 @@
 import * as api from "@client/api";
 import { PageHeader, PageMain } from "@client/components/layout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CircleHelp, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { buildCareerLearningInsights } from "@/client/lib/career-learning";
+import { queryKeys } from "@/client/lib/queryKeys";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -16,20 +18,45 @@ type Insight = {
 
 export function ImprovePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const readyQuery = useQuery({
     queryKey: ["candidate-improve", "ready"],
     queryFn: () => api.getJobs({ statuses: ["ready"], view: "list" }),
   });
   const applicationQuery = useQuery({
     queryKey: ["candidate-improve", "applications"],
-    queryFn: () =>
-      api.getJobs({ statuses: ["applied", "in_progress"], view: "list" }),
+    queryFn: async () => {
+      const response = await api.getJobs({
+        statuses: ["applied", "in_progress"],
+        view: "list",
+      });
+      const eventResults = await Promise.allSettled(
+        response.jobs.map((job) =>
+          queryClient.fetchQuery({
+            queryKey: queryKeys.jobs.stageEvents(job.id),
+            queryFn: () => api.getJobStageEvents(job.id),
+            staleTime: 0,
+          }),
+        ),
+      );
+      return {
+        applications: response.jobs.map((job, index) => ({
+          job,
+          events:
+            eventResults[index]?.status === "fulfilled"
+              ? eventResults[index].value
+              : [],
+        })),
+      };
+    },
   });
 
   const insights = useMemo<Insight[]>(() => {
     const ready = readyQuery.data?.jobs ?? [];
-    const applications = applicationQuery.data?.jobs ?? [];
+    const applicationEvidence = applicationQuery.data?.applications ?? [];
+    const applications = applicationEvidence.map(({ job }) => job);
     const jobs = [...ready, ...applications];
+    const learningInsights = buildCareerLearningInsights(applicationEvidence);
     const salaryCount = jobs.filter(
       (job) =>
         job.salary ||
@@ -46,21 +73,25 @@ export function ImprovePage() {
       dominant && jobs.length ? dominant[1] / jobs.length : 0;
 
     const result: Insight[] = [
-      {
-        title:
-          applications.length >= 5
-            ? "Outcome evidence is ready for review"
-            : "Build outcome evidence before changing strategy",
-        evidence:
-          String(applications.length) +
-          " active or submitted application" +
-          (applications.length === 1 ? "" : "s") +
-          " are available for calibration.",
-        recommendation:
-          applications.length >= 5
-            ? "The JobAgent can start comparing response quality by role, source, geography and compensation."
-            : "The JobAgent will avoid strong salary or positioning conclusions until the outcome sample is larger.",
-      },
+      ...learningInsights.map((insight) => ({
+        title: insight.title,
+        evidence: insight.evidence + " Confidence: " + insight.confidence + ".",
+        recommendation: insight.recommendation,
+      })),
+      ...(learningInsights.length === 0
+        ? [
+            {
+              title: "Build outcome evidence before changing strategy",
+              evidence:
+                String(applications.length) +
+                " active or submitted application" +
+                (applications.length === 1 ? "" : "s") +
+                " are available for calibration.",
+              recommendation:
+                "The JobAgent will keep learning from applications, employer responses and interview debriefs, but it will not propose a career-direction change from a small sample.",
+            },
+          ]
+        : []),
       {
         title:
           salaryCount >= 5
