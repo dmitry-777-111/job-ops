@@ -1173,6 +1173,7 @@ function ResumeStep({
   onBack: () => void;
   onConfirm: () => void;
 }) {
+  const interfaceLanguage = useInterfaceLanguage();
   const experience = profile?.sections?.experience?.items ?? [];
   if (!hasResume) {
     return (
@@ -1234,18 +1235,19 @@ function ResumeStep({
         <div className="min-h-80 rounded-xl border border-border/60 bg-muted/15 p-6">
           <div className="mb-6 border-b pb-5">
             <h3 className="text-2xl font-semibold">
-              {profile?.basics?.name || "Parsed resume"}
+              {profile?.basics?.name ||
+                translateUi("Parsed resume", interfaceLanguage)}
             </h3>
             <p className="text-muted-foreground">
               {profile?.basics?.headline ||
                 profile?.basics?.label ||
-                "Review the imported details"}
+                translateUi("Review the imported details", interfaceLanguage)}
             </p>
             <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
               {profile?.basics?.location?.city ||
                 profile?.basics?.location?.region ||
-                "No location detected"}
+                translateUi("No location detected", interfaceLanguage)}
             </p>
           </div>
           <div className="space-y-4">
@@ -1263,8 +1265,10 @@ function ResumeStep({
             ))}
             {experience.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No experience entries were detected. Open Resume Studio to
-                correct the document before confirming.
+                {translateUi(
+                  "No experience entries were detected. Open Resume Studio to correct the document before confirming.",
+                  interfaceLanguage,
+                )}
               </p>
             ) : null}
           </div>
@@ -1272,16 +1276,21 @@ function ResumeStep({
         <div className="space-y-3">
           <div className="rounded-xl bg-muted/40 p-4">
             <FileCheck2 className="mb-3 h-5 w-5" />
-            <div className="text-sm font-medium">Parsed successfully</div>
+            <div className="text-sm font-medium">
+              {translateUi("Parsed successfully", interfaceLanguage)}
+            </div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {experience.length} experience{" "}
-              {experience.length === 1 ? "entry" : "entries"}
+              {experience.length} {translateUi("experience", interfaceLanguage)}{" "}
+              {translateUi(
+                experience.length === 1 ? "entry" : "entries",
+                interfaceLanguage,
+              )}
             </div>
           </div>
           <Button type="button" variant="outline" className="w-full" asChild>
             <a href="/design-resume">
               <BriefcaseBusiness className="h-4 w-4" />
-              Edit in Resume Studio
+              {translateUi("Edit in Resume Studio", interfaceLanguage)}
             </a>
           </Button>
         </div>

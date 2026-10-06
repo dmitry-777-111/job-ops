@@ -874,6 +874,289 @@ const translations: Record<
     ru: "Сохраняем...",
     de: "Speichern...",
   },
+
+  "Load the resume The JobAgent should use": {
+    es: "Carga el currículum que debe usar The JobAgent",
+    fr: "Chargez le CV que The JobAgent doit utiliser",
+    ru: "Загрузите резюме, которое будет использовать The JobAgent",
+    de: "Laden Sie den Lebenslauf, den The JobAgent verwenden soll",
+  },
+  "Upload a file or connect Reactive Resume. After parsing, you'll review the result before anything is marked complete.":
+    {
+      es: "Sube un archivo o conecta Reactive Resume. Después del análisis podrás revisar el resultado antes de que se marque como completado.",
+      fr: "Téléversez un fichier ou connectez Reactive Resume. Après l’analyse, vous pourrez vérifier le résultat avant toute validation.",
+      ru: "Загрузите файл или подключите Reactive Resume. После обработки вы сможете проверить результат до завершения шага.",
+      de: "Laden Sie eine Datei hoch oder verbinden Sie Reactive Resume. Nach der Verarbeitung können Sie das Ergebnis prüfen, bevor der Schritt abgeschlossen wird.",
+    },
+  "Upload a file": {
+    es: "Subir archivo",
+    fr: "Téléverser un fichier",
+    ru: "Загрузить файл",
+    de: "Datei hochladen",
+  },
+  "Use Reactive Resume": {
+    es: "Usar Reactive Resume",
+    fr: "Utiliser Reactive Resume",
+    ru: "Использовать Reactive Resume",
+    de: "Reactive Resume verwenden",
+  },
+  "The JobAgent turns a PDF, DOCX, or Reactive Resume JSON into the baseline used for matching and tailoring.":
+    {
+      es: "The JobAgent convierte un PDF, DOCX o JSON de Reactive Resume en la base para la selección y adaptación.",
+      fr: "The JobAgent transforme un PDF, DOCX ou JSON Reactive Resume en base pour la mise en correspondance et l’adaptation.",
+      ru: "The JobAgent превращает PDF, DOCX или JSON Reactive Resume в базовое резюме для сопоставления вакансий и адаптации.",
+      de: "The JobAgent wandelt PDF, DOCX oder Reactive-Resume-JSON in die Grundlage für Matching und Anpassung um.",
+    },
+  "Connect an existing Reactive Resume so The JobAgent can assess fit and build applications from it.":
+    {
+      es: "Conecta un Reactive Resume existente para que The JobAgent evalúe la compatibilidad y prepare candidaturas.",
+      fr: "Connectez un Reactive Resume existant afin que The JobAgent évalue l’adéquation et prépare les candidatures.",
+      ru: "Подключите существующее Reactive Resume, чтобы The JobAgent мог оценивать соответствие и готовить отклики.",
+      de: "Verbinden Sie ein vorhandenes Reactive Resume, damit The JobAgent die Eignung bewerten und Bewerbungen erstellen kann.",
+    },
+  "Upload a resume file": {
+    es: "Subir archivo de currículum",
+    fr: "Téléverser un CV",
+    ru: "Загрузить файл резюме",
+    de: "Lebenslaufdatei hochladen",
+  },
+  "Supported formats: PDF, DOCX, and Reactive Resume JSON.": {
+    es: "Formatos compatibles: PDF, DOCX y JSON de Reactive Resume.",
+    fr: "Formats pris en charge : PDF, DOCX et JSON Reactive Resume.",
+    ru: "Поддерживаемые форматы: PDF, DOCX и JSON Reactive Resume.",
+    de: "Unterstützte Formate: PDF, DOCX und Reactive-Resume-JSON.",
+  },
+  "Supported formats: PDF and DOCX.": {
+    es: "Formatos compatibles: PDF y DOCX.",
+    fr: "Formats pris en charge : PDF et DOCX.",
+    ru: "Поддерживаемые форматы: PDF и DOCX.",
+    de: "Unterstützte Formate: PDF und DOCX.",
+  },
+  "The JobAgent imports Reactive Resume JSON directly. PDF and DOCX files are sent to the configured AI service and stored as a resume. That resume drives job matching, fit assessment, search terms, and application workflows.":
+    {
+      es: "The JobAgent importa directamente JSON de Reactive Resume. Los archivos PDF y DOCX se envían al servicio de IA configurado y se guardan como currículum. Ese currículum se utiliza para selección de vacantes, evaluación de compatibilidad, términos de búsqueda y candidaturas.",
+      fr: "The JobAgent importe directement le JSON Reactive Resume. Les fichiers PDF et DOCX sont envoyés au service d’IA configuré puis enregistrés comme CV. Ce CV sert à la mise en correspondance, à l’évaluation de l’adéquation, aux termes de recherche et aux candidatures.",
+      ru: "The JobAgent напрямую импортирует JSON Reactive Resume. Файлы PDF и DOCX передаются настроенному ИИ-сервису и сохраняются как резюме. Это резюме используется для сопоставления вакансий, оценки соответствия, поисковых запросов и подготовки откликов.",
+      de: "The JobAgent importiert Reactive-Resume-JSON direkt. PDF- und DOCX-Dateien werden an den konfigurierten KI-Dienst gesendet und als Lebenslauf gespeichert. Dieser Lebenslauf dient Matching, Eignungsbewertung, Suchbegriffen und Bewerbungsabläufen.",
+    },
+  "Upload your existing resume as a PDF or DOCX. The JobAgent will import it and use it as the baseline for matching, fit assessment, search terms, and application workflows.":
+    {
+      es: "Sube tu currículum existente en PDF o DOCX. The JobAgent lo importará y lo usará como base para selección, evaluación de compatibilidad, términos de búsqueda y candidaturas.",
+      fr: "Téléversez votre CV existant au format PDF ou DOCX. The JobAgent l’importera et l’utilisera comme base pour la mise en correspondance, l’évaluation de l’adéquation, les termes de recherche et les candidatures.",
+      ru: "Загрузите существующее резюме в PDF или DOCX. The JobAgent импортирует его и будет использовать как основу для сопоставления вакансий, оценки соответствия, поисковых запросов и откликов.",
+      de: "Laden Sie Ihren vorhandenen Lebenslauf als PDF oder DOCX hoch. The JobAgent importiert ihn und verwendet ihn als Grundlage für Matching, Eignungsbewertung, Suchbegriffe und Bewerbungsabläufe.",
+    },
+  "Upload your existing resume, PDF or DOCX": {
+    es: "Sube tu currículum existente, PDF o DOCX",
+    fr: "Téléversez votre CV existant, PDF ou DOCX",
+    ru: "Загрузите существующее резюме в PDF или DOCX",
+    de: "Vorhandenen Lebenslauf als PDF oder DOCX hochladen",
+  },
+  "Your base resume is loaded and ready.": {
+    es: "Tu currículum base está cargado y listo.",
+    fr: "Votre CV de base est chargé et prêt.",
+    ru: "Базовое резюме загружено и готово.",
+    de: "Ihr Basis-Lebenslauf ist geladen und bereit.",
+  },
+  "Upload a resume file, or connect Reactive Resume and choose a template. This gives The JobAgent the baseline it needs for matching, fit assessment, and better application workflows.":
+    {
+      es: "Sube un currículum o conecta Reactive Resume y elige una plantilla. Así The JobAgent obtiene la base necesaria para selección, evaluación de compatibilidad y mejores candidaturas.",
+      fr: "Téléversez un CV ou connectez Reactive Resume et choisissez un modèle. The JobAgent disposera ainsi de la base nécessaire pour la mise en correspondance, l’évaluation de l’adéquation et de meilleurs dossiers de candidature.",
+      ru: "Загрузите резюме или подключите Reactive Resume и выберите шаблон. Это даст The JobAgent базовое резюме для сопоставления вакансий, оценки соответствия и подготовки более качественных откликов.",
+      de: "Laden Sie einen Lebenslauf hoch oder verbinden Sie Reactive Resume und wählen Sie eine Vorlage. So erhält The JobAgent die Grundlage für Matching, Eignungsbewertung und bessere Bewerbungsabläufe.",
+    },
+  "Check connection": {
+    es: "Comprobar conexión",
+    fr: "Vérifier la connexion",
+    ru: "Проверить подключение",
+    de: "Verbindung prüfen",
+  },
+  "Resume review": {
+    es: "Revisión del currículum",
+    fr: "Vérification du CV",
+    ru: "Проверка резюме",
+    de: "Lebenslauf prüfen",
+  },
+  "Is this the right resume?": {
+    es: "¿Es este el currículum correcto?",
+    fr: "Est-ce le bon CV ?",
+    ru: "Это нужное резюме?",
+    de: "Ist das der richtige Lebenslauf?",
+  },
+  "Confirm the parsed identity and recent experience. Completion is tied to this exact resume source, so replacing it requires confirmation again.":
+    {
+      es: "Confirma los datos personales y la experiencia reciente extraídos. La finalización queda vinculada a esta fuente de currículum, por lo que sustituirla requerirá una nueva confirmación.",
+      fr: "Confirmez l’identité extraite et l’expérience récente. La validation est liée à cette source exacte de CV ; son remplacement nécessitera une nouvelle confirmation.",
+      ru: "Проверьте распознанные личные данные и последний опыт работы. Завершение шага связано именно с этим источником резюме, поэтому после замены потребуется новое подтверждение.",
+      de: "Bestätigen Sie die erkannten Personendaten und die jüngste Berufserfahrung. Der Abschluss ist an genau diese Lebenslaufquelle gebunden; bei einem Austausch ist eine erneute Bestätigung erforderlich.",
+    },
+  "Parsed resume": {
+    es: "Currículum procesado",
+    fr: "CV analysé",
+    ru: "Распознанное резюме",
+    de: "Verarbeiteter Lebenslauf",
+  },
+  "Review the imported details": {
+    es: "Revisa los datos importados",
+    fr: "Vérifiez les données importées",
+    ru: "Проверьте импортированные данные",
+    de: "Importierte Daten prüfen",
+  },
+  "No location detected": {
+    es: "No se detectó ubicación",
+    fr: "Aucun lieu détecté",
+    ru: "Местоположение не определено",
+    de: "Kein Standort erkannt",
+  },
+  "No experience entries were detected. Open Resume Studio to correct the document before confirming.":
+    {
+      es: "No se detectó experiencia laboral. Abre Resume Studio y corrige el documento antes de confirmar.",
+      fr: "Aucune expérience professionnelle n’a été détectée. Ouvrez Resume Studio et corrigez le document avant de confirmer.",
+      ru: "Опыт работы не обнаружен. Откройте редактор резюме и исправьте документ перед подтверждением.",
+      de: "Es wurde keine Berufserfahrung erkannt. Öffnen Sie Resume Studio und korrigieren Sie das Dokument vor der Bestätigung.",
+    },
+  "Parsed successfully": {
+    es: "Procesado correctamente",
+    fr: "Analyse réussie",
+    ru: "Успешно распознано",
+    de: "Erfolgreich verarbeitet",
+  },
+  experience: {
+    es: "experiencia",
+    fr: "expérience",
+    ru: "опыт",
+    de: "Erfahrung",
+  },
+  entry: { es: "entrada", fr: "entrée", ru: "запись", de: "Eintrag" },
+  entries: { es: "entradas", fr: "entrées", ru: "записей", de: "Einträge" },
+  "Edit in Resume Studio": {
+    es: "Editar en Resume Studio",
+    fr: "Modifier dans Resume Studio",
+    ru: "Редактировать резюме",
+    de: "In Resume Studio bearbeiten",
+  },
+  "Use this resume": {
+    es: "Usar este currículum",
+    fr: "Utiliser ce CV",
+    ru: "Использовать это резюме",
+    de: "Diesen Lebenslauf verwenden",
+  },
+  "Use Reactive Resume if your current resume already lives there. Once connected, The JobAgent can use that resume for matching, fit assessment, tailoring, and application workflows.":
+    {
+      es: "Usa Reactive Resume si tu currículum ya está allí. Tras conectarlo, The JobAgent podrá usarlo para selección, evaluación de compatibilidad, adaptación y candidaturas.",
+      fr: "Utilisez Reactive Resume si votre CV y existe déjà. Une fois connecté, The JobAgent pourra l’utiliser pour la mise en correspondance, l’évaluation de l’adéquation, l’adaptation et les candidatures.",
+      ru: "Используйте Reactive Resume, если ваше резюме уже находится там. После подключения The JobAgent сможет использовать его для сопоставления вакансий, оценки соответствия, адаптации и откликов.",
+      de: "Verwenden Sie Reactive Resume, wenn Ihr Lebenslauf dort bereits vorhanden ist. Nach der Verbindung kann The JobAgent ihn für Matching, Eignungsbewertung, Anpassung und Bewerbungsabläufe verwenden.",
+    },
+  "v5 API key": {
+    es: "Clave API v5",
+    fr: "Clé API v5",
+    ru: "API-ключ v5",
+    de: "v5-API-Schlüssel",
+  },
+  "Enter v5 API key": {
+    es: "Introduce la clave API v5",
+    fr: "Saisissez la clé API v5",
+    ru: "Введите API-ключ v5",
+    de: "v5-API-Schlüssel eingeben",
+  },
+  "Leave blank to keep the saved v5 API key.": {
+    es: "Déjalo en blanco para conservar la clave API v5 guardada.",
+    fr: "Laissez vide pour conserver la clé API v5 enregistrée.",
+    ru: "Оставьте поле пустым, чтобы сохранить текущий API-ключ v5.",
+    de: "Leer lassen, um den gespeicherten v5-API-Schlüssel beizubehalten.",
+  },
+  "Self-hosted Reactive Resume?": {
+    es: "¿Reactive Resume autohospedado?",
+    fr: "Reactive Resume auto-hébergé ?",
+    ru: "Собственный сервер Reactive Resume?",
+    de: "Self-hosted Reactive Resume?",
+  },
+  "Turn this on only if you run your own instance and need a custom base URL.":
+    {
+      es: "Actívalo solo si ejecutas tu propia instancia y necesitas una URL base personalizada.",
+      fr: "Activez cette option uniquement si vous utilisez votre propre instance et avez besoin d’une URL de base personnalisée.",
+      ru: "Включайте только если используете собственный экземпляр и нужен другой базовый URL.",
+      de: "Nur aktivieren, wenn Sie eine eigene Instanz betreiben und eine benutzerdefinierte Basis-URL benötigen.",
+    },
+  "Custom URL": {
+    es: "URL personalizada",
+    fr: "URL personnalisée",
+    ru: "Собственный URL",
+    de: "Benutzerdefinierte URL",
+  },
+  "Enter the root URL for your self-hosted Reactive Resume instance, such as https://resume.yourdomain.com.":
+    {
+      es: "Introduce la URL raíz de tu instancia de Reactive Resume, por ejemplo https://resume.yourdomain.com.",
+      fr: "Saisissez l’URL racine de votre instance Reactive Resume, par exemple https://resume.yourdomain.com.",
+      ru: "Введите корневой URL вашего экземпляра Reactive Resume, например https://resume.yourdomain.com.",
+      de: "Geben Sie die Stamm-URL Ihrer Reactive-Resume-Instanz ein, z. B. https://resume.yourdomain.com.",
+    },
+  "Template resume": {
+    es: "Currículum de plantilla",
+    fr: "CV modèle",
+    ru: "Шаблон резюме",
+    de: "Vorlagen-Lebenslauf",
+  },
+  "Choose the resume The JobAgent should use as the source for matching, fit assessment, and tailored applications.":
+    {
+      es: "Elige el currículum que The JobAgent debe usar para selección, evaluación de compatibilidad y candidaturas adaptadas.",
+      fr: "Choisissez le CV que The JobAgent doit utiliser pour la mise en correspondance, l’évaluation de l’adéquation et les candidatures adaptées.",
+      ru: "Выберите резюме, которое The JobAgent будет использовать для сопоставления вакансий, оценки соответствия и адаптированных откликов.",
+      de: "Wählen Sie den Lebenslauf, den The JobAgent für Matching, Eignungsbewertung und angepasste Bewerbungen verwenden soll.",
+    },
+  "You already have a usable resume source, so this selection stays optional.":
+    {
+      es: "Ya tienes una fuente de currículum utilizable, por lo que esta selección sigue siendo opcional.",
+      fr: "Vous disposez déjà d’une source de CV utilisable ; ce choix reste donc facultatif.",
+      ru: "У вас уже есть пригодный источник резюме, поэтому этот выбор остаётся необязательным.",
+      de: "Sie haben bereits eine nutzbare Lebenslaufquelle; diese Auswahl bleibt daher optional.",
+    },
+  "Reactive Resume connection verified.": {
+    es: "Conexión con Reactive Resume verificada.",
+    fr: "Connexion Reactive Resume vérifiée.",
+    ru: "Подключение Reactive Resume проверено.",
+    de: "Reactive-Resume-Verbindung geprüft.",
+  },
+
+  "Connect LinkedIn, Indeed & more": {
+    es: "Conectar LinkedIn, Indeed y más",
+    fr: "Connecter LinkedIn, Indeed et plus",
+    ru: "Подключить LinkedIn, Indeed и другие",
+    de: "LinkedIn, Indeed und weitere verbinden",
+  },
+  "Connect job-search profiles so The JobAgent can compare profile completeness, positioning and consistency across platforms and suggest improvements.":
+    {
+      es: "Conecta tus perfiles de búsqueda de empleo para que The JobAgent compare su integridad, posicionamiento y coherencia entre plataformas y sugiera mejoras.",
+      fr: "Connectez vos profils de recherche d’emploi afin que The JobAgent compare leur complétude, leur positionnement et leur cohérence entre plateformes et suggère des améliorations.",
+      ru: "Подключите профили на площадках поиска работы, чтобы The JobAgent мог сравнивать полноту, позиционирование и согласованность профилей и предлагать улучшения.",
+      de: "Verbinden Sie Ihre Jobsuchprofile, damit The JobAgent Vollständigkeit, Positionierung und Konsistenz plattformübergreifend vergleichen und Verbesserungen vorschlagen kann.",
+    },
+  "Connect job profiles": {
+    es: "Conectar perfiles",
+    fr: "Connecter les profils",
+    ru: "Подключить профили",
+    de: "Profile verbinden",
+  },
+  "Hide connection options": {
+    es: "Ocultar opciones",
+    fr: "Masquer les options",
+    ru: "Скрыть варианты",
+    de: "Optionen ausblenden",
+  },
+  "Not connected": {
+    es: "No conectado",
+    fr: "Non connecté",
+    ru: "Не подключено",
+    de: "Nicht verbunden",
+  },
+  "These connections are optional. As channel integrations become available, The JobAgent will use them to score profile quality, identify missing or weak sections and recommend concrete improvements.":
+    {
+      es: "Estas conexiones son opcionales. A medida que estén disponibles las integraciones, The JobAgent las usará para evaluar la calidad del perfil, detectar secciones débiles o ausentes y recomendar mejoras concretas.",
+      fr: "Ces connexions sont facultatives. À mesure que les intégrations seront disponibles, The JobAgent les utilisera pour évaluer la qualité du profil, détecter les sections faibles ou manquantes et recommander des améliorations concrètes.",
+      ru: "Эти подключения необязательны. По мере появления интеграций The JobAgent будет использовать их для оценки качества профиля, поиска слабых или незаполненных разделов и конкретных рекомендаций по улучшению.",
+      de: "Diese Verbindungen sind optional. Sobald Integrationen verfügbar sind, nutzt The JobAgent sie zur Bewertung der Profilqualität, zum Erkennen fehlender oder schwacher Bereiche und für konkrete Verbesserungsvorschläge.",
+    },
 };
 
 export function translateUi(text: string, language: InterfaceLanguage): string {

@@ -1,6 +1,9 @@
-import { FileText, Upload } from "lucide-react";
+import { FileText, Link2, Upload } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
+import { translateUi } from "@/client/lib/i18n";
+import { PRODUCT_BRAND } from "@/client/lib/product-brand";
 import type { LlmProviderId } from "@/client/pages/settings/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -157,19 +160,36 @@ export const BaseResumeStep: React.FC<{
   onRxresumeUrlChange,
   onTemplateResumeChange,
 }) => {
+  const interfaceLanguage = useInterfaceLanguage();
+  const [showProfileConnections, setShowProfileConnections] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const effectiveResumeSetupMode = allowReactiveResume
     ? resumeSetupMode
     : "upload";
   const uploadTitle = allowReactiveResume
-    ? "Upload a resume file"
-    : "Upload your existing resume, PDF or DOCX";
+    ? translateUi("Upload a resume file", interfaceLanguage)
+    : translateUi(
+        "Upload your existing resume, PDF or DOCX",
+        interfaceLanguage,
+      );
   const uploadDescription = allowReactiveResume
-    ? "Job Ops imports Reactive Resume JSON directly. PDF and DOCX files are sent to your configured AI model and stored as a local Design Resume. That resume drives job matching, fit assessment, search terms, and application workflows."
-    : "Upload your existing resume as a PDF or DOCX. Job Ops will import it and use it as the baseline for matching, fit assessment, search terms, and application workflows.";
+    ? translateUi(
+        PRODUCT_BRAND.name +
+          " imports Reactive Resume JSON directly. PDF and DOCX files are sent to the configured AI service and stored as a resume. That resume drives job matching, fit assessment, search terms, and application workflows.",
+        interfaceLanguage,
+      )
+    : translateUi(
+        "Upload your existing resume as a PDF or DOCX. " +
+          PRODUCT_BRAND.name +
+          " will import it and use it as the baseline for matching, fit assessment, search terms, and application workflows.",
+        interfaceLanguage,
+      );
   const supportedFormats = allowReactiveResume
-    ? "Supported formats: PDF, DOCX, and Reactive Resume JSON."
-    : "Supported formats: PDF and DOCX.";
+    ? translateUi(
+        "Supported formats: PDF, DOCX, and Reactive Resume JSON.",
+        interfaceLanguage,
+      )
+    : translateUi("Supported formats: PDF and DOCX.", interfaceLanguage);
 
   return (
     <div className="space-y-6" data-onboarding-target="resume-options">
@@ -200,15 +220,22 @@ export const BaseResumeStep: React.FC<{
           {[
             {
               value: "upload",
-              title: "Upload a file",
-              description:
-                "Turn a PDF, DOCX, or Reactive Resume JSON into the baseline Job Ops uses for matching and tailoring.",
+              title: translateUi("Upload a file", interfaceLanguage),
+              description: translateUi(
+                PRODUCT_BRAND.name +
+                  " turns a PDF, DOCX, or Reactive Resume JSON into the baseline used for matching and tailoring.",
+                interfaceLanguage,
+              ),
             },
             {
               value: "rxresume",
-              title: "Use Reactive Resume",
-              description:
-                "Connect an existing Reactive Resume so Job Ops can assess fit and build applications from it.",
+              title: translateUi("Use Reactive Resume", interfaceLanguage),
+              description: translateUi(
+                "Connect an existing Reactive Resume so " +
+                  PRODUCT_BRAND.name +
+                  " can assess fit and build applications from it.",
+                interfaceLanguage,
+              ),
             },
           ].map((option) => {
             const checked = resumeSetupMode === option.value;
@@ -243,6 +270,69 @@ export const BaseResumeStep: React.FC<{
         </RadioGroup>
       ) : null}
 
+      <section
+        className="rounded-xl border border-border/60 bg-card/40 p-4"
+        data-onboarding-target="profile-connections"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background">
+              <Link2 className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div>
+              <div className="font-medium">
+                {translateUi(
+                  "Connect LinkedIn, Indeed & more",
+                  interfaceLanguage,
+                )}
+              </div>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {translateUi(
+                  "Connect job-search profiles so The JobAgent can compare profile completeness, positioning and consistency across platforms and suggest improvements.",
+                  interfaceLanguage,
+                )}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="shrink-0"
+            onClick={() => setShowProfileConnections((visible) => !visible)}
+          >
+            {translateUi(
+              showProfileConnections
+                ? "Hide connection options"
+                : "Connect job profiles",
+              interfaceLanguage,
+            )}
+          </Button>
+        </div>
+        {showProfileConnections ? (
+          <div className="mt-4 grid gap-3 border-t pt-4 sm:grid-cols-2">
+            {["LinkedIn", "Indeed", "Job Bank", "Employer sites"].map(
+              (channel) => (
+                <div
+                  key={channel}
+                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background px-3 py-2"
+                >
+                  <span className="text-sm font-medium">{channel}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {translateUi("Not connected", interfaceLanguage)}
+                  </span>
+                </div>
+              ),
+            )}
+            <p className="sm:col-span-2 text-xs leading-5 text-muted-foreground">
+              {translateUi(
+                "These connections are optional. As channel integrations become available, The JobAgent will use them to score profile quality, identify missing or weak sections and recommend concrete improvements.",
+                interfaceLanguage,
+              )}
+            </p>
+          </div>
+        ) : null}
+      </section>
+
       {effectiveResumeSetupMode === "upload" ? (
         <>
           {isImportingResume ? (
@@ -266,7 +356,7 @@ export const BaseResumeStep: React.FC<{
                   disabled={isBusy}
                 >
                   <Upload className="h-4 w-4" />
-                  Upload resume file
+                  {translateUi("Upload resume file", interfaceLanguage)}
                 </Button>
                 <div className="text-xs text-muted-foreground">
                   {supportedFormats}
@@ -277,7 +367,10 @@ export const BaseResumeStep: React.FC<{
 
           <InlineValidation
             state={baseResumeValidation}
-            successMessage="Your base resume is loaded and ready."
+            successMessage={translateUi(
+              "Your base resume is loaded and ready.",
+              interfaceLanguage,
+            )}
           />
         </>
       ) : (

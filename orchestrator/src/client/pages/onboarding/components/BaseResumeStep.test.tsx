@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { BaseResumeStep } from "./BaseResumeStep";
 
@@ -37,6 +37,26 @@ const defaultProps = {
 describe("BaseResumeStep", () => {
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("shows the optional job-profile connection entry", () => {
+    render(<BaseResumeStep {...defaultProps} />);
+
+    const connect = screen.getByRole("button", {
+      name: /connect job profiles/i,
+    });
+    expect(connect).toBeInTheDocument();
+    expect(
+      screen.getByText(/Connect LinkedIn, Indeed & more/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(connect);
+
+    expect(screen.getByText("LinkedIn")).toBeInTheDocument();
+    expect(screen.getByText("Indeed")).toBeInTheDocument();
+    expect(screen.getByText("Job Bank")).toBeInTheDocument();
+    expect(screen.getByText("Employer sites")).toBeInTheDocument();
+    expect(screen.getAllByText("Not connected")).toHaveLength(4);
   });
 
   it("shows optimistic resume import progress while a file import is running", () => {
