@@ -3,7 +3,6 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
 import { translateUi } from "@/client/lib/i18n";
-import { PRODUCT_BRAND } from "@/client/lib/product-brand";
 import type { LlmProviderId } from "@/client/pages/settings/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -165,24 +164,12 @@ export const BaseResumeStep: React.FC<{
     resumeSetupMode === "rxresume",
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const jsonInputRef = useRef<HTMLInputElement>(null);
-  const uploadTitle = translateUi(
-    "Upload your existing resume, PDF or DOCX",
-    interfaceLanguage,
-  );
-  const uploadDescription = translateUi(
-    "Upload your existing resume as a PDF or DOCX. " +
-      PRODUCT_BRAND.name +
-      " will import it and use it as the baseline for matching, fit assessment, search terms, and application workflows.",
-    interfaceLanguage,
-  );
-
   return (
     <div className="space-y-6" data-onboarding-target="resume-options">
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
+        accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/json,.json"
         className="hidden"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
@@ -231,12 +218,7 @@ export const BaseResumeStep: React.FC<{
             }
           }}
         >
-          <div className="space-y-2">
-            <div className="text-sm font-medium">{uploadTitle}</div>
-            <p className="text-sm text-muted-foreground">{uploadDescription}</p>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -246,10 +228,9 @@ export const BaseResumeStep: React.FC<{
               {translateUi("Upload resume file", interfaceLanguage)}
             </Button>
             <div className="text-xs text-muted-foreground">
-              {translateUi(
-                "Supported formats: PDF and DOCX.",
-                interfaceLanguage,
-              )}
+              {allowReactiveResume
+                ? "PDF / DOCX / Reactive Resume"
+                : "PDF / DOCX"}
             </div>
             <div className="w-full text-xs text-muted-foreground">
               {translateUi(
@@ -271,20 +252,6 @@ export const BaseResumeStep: React.FC<{
 
       {allowReactiveResume ? (
         <>
-          <input
-            ref={jsonInputRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(event) => {
-              const file = event.currentTarget.files?.[0];
-              if (file) {
-                onResumeSetupModeChange("upload");
-                void onImportResumeFile(file);
-              }
-              event.currentTarget.value = "";
-            }}
-          />
           <div className="rounded-lg border border-border/60 bg-muted/5">
             <button
               type="button"
@@ -306,27 +273,7 @@ export const BaseResumeStep: React.FC<{
 
             {showOtherImportMethods ? (
               <div className="space-y-4 border-t border-border/60 p-4">
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {translateUi(
-                    "Use these options only if your resume already lives in Reactive Resume or you have a Reactive Resume JSON export.",
-                    interfaceLanguage,
-                  )}
-                </p>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isBusy}
-                    onClick={() => {
-                      onResumeSetupModeChange("upload");
-                      jsonInputRef.current?.click();
-                    }}
-                  >
-                    {translateUi(
-                      "Import Reactive Resume JSON",
-                      interfaceLanguage,
-                    )}
-                  </Button>
                   <Button
                     type="button"
                     variant="outline"
