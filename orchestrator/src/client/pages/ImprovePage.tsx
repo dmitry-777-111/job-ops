@@ -1,6 +1,7 @@
 import * as api from "@client/api";
 import { PageHeader, PageMain } from "@client/components/layout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { CareerRecommendationSnapshot } from "@shared/types.js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CircleHelp, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,8 @@ type Insight = {
   evidence: string;
   recommendation: string;
   action?: { label: string; path: string };
+  recommendationKey?: string;
+  snapshot?: CareerRecommendationSnapshot;
 };
 
 export function ImprovePage() {
@@ -50,6 +53,26 @@ export function ImprovePage() {
       };
     },
   });
+  const decisionQuery = useQuery({
+    queryKey: ["candidate-improve", "recommendation-decisions"],
+    queryFn: () => api.listCareerRecommendationDecisions(),
+  });
+  const decisionMutation = useMutation({
+    mutationFn: api.decideCareerRecommendation,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["candidate-improve", "recommendation-decisions"],
+      });
+    },
+  });
+
+  const decisionByKey = useMemo(
+    () =>
+      new Map(
+        (decisionQuery.data ?? []).map((decision) => [decision.key, decision]),
+      ),
+    [decisionQuery.data],
+  );
 
   const insights = useMemo<Insight[]>(() => {
     const ready = readyQuery.data?.jobs ?? [];
@@ -75,8 +98,23 @@ export function ImprovePage() {
     const result: Insight[] = [
       ...learningInsights.map((insight) => ({
         title: insight.title,
-        evidence: `${insight.evidence} Confidence: ${insight.confidence}.`,
+        evidence: insight.evidence + " Confidence: " + insight.confidence + ".",
         recommendation: insight.recommendation,
+        recommendationKey: insight.key,
+        snapshot: {
+          stage: insight.stage,
+          confidence: insight.confidence,
+          target: insight.target,
+          title: insight.title,
+          evidence: insight.evidence,
+          recommendation: insight.recommendation,
+        },
+        action:
+          insight.target === "mixed" ||
+          insight.target === "profile" ||
+          insight.target === "job_platform_profile"
+            ? { label: "Review profile", path: "/design-resume" }
+            : undefined,
       })),
       ...(learningInsights.length === 0
         ? [
@@ -140,7 +178,10 @@ export function ImprovePage() {
     return result;
   }, [applicationQuery.data, readyQuery.data]);
 
-  const loading = readyQuery.isLoading || applicationQuery.isLoading;
+  const loading =
+    readyQuery.isLoading ||
+    applicationQuery.isLoading ||
+    decisionQuery.isLoading;
 
   return (
     <>
@@ -160,8 +201,10 @@ export function ImprovePage() {
               The JobAgent improves quality, not application volume alone
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Recommendations use your profile, matching opportunities and
-              application outcomes. Strategy changes stay under your control.
+              Recommendations use your profile, matching opportunities,
+              application outcomes and interview evidence. You decide whether to
+              use a recommendation. Profile and strategy changes stay under your
+              control.
             </p>
           </div>
 
@@ -171,41 +214,111 @@ export function ImprovePage() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {insights.map((insight) => (
-                <article
-                  key={insight.title}
-                  className="rounded-xl border border-border/60 bg-card/70 p-5"
-                >
-                  <div className="flex items-center gap-2">
-                    <CircleHelp className="h-4 w-4" />
-                    <h2 className="font-semibold">{insight.title}</h2>
-                  </div>
-                  <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Evidence
-                  </div>
-                  <p className="mt-1 text-sm">{insight.evidence}</p>
-                  <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    The JobAgent suggestion
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {insight.recommendation}
-                  </p>
-                  {insight.action ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-4"
-                      onClick={() =>
-                        insight.action && navigate(insight.action.path)
-                      }
-                    >
-                      {insight.action.label}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  ) : null}
-                </article>
-              ))}
+              {insights.map((insight) => {
+                const decision = insight.recommendationKey
+                  ? decisionByKey.get(insight.recommendationKey)
+                  : null;
+                return (
+                  <article
+                    key={insight.title}
+                    className="rounded-xl border border-border/60 bg-card/70 p-5"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CircleHelp className="h-4 w-4" />
+                      <h2 className="font-semibold">{insight.title}</h2>
+                      {insight.snapshot ? (
+                        <Badge variant="outline">
+                          {insight.snapshot.confidence}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Evidence
+                    </div>
+                    <p className="mt-1 text-sm">{insight.evidence}</p>
+                    <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      The JobAgent suggestion
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {insight.recommendation}
+                    </p>
+
+                    {insight.recommendationKey && insight.snapshot ? (
+                      <div className="mt-4 border-t border-border/50 pt-3">
+                        {decision ? (
+                          <div className="space-y-2">
+                            <Badge
+                              variant={
+                                decision.status === "accepted"
+                                  ? "default"
+                                  : "outline"
+                              }
+                            >
+                              {decision.status === "accepted"
+                                ? "Accepted for review"
+                                : "Current approach kept"}
+                            </Badge>
+                            <p className="text-xs text-muted-foreground">
+                              {decision.status === "accepted"
+                                ? "No profile or strategy was changed automatically. The recommendation is saved as an explicit user decision."
+                                : "TJAgent will keep the evidence, but this recommendation will not be treated as an approved change."}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={decisionMutation.isPending}
+                              onClick={() =>
+                                decisionMutation.mutate({
+                                  key: insight.recommendationKey as string,
+                                  snapshot:
+                                    insight.snapshot as CareerRecommendationSnapshot,
+                                  status: "accepted",
+                                })
+                              }
+                            >
+                              Use this recommendation
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={decisionMutation.isPending}
+                              onClick={() =>
+                                decisionMutation.mutate({
+                                  key: insight.recommendationKey as string,
+                                  snapshot:
+                                    insight.snapshot as CareerRecommendationSnapshot,
+                                  status: "rejected",
+                                })
+                              }
+                            >
+                              Keep current approach
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {insight.action ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-4"
+                        onClick={() =>
+                          insight.action && navigate(insight.action.path)
+                        }
+                      >
+                        {insight.action.label}
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

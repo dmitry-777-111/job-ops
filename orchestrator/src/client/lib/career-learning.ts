@@ -1,16 +1,16 @@
-import type { JobListItem, StageEvent } from "@shared/types.js";
-
-export type CareerLearningStage =
-  | "market_entry"
-  | "screening"
-  | "interview"
-  | "final";
-
-export type CareerLearningConfidence = "emerging" | "moderate" | "strong";
+import type {
+  CareerLearningStage,
+  CareerRecommendationConfidence,
+  CareerRecommendationTarget,
+  JobListItem,
+  StageEvent,
+} from "@shared/types.js";
 
 export type CareerLearningInsight = {
+  key: string;
   stage: CareerLearningStage;
-  confidence: CareerLearningConfidence;
+  confidence: CareerRecommendationConfidence;
+  target: CareerRecommendationTarget;
   title: string;
   evidence: string;
   recommendation: string;
@@ -50,10 +50,23 @@ function percent(value: number) {
   return `${String(Math.round(value * 100))}%`;
 }
 
-function confidenceFor(sample: number, moderateAt: number, strongAt: number) {
-  if (sample >= strongAt) return "strong" as const;
-  if (sample >= moderateAt) return "moderate" as const;
-  return "emerging" as const;
+function confidenceFor(
+  sample: number,
+  moderateAt: number,
+  strongAt: number,
+): CareerRecommendationConfidence {
+  if (sample >= strongAt) return "strong";
+  if (sample >= moderateAt) return "moderate";
+  return "emerging";
+}
+
+function reasonKey(reason: string) {
+  return reason
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80);
 }
 
 export function buildCareerLearningInsights(
@@ -101,8 +114,10 @@ export function buildCareerLearningInsights(
   const responseRate = ratio(responded.length, sample);
   if (sample >= 10 && responseRate < 0.15) {
     insights.push({
+      key: "market-entry-low-response",
       stage: "market_entry",
       confidence: confidenceFor(sample, 10, 15),
+      target: "mixed",
       title: "Too few relevant applications are turning into conversations",
       evidence:
         String(responded.length) +
@@ -119,8 +134,10 @@ export function buildCareerLearningInsights(
   const screenToInterview = ratio(interviewed.length, screened.length);
   if (screened.length >= 5 && screenToInterview < 0.4) {
     insights.push({
+      key: "screening-low-conversion",
       stage: "screening",
       confidence: confidenceFor(screened.length, 5, 7),
+      target: "interview_behavior",
       title: "A repeatable screening-stage blocker may be forming",
       evidence:
         String(interviewed.length) +
@@ -137,8 +154,10 @@ export function buildCareerLearningInsights(
   const interviewToFinal = ratio(finalStage.length, interviewed.length);
   if (interviewed.length >= 3 && interviewToFinal < 0.34) {
     insights.push({
+      key: "interview-low-final-conversion",
       stage: "interview",
       confidence: confidenceFor(interviewed.length, 3, 5),
+      target: "interview_behavior",
       title: "Interview performance now has enough evidence to review",
       evidence:
         String(finalStage.length) +
@@ -158,8 +177,10 @@ export function buildCareerLearningInsights(
 
   if (interviewed.length > debriefs.length) {
     insights.push({
+      key: "interview-missing-debrief",
       stage: "interview",
       confidence: "emerging",
+      target: "interview_behavior",
       title: "Interview evidence is incomplete",
       evidence:
         String(interviewed.length - debriefs.length) +
@@ -180,8 +201,10 @@ export function buildCareerLearningInsights(
     );
     if (count / knownReasonTotal >= 0.5) {
       insights.push({
+        key: `repeated-rejection-${reasonKey(reason) || "known-reason"}`,
         stage: "market_entry",
         confidence: confidenceFor(count, 3, 5),
+        target: "mixed",
         title: "A repeated explicit rejection reason is forming",
         evidence:
           reason +
@@ -198,8 +221,10 @@ export function buildCareerLearningInsights(
 
   if (finalStage.length >= 2 && offers.length === 0) {
     insights.push({
+      key: "final-stage-no-offer",
       stage: "final",
       confidence: confidenceFor(finalStage.length, 2, 3),
+      target: "interview_behavior",
       title: "Final-stage conversion deserves a focused review",
       evidence:
         String(finalStage.length) +
