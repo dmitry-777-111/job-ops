@@ -64,9 +64,6 @@ const ONBOARDING_COUNTRY_KEYS = [
   "united states",
   "russia",
   "china",
-  "mexico",
-  "brazil",
-  "argentina",
 ] as const;
 
 const DISPLAY_LOCALE_BY_INTERFACE_LANGUAGE: Record<InterfaceLanguage, string> =
