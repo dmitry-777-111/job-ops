@@ -1,5 +1,7 @@
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import type { ManualImportResult } from "@client/components/ManualImportFlow";
 import { ManualImportFlow } from "@client/components/ManualImportFlow";
+import { translateUi } from "@client/lib/i18n";
 import type {
   AppSettings,
   CreatePipelineSearchPresetInput,
@@ -81,6 +83,7 @@ export const RunModeModal: React.FC<RunModeModalProps> = ({
   onApplySavedSearch,
 }) => {
   const prefersReducedMotion = useReducedMotion();
+  const interfaceLanguage = useInterfaceLanguage();
   const isManualMode = mode === "manual";
   const showTopHeader = isManualMode || showModeTabs;
   const composerTransition = prefersReducedMotion
@@ -111,17 +114,26 @@ export const RunModeModal: React.FC<RunModeModalProps> = ({
           <div className="mb-6 flex items-start justify-between gap-4">
             <div className="space-y-2">
               <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                Search composer
+                {translateUi("Search composer", interfaceLanguage)}
               </p>
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 {isManualMode
-                  ? "Review job details"
-                  : "What kind of jobs are you looking for?"}
+                  ? translateUi("Review job details", interfaceLanguage)
+                  : translateUi(
+                      "What kind of jobs are you looking for?",
+                      interfaceLanguage,
+                    )}
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                 {isManualMode
-                  ? "Add a job description, review the extracted details, then import."
-                  : "Describe the search in plain language. AI fills the settings for review, then you run the search."}
+                  ? translateUi(
+                      "Add a job description, review the extracted details, then import.",
+                      interfaceLanguage,
+                    )
+                  : translateUi(
+                      "Describe the search in plain language. AI fills the settings for review, then you run the search.",
+                      interfaceLanguage,
+                    )}
               </p>
             </div>
             {showCloseButton ? (
@@ -130,7 +142,7 @@ export const RunModeModal: React.FC<RunModeModalProps> = ({
                 size="sm"
                 onClick={() => onOpenChange(false)}
               >
-                Close
+                {translateUi("Close", interfaceLanguage)}
               </Button>
             ) : null}
           </div>
@@ -141,7 +153,7 @@ export const RunModeModal: React.FC<RunModeModalProps> = ({
               size="sm"
               onClick={() => onOpenChange(false)}
             >
-              Close
+              {translateUi("Close", interfaceLanguage)}
             </Button>
           </div>
         ) : null}
@@ -161,8 +173,12 @@ export const RunModeModal: React.FC<RunModeModalProps> = ({
         >
           {showModeTabs ? (
             <TabsList className="grid w-full max-w-sm grid-cols-2">
-              <TabsTrigger value="automatic">Automatic</TabsTrigger>
-              <TabsTrigger value="manual">Manual</TabsTrigger>
+              <TabsTrigger value="automatic">
+                {translateUi("Automatic", interfaceLanguage)}
+              </TabsTrigger>
+              <TabsTrigger value="manual">
+                {translateUi("Manual", interfaceLanguage)}
+              </TabsTrigger>
             </TabsList>
           ) : null}
 

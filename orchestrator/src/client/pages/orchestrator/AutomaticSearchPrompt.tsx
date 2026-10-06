@@ -1,3 +1,5 @@
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
+import { translateUi } from "@client/lib/i18n";
 import { Info, Loader2, Search, ShieldCheck, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -50,40 +52,55 @@ export function AutomaticSearchPrompt({
   onGenerateSearchPlan,
   onConfigureManually,
 }: AutomaticSearchPromptProps) {
+  const interfaceLanguage = useInterfaceLanguage();
+
   return (
     <div className="mx-auto flex w-full max-w-[40rem] flex-col">
       {showIntro ? (
         <div className="mb-7 space-y-3 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-            Search composer
+            {translateUi("Search composer", interfaceLanguage)}
           </p>
           <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            What kind of jobs are you looking for?
+            {translateUi(
+              "What kind of jobs are you looking for?",
+              interfaceLanguage,
+            )}
           </h1>
           <p className="mx-auto max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Describe the roles you want. Job Ops will turn that into search
-            terms, sources, filters, and ranking rules before anything runs.
+            {translateUi(
+              "Describe the roles you want. The JobAgent will turn that into search terms, sources, filters, and ranking rules before anything runs.",
+              interfaceLanguage,
+            )}
           </p>
         </div>
       ) : null}
 
       <Label htmlFor="search-plan-prompt" className="sr-only">
-        What kind of jobs are you looking for?
+        {translateUi(
+          "What kind of jobs are you looking for?",
+          interfaceLanguage,
+        )}
       </Label>
       <Textarea
         id="search-plan-prompt"
         value={searchPrompt}
         onChange={(event) => onSearchPromptChange(event.target.value)}
-        placeholder="Example: Software engineering jobs in Manchester above GBP 60k. Prefer backend/API work, hybrid or remote roles, and visa-friendly employers. Lower-score generic graduate programmes."
+        placeholder={translateUi(
+          "Example: Software engineering jobs in Manchester above GBP 60k. Prefer backend/API work, hybrid or remote roles, and visa-friendly employers. Lower-score generic graduate programmes.",
+          interfaceLanguage,
+        )}
         className="min-h-48 resize-none rounded-lg border-border/70 bg-background/35 px-4 py-4 text-base leading-7 shadow-none placeholder:text-muted-foreground/75 focus-visible:ring-1 focus-visible:ring-primary/70"
       />
 
       <div className="mt-5 space-y-2">
-        <p className="text-sm text-muted-foreground">Try these examples</p>
+        <p className="text-sm text-muted-foreground">
+          {translateUi("Try these examples", interfaceLanguage)}
+        </p>
         <div className="flex flex-wrap gap-2">
           {SEARCH_PROMPT_EXAMPLES.map((example) => (
             <Button
-              key={example.label}
+              key={translateUi(example.label, interfaceLanguage)}
               type="button"
               variant="outline"
               size="sm"
@@ -108,7 +125,10 @@ export function AutomaticSearchPrompt({
         ) : (
           <Sparkles className="h-4 w-4" />
         )}
-        {isPlanningSearch ? "Generating search..." : "Generate search"}
+        {translateUi(
+          isPlanningSearch ? "Generating search..." : "Generate search",
+          interfaceLanguage,
+        )}
       </Button>
 
       <Button
@@ -117,13 +137,16 @@ export function AutomaticSearchPrompt({
         className="mx-auto mt-3 h-auto px-0 text-sm text-primary/80 underline-offset-4"
         onClick={onConfigureManually}
       >
-        Configure manually
+        {translateUi("Configure manually", interfaceLanguage)}
       </Button>
 
       <div className="mt-7 flex items-center justify-center gap-2 text-sm text-muted-foreground">
         <ShieldCheck className="h-4 w-4" />
         <span>
-          You'll review the generated settings before running the search.
+          {translateUi(
+            "You'll review the generated settings before running the search.",
+            interfaceLanguage,
+          )}
         </span>
       </div>
 
@@ -132,8 +155,8 @@ export function AutomaticSearchPrompt({
           <Info className="h-4 w-4" />
           <AlertTitle>
             {planSource === "fallback"
-              ? "Current settings kept"
-              : "Search settings ready"}
+              ? translateUi("Current settings kept", interfaceLanguage)
+              : translateUi("Search settings ready", interfaceLanguage)}
           </AlertTitle>
           <AlertDescription className="space-y-2">
             <p>{planSummary}</p>

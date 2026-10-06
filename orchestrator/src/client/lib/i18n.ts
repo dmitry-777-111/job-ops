@@ -649,6 +649,147 @@ const translations: Record<
     ru: "Описание вакансии",
     de: "Stellenbeschreibung anzeigen",
   },
+  "Search composer": {
+    es: "Asistente de búsqueda",
+    fr: "Assistant de recherche",
+    ru: "Настройка поиска",
+    de: "Suchassistent",
+  },
+  "What kind of jobs are you looking for?": {
+    es: "¿Qué tipo de empleo buscas?",
+    fr: "Quel type d’emploi recherchez-vous ?",
+    ru: "Какие вакансии вы ищете?",
+    de: "Welche Stellen suchen Sie?",
+  },
+  "Review job details": {
+    es: "Revisar los detalles de la oferta",
+    fr: "Vérifier les détails de l’offre",
+    ru: "Проверьте данные вакансии",
+    de: "Stellendetails prüfen",
+  },
+  "Add a job description, review the extracted details, then import.": {
+    es: "Añade una descripción, revisa los datos extraídos y luego importa.",
+    fr: "Ajoutez une description, vérifiez les informations extraites, puis importez.",
+    ru: "Добавьте описание вакансии, проверьте извлечённые данные и затем импортируйте.",
+    de: "Fügen Sie eine Stellenbeschreibung hinzu, prüfen Sie die extrahierten Angaben und importieren Sie sie dann.",
+  },
+  "Describe the search in plain language. AI fills the settings for review, then you run the search.":
+    {
+      es: "Describe la búsqueda con tus propias palabras. La IA preparará los ajustes para que los revises antes de iniciar la búsqueda.",
+      fr: "Décrivez la recherche en langage naturel. L’IA prépare les paramètres à vérifier avant de lancer la recherche.",
+      ru: "Опишите поиск обычными словами. ИИ подготовит настройки для проверки, после чего вы запустите поиск.",
+      de: "Beschreiben Sie die Suche in normaler Sprache. Die KI bereitet die Einstellungen zur Prüfung vor, bevor Sie die Suche starten.",
+    },
+  Automatic: {
+    es: "Automático",
+    fr: "Automatique",
+    ru: "Автоматически",
+    de: "Automatisch",
+  },
+  Manual: { es: "Manual", fr: "Manuel", ru: "Вручную", de: "Manuell" },
+  Close: { es: "Cerrar", fr: "Fermer", ru: "Закрыть", de: "Schließen" },
+  "Describe the roles you want. The JobAgent will turn that into search terms, sources, filters, and ranking rules before anything runs.":
+    {
+      es: "Describe los puestos que buscas. The JobAgent los convertirá en términos de búsqueda, fuentes, filtros y reglas de clasificación antes de ejecutar nada.",
+      fr: "Décrivez les postes recherchés. The JobAgent les convertira en termes de recherche, sources, filtres et règles de classement avant toute exécution.",
+      ru: "Опишите нужные вакансии. The JobAgent преобразует это в поисковые запросы, источники, фильтры и правила ранжирования до запуска поиска.",
+      de: "Beschreiben Sie die gewünschten Stellen. The JobAgent erstellt daraus Suchbegriffe, Quellen, Filter und Ranking-Regeln, bevor etwas gestartet wird.",
+    },
+  "Example: Software engineering jobs in Manchester above GBP 60k. Prefer backend/API work, hybrid or remote roles, and visa-friendly employers. Lower-score generic graduate programmes.":
+    {
+      es: "Ejemplo: puestos de ingeniería de software en Manchester por encima de 60 000 GBP. Prioriza backend/API, híbrido o remoto y empleadores favorables a visados.",
+      fr: "Exemple : postes d’ingénierie logicielle à Manchester au-dessus de 60 000 GBP. Privilégier backend/API, hybride ou télétravail et employeurs favorables aux visas.",
+      ru: "Пример: вакансии software engineer в Манчестере от 60 000 GBP. Приоритет backend/API, гибрид или удалённая работа и работодатели, готовые к визовому спонсорству.",
+      de: "Beispiel: Software-Engineering-Stellen in Manchester über 60.000 GBP. Backend/API, Hybrid oder Remote und visafreundliche Arbeitgeber bevorzugen.",
+    },
+  "Try these examples": {
+    es: "Prueba estos ejemplos",
+    fr: "Essayez ces exemples",
+    ru: "Примеры запросов",
+    de: "Beispiele ausprobieren",
+  },
+  "Masters placement": {
+    es: "Prácticas de máster",
+    fr: "Stage de master",
+    ru: "Практика для магистра",
+    de: "Master-Praktikum",
+  },
+  "Graduate software engineer": {
+    es: "Ingeniero de software junior",
+    fr: "Ingénieur logiciel débutant",
+    ru: "Начинающий software engineer",
+    de: "Software Engineer für Absolventen",
+  },
+  "Data analyst internship": {
+    es: "Prácticas de analista de datos",
+    fr: "Stage d’analyste de données",
+    ru: "Стажировка data analyst",
+    de: "Data-Analyst-Praktikum",
+  },
+  "Visa-friendly roles": {
+    es: "Empleos favorables a visados",
+    fr: "Postes favorables aux visas",
+    ru: "Вакансии с визовой поддержкой",
+    de: "Visafreundliche Stellen",
+  },
+  "Generate search": {
+    es: "Crear búsqueda",
+    fr: "Générer la recherche",
+    ru: "Сформировать поиск",
+    de: "Suche erstellen",
+  },
+  "Generating search...": {
+    es: "Creando búsqueda...",
+    fr: "Création de la recherche...",
+    ru: "Формируем поиск...",
+    de: "Suche wird erstellt...",
+  },
+  "Configure manually": {
+    es: "Configurar manualmente",
+    fr: "Configurer manuellement",
+    ru: "Настроить вручную",
+    de: "Manuell konfigurieren",
+  },
+  "You'll review the generated settings before running the search.": {
+    es: "Podrás revisar los ajustes generados antes de iniciar la búsqueda.",
+    fr: "Vous pourrez vérifier les paramètres générés avant de lancer la recherche.",
+    ru: "Перед запуском поиска вы сможете проверить сформированные настройки.",
+    de: "Sie können die erzeugten Einstellungen prüfen, bevor die Suche gestartet wird.",
+  },
+  "Current settings kept": {
+    es: "Se mantienen los ajustes actuales",
+    fr: "Paramètres actuels conservés",
+    ru: "Текущие настройки сохранены",
+    de: "Aktuelle Einstellungen beibehalten",
+  },
+  "Search settings ready": {
+    es: "Ajustes de búsqueda listos",
+    fr: "Paramètres de recherche prêts",
+    ru: "Настройки поиска готовы",
+    de: "Sucheinstellungen bereit",
+  },
+  "Independent from the interface language.": {
+    es: "Independiente del idioma de la interfaz.",
+    fr: "Indépendant de la langue de l’interface.",
+    ru: "Не зависит от языка интерфейса.",
+    de: "Unabhängig von der Sprache der Oberfläche.",
+  },
+  "Auto — match vacancy": {
+    es: "Auto — según la vacante",
+    fr: "Auto — selon l’offre",
+    ru: "Авто — по языку вакансии",
+    de: "Auto — passend zur Stelle",
+  },
+  English: { es: "Inglés", fr: "Anglais", ru: "Английский", de: "Englisch" },
+  Español: { es: "Español", fr: "Espagnol", ru: "Испанский", de: "Spanisch" },
+  Français: {
+    es: "Francés",
+    fr: "Français",
+    ru: "Французский",
+    de: "Französisch",
+  },
+  Русский: { es: "Ruso", fr: "Russe", ru: "Русский", de: "Russisch" },
+  Deutsch: { es: "Alemán", fr: "Allemand", ru: "Немецкий", de: "Deutsch" },
 };
 
 export function translateUi(text: string, language: InterfaceLanguage): string {

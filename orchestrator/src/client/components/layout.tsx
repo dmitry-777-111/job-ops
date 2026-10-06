@@ -8,6 +8,10 @@ import {
   hasAuthenticatedSession,
   logout,
 } from "@client/api";
+import {
+  getAuthSessionVersion,
+  subscribeAuthSession,
+} from "@client/api/auth-session";
 import { useQuery } from "@tanstack/react-query";
 import {
   ExternalLink,
@@ -16,7 +20,7 @@ import {
   Menu,
   UserRound,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,10 +72,16 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({
     queryFn: getAppStatus,
   });
   const appMode = appStatusQuery.data?.appMode ?? "local";
+  const authSessionVersion = useSyncExternalStore(
+    subscribeAuthSession,
+    getAuthSessionVersion,
+    getAuthSessionVersion,
+  );
+  const hasSession = hasAuthenticatedSession();
   const currentUserQuery = useQuery({
-    queryKey: ["auth", "me", "app-mode"],
+    queryKey: ["auth", "me", "app-mode", authSessionVersion],
     queryFn: getCurrentAuthUser,
-    enabled: hasAuthenticatedSession(),
+    enabled: hasSession,
     retry: false,
     staleTime: 0,
     refetchOnMount: "always",
@@ -83,7 +93,7 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({
         appMode,
         isPending:
           appStatusQuery.isPending ||
-          (hasAuthenticatedSession() && currentUserQuery.isPending),
+          (hasSession && currentUserQuery.isPending),
         isSystemAdmin: currentUserQuery.data?.isSystemAdmin === true,
       }}
     >

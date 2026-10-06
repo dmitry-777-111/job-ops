@@ -132,6 +132,22 @@ let cachedLegacyCredentials: AuthCredentials | null =
   loadStoredLegacyCredentials();
 let cachedAuthToken: string | null = loadStoredAuthToken();
 let authMigrationInFlight: Promise<boolean> | null = null;
+let authSessionVersion = 0;
+const authSessionListeners = new Set<() => void>();
+
+function notifyAuthSessionChanged(): void {
+  authSessionVersion += 1;
+  for (const listener of authSessionListeners) listener();
+}
+
+export function subscribeAuthSession(listener: () => void): () => void {
+  authSessionListeners.add(listener);
+  return () => authSessionListeners.delete(listener);
+}
+
+export function getAuthSessionVersion(): number {
+  return authSessionVersion;
+}
 
 function clearCachedAppData(): void {
   queryClient.clear();
@@ -143,6 +159,7 @@ export function clearAuthSession(): void {
   cachedAuthToken = null;
   storeLegacyCredentials(null);
   storeAuthToken(null);
+  notifyAuthSessionChanged();
 }
 
 export function setAuthenticatedSession(token: string): void {
@@ -151,6 +168,7 @@ export function setAuthenticatedSession(token: string): void {
   storeAuthToken(token);
   cachedLegacyCredentials = null;
   storeLegacyCredentials(null);
+  notifyAuthSessionChanged();
 }
 
 export function getCachedAuthHeader(): string | undefined {
@@ -166,8 +184,10 @@ export function getCachedAuthTokenForRequests(): string | null {
 }
 
 export function setCachedAuthTokenForRequests(token: string | null): void {
+  if (cachedAuthToken === token) return;
   cachedAuthToken = token;
   storeAuthToken(token);
+  notifyAuthSessionChanged();
 }
 
 export function consumeLegacyCredentialsForMigration(): AuthCredentials | null {

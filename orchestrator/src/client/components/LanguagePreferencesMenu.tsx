@@ -233,7 +233,10 @@ export function LanguagePreferencesMenu() {
           {translateUi("Resume & application language", interfaceLanguage)}
         </DropdownMenuLabel>
         <div className="px-2 pb-1 text-xs text-muted-foreground">
-          Independent from the interface language.
+          {translateUi(
+            "Independent from the interface language.",
+            interfaceLanguage,
+          )}
         </div>
         {applicationOptions.map((option) => (
           <DropdownMenuItem
@@ -242,7 +245,7 @@ export function LanguagePreferencesMenu() {
             onSelect={() => void setApplicationLanguage(option.value)}
             className="flex items-center justify-between"
           >
-            <span>{option.label}</span>
+            <span>{translateUi(option.label, interfaceLanguage)}</span>
             {applicationLanguage === option.value ? (
               <Check className="h-4 w-4" />
             ) : null}
