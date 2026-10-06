@@ -199,17 +199,9 @@ export const BaseResumeStep: React.FC<{
           selectedProvider={selectedProvider}
         />
       ) : (
+        // biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop is supplemental; the nested upload button is the keyboard-accessible control.
         <div
           data-testid="resume-drop-zone"
-          role="button"
-          tabIndex={0}
-          aria-label={translateUi("Upload resume file", interfaceLanguage)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              fileInputRef.current?.click();
-            }
-          }}
           className={cn(
             "rounded-lg border border-border/60 bg-muted/10 p-5 transition-colors",
             isDraggingResume && "border-primary bg-primary/5",

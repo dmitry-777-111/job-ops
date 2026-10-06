@@ -144,6 +144,28 @@ describe("BaseResumeStep", () => {
     expect(screen.queryByText(/Reactive Resume JSON/i)).not.toBeInTheDocument();
   });
 
+  it("keeps Reactive Resume collapsed until the user opens other import methods", () => {
+    render(<BaseResumeStep {...defaultProps} allowReactiveResume />);
+
+    expect(
+      screen.getByRole("button", { name: "Other import methods" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Connect Reactive Resume" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Other import methods" }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Connect Reactive Resume" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Import Reactive Resume JSON" }),
+    ).toBeInTheDocument();
+  });
+
   it("hides self-hosted Reactive Resume controls when disabled", () => {
     render(
       <BaseResumeStep
