@@ -1,0 +1,40 @@
+{
+  "recordedAt": "2026-10-05",
+  "host": "career-os-vps",
+  "resourceGate": "FAIL",
+  "rootFilesystem": {
+    "device": "/dev/vda2",
+    "total": "34G",
+    "used": "30G",
+    "available": "2.2G",
+    "usedPercent": 94
+  },
+  "blockDevice": {
+    "disk": "/dev/vda",
+    "total": "35G",
+    "rootPartition": "34G",
+    "swapPartition": "1G",
+    "unallocatedCapacity": "0G"
+  },
+  "memory": {
+    "ramTotal": "1.9GiB",
+    "ramAvailableApprox": "56MiB",
+    "swapTotal": "5.0GiB",
+    "swapFreeApprox": "508KiB",
+    "swapState": "effectively full",
+    "vmstatObservation": "active swap-in/out with CPU saturation during sample"
+  },
+  "docker": {
+    "runningProduction": "career-os-v2-job-ops",
+    "productionHealth": "healthy",
+    "images": 2,
+    "imagesSize": "17.43GB",
+    "retainedRollbackImage": "ghcr.io/dmitry-777-111/job-ops:career-os-v1-freeze",
+    "currentProductionImage": "ghcr.io/dmitry-777-111/job-ops:v2-candidate-20261003-03"
+  },
+  "decision": "No cleanup, image deletion, deploy, or cutover performed. Existing capacity cannot safely hold rollback + current production + new Freeze 3 immutable image with required headroom.",
+  "minimumRecommendedUpgrade": {
+    "disk": "60GB total or more",
+    "ram": "4GB minimum; 6-8GB preferred if browser/visa workloads remain colocated"
+  }
+}

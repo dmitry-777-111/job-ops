@@ -92,3 +92,13 @@ This series changes documentation/evidence only. Application CI bf68d75 remains 
 1. Resource/capacity gate must PASS on the actual runtime host without sacrificing rollback.
 2. Master-plan runtime stability requirement remains: 3-5 clean daily runs before stability is claimed.
 3. Final explicit cutover decision only after the above; Freeze 2 remains rollback until then.
+
+## Resource gate measurement — 2026-10-05
+
+- Actual VPS root filesystem: 34G root partition, 30G used, 2.2G available, 94% utilization.
+- `/dev/vda` is 35G total and fully partitioned (34G root + 1G swap); there is no unallocated disk space to grow into locally.
+- RAM is 1.9GiB total with roughly 56MiB available at measurement time. Swap is effectively exhausted: 5.0GiB total, ~508KiB free. vmstat showed active swap churn and CPU saturation during the sample.
+- Production `career-os-v2-job-ops` remains healthy. Docker currently retains two required images totaling 17.43GB; rollback/current production assets were not deleted.
+- Resource gate = FAIL. No deploy/cutover/image deletion/cleanup performed.
+- Safe capacity target before cutover: at least 60GB total disk; at least 4GB RAM, preferably 6-8GB if browser/visa workloads remain on the same VPS.
+- Evidence: `evidence/F3_7_RESOURCE_GATE.json`.
