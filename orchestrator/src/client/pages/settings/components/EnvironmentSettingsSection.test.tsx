@@ -8,6 +8,7 @@ import { Accordion } from "@/components/ui/accordion";
 import { EnvironmentSettingsSection } from "./EnvironmentSettingsSection";
 
 vi.mock("@client/api", () => ({
+  changeOwnPassword: vi.fn(),
   createWorkspaceUser: vi.fn(),
   getCurrentAuthUser: vi.fn(),
   listWorkspaceUsers: vi.fn(),

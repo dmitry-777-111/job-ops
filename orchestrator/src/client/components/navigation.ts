@@ -8,6 +8,7 @@ import {
   Link2,
   Settings,
   Shield,
+  Sparkles,
 } from "lucide-react";
 
 export type NavLink = {
@@ -72,6 +73,12 @@ export const CANDIDATE_NAV_LINKS: NavLink[] = [
     label: "Applications",
     icon: Columns3,
     activePaths: ["/applications/in-progress"],
+  },
+  {
+    to: "/improve",
+    label: "Improve",
+    icon: Sparkles,
+    activePaths: ["/improve"],
   },
   {
     to: "/design-resume",

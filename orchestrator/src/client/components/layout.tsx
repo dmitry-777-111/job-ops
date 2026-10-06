@@ -213,8 +213,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         <span>Account</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
-                      <DropdownMenuLabel>Remembered</DropdownMenuLabel>
+                    <DropdownMenuContent align="start" className="w-64">
+                      <DropdownMenuLabel className="space-y-1">
+                        <span className="block">Current account</span>
+                        <span className="block text-xs font-normal text-muted-foreground">
+                          {isSystemAdmin ? "System Admin" : "Candidate"}
+                        </span>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Switch account</DropdownMenuLabel>
                       {rememberedUsers.length > 0 ? (
                         rememberedUsers.map((user) => (
                           <DropdownMenuItem

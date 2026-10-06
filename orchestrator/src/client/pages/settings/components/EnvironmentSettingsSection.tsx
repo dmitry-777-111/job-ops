@@ -25,6 +25,55 @@ type EnvironmentSettingsSectionProps = {
 const workspaceUsersQueryKey = ["workspaces", "users"] as const;
 const currentAuthUserQueryKey = ["auth", "me"] as const;
 
+function OwnPasswordControl(props: {
+  username: string;
+  workspaceName: string;
+  isSystemAdmin: boolean;
+}) {
+  const [password, setPassword] = useState("");
+  const mutation = useMutation({
+    mutationFn: api.changeOwnPassword,
+    onSuccess: () => {
+      setPassword("");
+      toast.success("Password changed");
+    },
+    onError: (error) => showErrorToast(error, "Failed to change password"),
+  });
+
+  return (
+    <div className="space-y-3 rounded-md border border-border/60 bg-muted/20 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="text-sm font-semibold">{props.username}</div>
+        <Badge variant="secondary">
+          {props.isSystemAdmin ? "System admin" : "Candidate"}
+        </Badge>
+        <Badge variant="outline">{props.workspaceName}</Badge>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Set a new password you know. Pathfinder never displays the stored
+        password.
+      </p>
+      <div className="flex max-w-md gap-2">
+        <Input
+          value={password}
+          onChange={(event) => setPassword(event.currentTarget.value)}
+          placeholder="New account password"
+          type="password"
+          autoComplete="new-password"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          disabled={mutation.isPending || password.length < 8}
+          onClick={() => mutation.mutate(password)}
+        >
+          Change password
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function AccountManagementSection() {
   const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
@@ -89,20 +138,24 @@ function AccountManagementSection() {
   });
 
   if (!meQuery.data?.isSystemAdmin) {
-    return (
-      <div className="space-y-2">
-        <div className="text-sm font-semibold">Workspace</div>
-        <p className="text-sm text-muted-foreground">
-          Signed in as {meQuery.data?.username ?? "a workspace user"}.
-        </p>
-      </div>
-    );
+    return meQuery.data ? (
+      <OwnPasswordControl
+        username={meQuery.data.username}
+        workspaceName={meQuery.data.workspaceName}
+        isSystemAdmin={false}
+      />
+    ) : null;
   }
 
   const users = usersQuery.data ?? [];
 
   return (
     <div className="space-y-5">
+      <OwnPasswordControl
+        username={meQuery.data.username}
+        workspaceName={meQuery.data.workspaceName}
+        isSystemAdmin
+      />
       <div className="space-y-1">
         <div className="text-sm font-semibold">Workspace Users</div>
         <p className="text-sm text-muted-foreground">

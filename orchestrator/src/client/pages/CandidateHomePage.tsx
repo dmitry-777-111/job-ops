@@ -4,9 +4,11 @@ import type { JobListItem } from "@shared/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   BriefcaseBusiness,
+  CheckCircle2,
   ExternalLink,
   FileCheck2,
   SlidersHorizontal,
+  Sparkles,
 } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +20,14 @@ const PERIOD_OPTIONS = [
   { hours: 24, label: "24 hours" },
   { hours: 72, label: "3 days" },
   { hours: 168, label: "7 days" },
+] as const;
+
+const JOURNEY_STAGES = [
+  "Tell us about yourself",
+  "Tell us what you want",
+  "Receive suitable jobs",
+  "Get an application-ready package",
+  "Improve from real outcomes",
 ] as const;
 
 function isWithinPeriod(job: JobListItem, hours: number): boolean {
@@ -44,6 +54,12 @@ export function CandidateHomePage() {
   const jobsQuery = useQuery({
     queryKey: ["candidate-home", "ready-jobs"],
     queryFn: () => api.getJobs({ statuses: ["ready"], view: "list" }),
+    refetchInterval: 60_000,
+  });
+  const applicationsQuery = useQuery({
+    queryKey: ["candidate-home", "applications"],
+    queryFn: () =>
+      api.getJobs({ statuses: ["applied", "in_progress"], view: "list" }),
     refetchInterval: 60_000,
   });
 
@@ -78,6 +94,23 @@ export function CandidateHomePage() {
         ),
     [jobsQuery.data, periodHours],
   );
+  const applicationCount = applicationsQuery.data?.jobs.length ?? 0;
+  const adaptiveMode =
+    applicationCount >= 5
+      ? "learn"
+      : applicationCount > 0
+        ? "review"
+        : jobs.length > 0
+          ? "apply"
+          : "search";
+  const adaptiveMessage =
+    adaptiveMode === "learn"
+      ? "You have enough application activity to start learning from market response."
+      : adaptiveMode === "review"
+        ? "You have active applications. Review progress while Pathfinder keeps searching."
+        : adaptiveMode === "apply"
+          ? "Strong matches are ready. The best next action is to review and prepare applications."
+          : "Pathfinder is building market evidence and watching for stronger matches.";
 
   return (
     <>
@@ -116,6 +149,60 @@ export function CandidateHomePage() {
 
       <PageMain>
         <section className="mx-auto max-w-5xl space-y-5">
+          <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Sparkles className="h-4 w-4" />
+                  Your Pathfinder journey
+                </div>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                  {adaptiveMessage}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/improve")}
+              >
+                Improve my profile
+              </Button>
+            </div>
+            <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              {JOURNEY_STAGES.map((stage, index) => {
+                const completed =
+                  index < 2 ||
+                  (index === 2 && jobs.length > 0) ||
+                  (index === 3 && applicationCount > 0);
+                const active =
+                  (adaptiveMode === "search" && index === 2) ||
+                  (adaptiveMode === "apply" && index === 2) ||
+                  (adaptiveMode === "review" && index === 3) ||
+                  (adaptiveMode === "learn" && index === 4);
+                return (
+                  <div
+                    key={stage}
+                    className={
+                      "rounded-xl border p-3 text-sm " +
+                      (active
+                        ? "border-foreground/30 bg-foreground text-background"
+                        : "border-border/60 bg-background/40")
+                    }
+                  >
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide opacity-80">
+                      {completed ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      ) : null}
+                      Step {index + 1}
+                    </div>
+                    <div className="mt-2 font-medium">{stage}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="text-sm text-muted-foreground">
               Pathfinder found

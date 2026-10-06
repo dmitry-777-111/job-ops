@@ -25,6 +25,7 @@ import { CandidateHomePage } from "./pages/CandidateHomePage";
 import { DesignResumePage } from "./pages/DesignResumePage";
 import { GmailOauthCallbackPage } from "./pages/GmailOauthCallbackPage";
 import { HomePage } from "./pages/HomePage";
+import { ImprovePage } from "./pages/ImprovePage";
 import { InProgressBoardPage } from "./pages/InProgressBoardPage";
 import { JobPage } from "./pages/JobPage";
 import { OfflinePage } from "./pages/OfflinePage";
@@ -197,6 +198,7 @@ export const App: React.FC = () => {
                   element={<DesignResumePage />}
                 />
                 <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/improve" element={<ImprovePage />} />
                 <Route path="/offline" element={<OfflinePage />} />
                 <Route path="/sign-in" element={<SignInPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
