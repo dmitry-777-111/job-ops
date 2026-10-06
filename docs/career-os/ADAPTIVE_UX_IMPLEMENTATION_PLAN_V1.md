@@ -378,3 +378,54 @@ The review milestone is reached when all are true:
 - system admin sees admin controls without leaking them to candidate;
 - production VPS remains unchanged.
 
+
+
+## 13. Language model — interface and application output are independent
+
+Candidate language has two separate settings:
+
+- `interfaceLanguage`: English, Spanish, French, Russian, German.
+- `applicationLanguage`: `auto` or a specific supported language for resume, cover letter and package text.
+
+Rules:
+- changing the interface language must never change the resume/application language;
+- `applicationLanguage=auto` follows the vacancy/job-market language when it can be determined, otherwise falls back to English;
+- candidate can override application language globally and, later, per vacancy/package;
+- language settings are candidate preferences, not admin/system AI settings;
+- UI strings must be translated through one dictionary/provider rather than duplicated ad hoc;
+- document generation must receive the resolved application language explicitly.
+
+Initial supported interface languages:
+English (`en`), Spanish (`es`), French (`fr`), Russian (`ru`), German (`de`).
+
+Acceptance:
+- language switcher is available without entering technical settings;
+- interface can change while application language stays unchanged;
+- application language is visible separately in Profile/Settings;
+- generated-package request can carry the resolved document language without changing candidate facts.
+
+## 14. AI positioning and product identity
+
+Pathfinder remains a career/job-search product first. AI is a capability, not the primary product category.
+
+UX/marketing rule:
+- use a persistent but low-noise `AI-assisted` cue near the Pathfinder identity/header;
+- label AI-generated or AI-explained recommendations contextually where they appear;
+- do not make provider/model/CLI configuration part of candidate onboarding;
+- candidate onboarding may say that Pathfinder uses AI to analyze fit, tailor documents and explain recommendations, without exposing implementation details;
+- technical provider/model controls belong in System Admin / Advanced settings;
+- the visual mark should communicate career/professional assistance first, with AI as a secondary cue.
+
+Brand mark direction:
+- replace the generic sparkle/Gemini-like mark with a minimal professional-clerk mark;
+- line-art silhouette: brimmed hat/head, jacket lapels and tie;
+- compact enough for 32–40 px UI use;
+- monochrome/currentColor SVG so it works in light/dark themes;
+- avoid copying another vendor's recognizable AI mark.
+
+Acceptance:
+- candidate onboarding contains no blocking AI-provider step;
+- no Codex CLI/model/provider errors are shown to candidates;
+- Pathfinder identity includes a subtle AI-assisted message;
+- technical AI settings remain accessible to admins;
+- no visible `JobOps` brand leakage in candidate-facing onboarding text.
