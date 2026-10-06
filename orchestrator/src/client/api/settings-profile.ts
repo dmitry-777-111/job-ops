@@ -45,6 +45,42 @@ export async function decideCareerRecommendation(input: {
   );
 }
 
+export async function getActiveCandidateStrategy(): Promise<CandidateStrategyProfile | null> {
+  return fetchApi<CandidateStrategyProfile | null>(
+    "/candidate/strategy/active",
+  );
+}
+
+export async function createCandidateStrategyDraft(input: {
+  targetMarkets: string[];
+  targetRoleFamilies: string[];
+  excludedRoleFamilies: string[];
+  constraints: CandidateStrategyProfile["constraints"];
+  freeformNotes?: string | null;
+}): Promise<CandidateStrategyProfile> {
+  return fetchApi<CandidateStrategyProfile>("/candidate/strategy/versions", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getCandidateStrategyDelta(
+  versionId: string,
+): Promise<CandidateStrategyDelta> {
+  return fetchApi<CandidateStrategyDelta>(
+    `/candidate/strategy/versions/${encodeURIComponent(versionId)}/delta`,
+  );
+}
+
+export async function activateCandidateStrategyVersion(
+  versionId: string,
+): Promise<CandidateStrategyProfile> {
+  return fetchApi<CandidateStrategyProfile>(
+    `/candidate/strategy/versions/${encodeURIComponent(versionId)}/activate`,
+    { method: "POST" },
+  );
+}
+
 export async function getSettings(): Promise<AppSettings> {
   if (settingsPromise) return settingsPromise;
 

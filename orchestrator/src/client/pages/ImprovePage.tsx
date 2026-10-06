@@ -3,12 +3,13 @@ import { PageHeader, PageMain } from "@client/components/layout";
 import type { CareerRecommendationSnapshot } from "@shared/types.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CircleHelp, Sparkles } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildCareerLearningInsights } from "@/client/lib/career-learning";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CareerStrategyRevisionPanel } from "./improve/CareerStrategyRevisionPanel";
 
 type Insight = {
   title: string;
@@ -22,6 +23,10 @@ type Insight = {
 export function ImprovePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [strategyRevision, setStrategyRevision] = useState<{
+    key: string;
+    snapshot: CareerRecommendationSnapshot;
+  } | null>(null);
   const readyQuery = useQuery({
     queryKey: ["candidate-improve", "ready"],
     queryFn: () => api.getJobs({ statuses: ["ready"], view: "list" }),
@@ -98,7 +103,7 @@ export function ImprovePage() {
     const result: Insight[] = [
       ...learningInsights.map((insight) => ({
         title: insight.title,
-        evidence: insight.evidence + " Confidence: " + insight.confidence + ".",
+        evidence: `${insight.evidence} Confidence: ${insight.confidence}.`,
         recommendation: insight.recommendation,
         recommendationKey: insight.key,
         snapshot: {
@@ -263,6 +268,25 @@ export function ImprovePage() {
                                 ? "No profile or strategy was changed automatically. The recommendation is saved as an explicit user decision."
                                 : "TJAgent will keep the evidence, but this recommendation will not be treated as an approved change."}
                             </p>
+                            {decision.status === "accepted" &&
+                            insight.snapshot &&
+                            (insight.snapshot.target === "strategy" ||
+                              insight.snapshot.target === "mixed") ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setStrategyRevision({
+                                    key: decision.key,
+                                    snapshot:
+                                      insight.snapshot as CareerRecommendationSnapshot,
+                                  })
+                                }
+                              >
+                                Prepare strategy revision
+                              </Button>
+                            ) : null}
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-2">
@@ -321,6 +345,14 @@ export function ImprovePage() {
               })}
             </div>
           )}
+
+          {strategyRevision ? (
+            <CareerStrategyRevisionPanel
+              recommendationKey={strategyRevision.key}
+              snapshot={strategyRevision.snapshot}
+              onClose={() => setStrategyRevision(null)}
+            />
+          ) : null}
         </section>
       </PageMain>
     </>
