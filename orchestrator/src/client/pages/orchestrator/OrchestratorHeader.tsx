@@ -1,4 +1,6 @@
+import { JobAgentMark } from "@client/components/JobAgentMark";
 import { PageHeader, StatusIndicator } from "@client/components/layout";
+import { PRODUCT_BRAND } from "@client/lib/product-brand";
 import type { JobSource } from "@shared/types.js";
 import {
   FileText,
@@ -107,11 +109,10 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
 
   return (
     <PageHeader
-      icon={() => (
-        <img src="/favicon.png" alt="" className="size-8 rounded-lg" />
-      )}
-      title="Job Ops"
-      subtitle="Orchestrator"
+      icon={JobAgentMark}
+      title={PRODUCT_BRAND.name}
+      subtitle="Admin workspace"
+      badge="System Admin"
       navOpen={navOpen}
       onNavOpenChange={onNavOpenChange}
       statusIndicator={

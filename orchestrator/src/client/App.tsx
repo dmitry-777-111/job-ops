@@ -41,7 +41,6 @@ import { WatchlistPage } from "./pages/WatchlistPage";
 
 /** Backwards-compatibility redirects: old URL paths -> new URL paths */
 const REDIRECTS: Array<{ from: string; to: string }> = [
-  { from: "/", to: "/jobs/ready" },
   { from: "/home", to: "/overview" },
   { from: "/ready", to: "/jobs/ready" },
   { from: "/ready/:jobId", to: "/jobs/ready/:jobId" },
@@ -168,6 +167,8 @@ export const App: React.FC = () => {
           >
             <div ref={nodeRef}>
               <Routes location={location}>
+                <Route path="/" element={<RootRoute />} />
+
                 {/* Backwards-compatibility redirects */}
                 {REDIRECTS.map(({ from, to }) => (
                   <Route
@@ -210,11 +211,8 @@ export const App: React.FC = () => {
                   element={<TrackingInboxRoute />}
                 />
                 <Route path="/watchlist" element={<WatchlistPage />} />
-                <Route path="/jobs/:tab" element={<OrchestratorPage />} />
-                <Route
-                  path="/jobs/:tab/:jobId"
-                  element={<OrchestratorPage />}
-                />
+                <Route path="/jobs/:tab" element={<JobsRoute />} />
+                <Route path="/jobs/:tab/:jobId" element={<JobsRoute />} />
               </Routes>
             </div>
           </CSSTransition>
@@ -225,6 +223,18 @@ export const App: React.FC = () => {
     </>
   );
 };
+
+function RootRoute() {
+  const { isPending, isSystemAdmin } = React.useContext(AppModeContext);
+  if (isPending) return null;
+  return <Navigate to={isSystemAdmin ? "/jobs/ready" : "/overview"} replace />;
+}
+
+function JobsRoute() {
+  const { isPending, isSystemAdmin } = React.useContext(AppModeContext);
+  if (isPending) return null;
+  return isSystemAdmin ? <OrchestratorPage /> : <CandidateHomePage />;
+}
 
 function TrackingInboxRoute() {
   const { appMode, isPending } = React.useContext(AppModeContext);
