@@ -24,6 +24,13 @@ export type LogJobStageEventResult = {
   newEvent: StageEvent | null;
 };
 
+const INTERVIEW_DEBRIEF_STAGES = new Set([
+  "recruiter_screen",
+  "hiring_manager_screen",
+  "technical_interview",
+  "onsite",
+]);
+
 const toTimestamp = (value: string) => {
   if (!value) return null;
   const date = new Date(value);
@@ -74,6 +81,7 @@ export async function logJobStageEvent({
   const metadata = {
     ...(evidence ? { evidence } : {}),
     note: values.notes?.trim() || undefined,
+    interviewDebrief: values.interviewDebrief?.trim() || undefined,
     eventLabel: values.title.trim() || undefined,
     reasonCode:
       values.reasonCode ||
@@ -82,7 +90,9 @@ export async function logJobStageEvent({
     eventType:
       values.stage === "no_change"
         ? ("note" as const)
-        : ("status_update" as const),
+        : INTERVIEW_DEBRIEF_STAGES.has(values.stage)
+          ? ("interview_log" as const)
+          : ("status_update" as const),
     externalUrl: values.salary ? `Salary: ${values.salary}` : undefined,
   };
 

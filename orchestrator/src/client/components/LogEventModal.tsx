@@ -35,6 +35,7 @@ const logEventSchema = z
     reasonCode: z.string().optional(),
     salary: z.string().optional(),
     evidenceNote: z.string().optional(),
+    interviewDebrief: z.string().optional(),
   })
   .superRefine((value, ctx) => {
     if (evidenceKindForStage(value.stage) && !value.evidenceNote?.trim()) {
@@ -73,6 +74,13 @@ const STAGE_OPTIONS = [
 ];
 
 const REASON_CODES = ["Skills", "Visa", "Timing", "Culture", "Unknown"];
+
+const INTERVIEW_DEBRIEF_STAGES = new Set([
+  "recruiter_screen",
+  "hiring_manager_screen",
+  "technical_interview",
+  "onsite",
+]);
 
 const toDateTimeLocal = (value: Date) => {
   const pad = (num: number) => String(num).padStart(2, "0");
@@ -120,6 +128,7 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
           title: editingEvent.metadata?.eventLabel || "",
           date: toDateTimeLocal(new Date(editingEvent.occurredAt * 1000)),
           notes: editingEvent.metadata?.note || "",
+          interviewDebrief: editingEvent.metadata?.interviewDebrief || "",
           evidenceNote:
             editingEvent.metadata?.evidence?.note ||
             editingEvent.metadata?.evidence?.sourceId ||
@@ -136,6 +145,7 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
           title: "Update",
           date: toDateTimeLocal(new Date()),
           notes: "",
+          interviewDebrief: "",
         });
       }
     }
@@ -222,6 +232,21 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
             <Textarea {...register("notes")} placeholder="Add details..." />
             <FieldError errors={[errors.notes]} />
           </Field>
+
+          {INTERVIEW_DEBRIEF_STAGES.has(selectedStage) ? (
+            <Field>
+              <FieldLabel>Interview debrief (optional)</FieldLabel>
+              <Textarea
+                {...register("interviewDebrief")}
+                placeholder="What did they ask? What felt difficult? What signals did you notice?"
+              />
+              <p className="text-xs text-muted-foreground">
+                After the interview, tell The JobAgent what happened. It can use
+                this together with the real outcome to improve your next-step
+                advice.
+              </p>
+            </Field>
+          ) : null}
 
           {evidenceKindForStage(selectedStage) && (
             <Field>

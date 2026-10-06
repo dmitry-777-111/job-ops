@@ -252,6 +252,7 @@ export interface StageEventMetadata {
   externalUrl?: string | null;
   reasonCode?: string | null;
   eventType?: "interview_log" | "status_update" | "note" | null;
+  interviewDebrief?: string | null;
 }
 
 export interface StageEvent {

@@ -15,6 +15,8 @@ const baseValues: LogEventFormValues = {
   date: "2026-05-27T10:00",
   notes: "Follow-up scheduled",
   evidenceNote: "Verified recruiter email dated 2026-05-27",
+  interviewDebrief:
+    "Asked about travel, work permit, and troubleshooting examples.",
 };
 
 beforeEach(() => {
@@ -46,9 +48,11 @@ describe("logJobStageEvent", () => {
       occurredAt: expect.any(Number),
       metadata: expect.objectContaining({
         actor: "user",
-        eventType: "status_update",
+        eventType: "interview_log",
         eventLabel: "Recruiter Screen",
         note: "Follow-up scheduled",
+        interviewDebrief:
+          "Asked about travel, work permit, and troubleshooting examples.",
         reasonCode: "in_progress_board_menu",
       }),
       outcome: null,
