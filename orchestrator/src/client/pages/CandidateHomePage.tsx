@@ -1,9 +1,12 @@
 import * as api from "@client/api";
+import { JobAgentMark } from "@client/components/JobAgentMark";
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import { PageHeader, PageMain } from "@client/components/layout";
+import { translateUi } from "@client/lib/i18n";
+import { PRODUCT_BRAND } from "@client/lib/product-brand";
 import type { JobListItem } from "@shared/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  BriefcaseBusiness,
   CheckCircle2,
   ExternalLink,
   FileCheck2,
@@ -49,6 +52,7 @@ function salaryLabel(job: JobListItem): string | null {
 
 export function CandidateHomePage() {
   const navigate = useNavigate();
+  const interfaceLanguage = useInterfaceLanguage();
   const [periodHours, setPeriodHours] = React.useState(24);
 
   const jobsQuery = useQuery({
@@ -115,9 +119,13 @@ export function CandidateHomePage() {
   return (
     <>
       <PageHeader
-        icon={BriefcaseBusiness}
-        title="Today"
-        subtitle="Your best new opportunities, ready to act on"
+        icon={JobAgentMark}
+        title={PRODUCT_BRAND.name}
+        badge={translateUi("Today", interfaceLanguage)}
+        subtitle={translateUi(
+          "Your best new opportunities, ready to act on",
+          interfaceLanguage,
+        )}
         actions={
           <>
             <div className="flex rounded-md border border-border/60 p-0.5">
@@ -130,7 +138,7 @@ export function CandidateHomePage() {
                   className="h-7 px-2 text-xs"
                   onClick={() => setPeriodHours(option.hours)}
                 >
-                  {option.label}
+                  {translateUi(option.label, interfaceLanguage)}
                 </Button>
               ))}
             </div>
@@ -141,7 +149,7 @@ export function CandidateHomePage() {
               onClick={() => navigate("/settings")}
             >
               <SlidersHorizontal className="h-4 w-4" />
-              Adjust
+              {translateUi("Adjust", interfaceLanguage)}
             </Button>
           </>
         }
@@ -154,10 +162,10 @@ export function CandidateHomePage() {
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Sparkles className="h-4 w-4" />
-                  Your JobAgent journey
+                  {translateUi("Your JobAgent journey", interfaceLanguage)}
                 </div>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  {adaptiveMessage}
+                  {translateUi(adaptiveMessage, interfaceLanguage)}
                 </p>
               </div>
               <Button
@@ -166,7 +174,7 @@ export function CandidateHomePage() {
                 size="sm"
                 onClick={() => navigate("/improve")}
               >
-                Improve my profile
+                {translateUi("Improve my profile", interfaceLanguage)}
               </Button>
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
@@ -194,9 +202,11 @@ export function CandidateHomePage() {
                       {completed ? (
                         <CheckCircle2 className="h-3.5 w-3.5" />
                       ) : null}
-                      Step {index + 1}
+                      {translateUi("Step", interfaceLanguage)} {index + 1}
                     </div>
-                    <div className="mt-2 font-medium">{stage}</div>
+                    <div className="mt-2 font-medium">
+                      {translateUi(stage, interfaceLanguage)}
+                    </div>
                   </div>
                 );
               })}
@@ -205,40 +215,54 @@ export function CandidateHomePage() {
 
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="text-sm text-muted-foreground">
-              The JobAgent found
+              {translateUi("The JobAgent found", interfaceLanguage)}
             </div>
             <div className="mt-1 text-3xl font-semibold tracking-tight">
-              {jobs.length} {jobs.length === 1 ? "match" : "matches"}
+              {jobs.length}{" "}
+              {translateUi(
+                jobs.length === 1 ? "match" : "matches",
+                interfaceLanguage,
+              )}
             </div>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              These vacancies passed your current search and scoring rules. Open
-              the original posting or prepare an application package.
+              {translateUi(
+                "These vacancies passed your current search and scoring rules. Open the original posting or prepare an application package.",
+                interfaceLanguage,
+              )}
             </p>
           </div>
 
           {jobsQuery.isLoading ? (
             <div className="rounded-xl border border-border/60 p-8 text-center text-sm text-muted-foreground">
-              Loading your latest matches…
+              {translateUi("Loading your latest matches…", interfaceLanguage)}
             </div>
           ) : jobsQuery.error ? (
             <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
-              Could not load matches. Please try again shortly.
+              {translateUi(
+                "Could not load matches. Please try again shortly.",
+                interfaceLanguage,
+              )}
             </div>
           ) : jobs.length === 0 ? (
             <div className="rounded-xl border border-border/60 bg-card/50 p-10 text-center">
               <div className="text-base font-medium">
-                No new matches in this period
+                {translateUi(
+                  "No new matches in this period",
+                  interfaceLanguage,
+                )}
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
-                Monitoring can keep running in the background. You can widen the
-                period or adjust what you are looking for.
+                {translateUi(
+                  "Monitoring can keep running in the background. You can widen the period or adjust what you are looking for.",
+                  interfaceLanguage,
+                )}
               </p>
               <Button
                 className="mt-4"
                 variant="outline"
                 onClick={() => navigate("/settings")}
               >
-                Adjust my search
+                {translateUi("Adjust my search", interfaceLanguage)}
               </Button>
             </div>
           ) : (
@@ -291,7 +315,7 @@ export function CandidateHomePage() {
                               target="_blank"
                               rel="noreferrer"
                             >
-                              Posting
+                              {translateUi("Posting", interfaceLanguage)}
                               <ExternalLink className="h-3.5 w-3.5" />
                             </a>
                           </Button>
@@ -303,7 +327,10 @@ export function CandidateHomePage() {
                           onClick={() => prepareMutation.mutate(job.id)}
                         >
                           <FileCheck2 className="h-4 w-4" />
-                          Prepare application
+                          {translateUi(
+                            "Prepare application",
+                            interfaceLanguage,
+                          )}
                         </Button>
                       </div>
                     </div>

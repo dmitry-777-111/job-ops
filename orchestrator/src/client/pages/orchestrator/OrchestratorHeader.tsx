@@ -1,5 +1,7 @@
 import { JobAgentMark } from "@client/components/JobAgentMark";
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import { PageHeader, StatusIndicator } from "@client/components/layout";
+import { translateUi } from "@client/lib/i18n";
 import { PRODUCT_BRAND } from "@client/lib/product-brand";
 import type { JobSource } from "@shared/types.js";
 import {
@@ -44,6 +46,7 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
   onCancelPipeline,
   onOpenManualImport,
 }) => {
+  const interfaceLanguage = useInterfaceLanguage();
   const primaryAction = hideRunAction ? null : isPipelineRunning ? (
     <Button
       size="sm"
@@ -75,7 +78,10 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
         <Play className="h-4 w-4" />
       )}
       <span className="hidden sm:inline">
-        {isSearchComposerOpen ? "Close search" : "Run search"}
+        {translateUi(
+          isSearchComposerOpen ? "Close search" : "Run search",
+          interfaceLanguage,
+        )}
       </span>
     </Button>
   );
@@ -100,7 +106,7 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
             className="cursor-pointer gap-2"
           >
             <FileText className="h-4 w-4" />
-            Import job manually
+            {translateUi("Import job manually", interfaceLanguage)}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -111,13 +117,16 @@ export const OrchestratorHeader: React.FC<OrchestratorHeaderProps> = ({
     <PageHeader
       icon={JobAgentMark}
       title={PRODUCT_BRAND.name}
-      subtitle="Admin workspace"
-      badge="System Admin"
+      subtitle={translateUi("Admin workspace", interfaceLanguage)}
+      badge={translateUi("System Admin", interfaceLanguage)}
       navOpen={navOpen}
       onNavOpenChange={onNavOpenChange}
       statusIndicator={
         isPipelineRunning ? (
-          <StatusIndicator label="Search running" variant="amber" />
+          <StatusIndicator
+            label={translateUi("Search running", interfaceLanguage)}
+            variant="amber"
+          />
         ) : undefined
       }
       actions={actions}

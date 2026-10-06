@@ -227,18 +227,25 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         className="h-8 w-full justify-start gap-2 px-2 text-xs"
                       >
                         <UserRound className="h-3.5 w-3.5" />
-                        <span>Account</span>
+                        <span>{translateUi("Account", interfaceLanguage)}</span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-64">
                       <DropdownMenuLabel className="space-y-1">
-                        <span className="block">Current account</span>
+                        <span className="block">
+                          {translateUi("Current account", interfaceLanguage)}
+                        </span>
                         <span className="block text-xs font-normal text-muted-foreground">
-                          {isSystemAdmin ? "System Admin" : "Candidate"}
+                          {translateUi(
+                            isSystemAdmin ? "System Admin" : "Candidate",
+                            interfaceLanguage,
+                          )}
                         </span>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuLabel>Switch account</DropdownMenuLabel>
+                      <DropdownMenuLabel>
+                        {translateUi("Switch account", interfaceLanguage)}
+                      </DropdownMenuLabel>
                       {rememberedUsers.length > 0 ? (
                         rememberedUsers.map((user) => (
                           <DropdownMenuItem
@@ -272,7 +279,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                         className="gap-2"
                       >
                         <LogOut className="h-3.5 w-3.5" />
-                        <span>Sign out</span>
+                        <span>
+                          {translateUi("Sign out", interfaceLanguage)}
+                        </span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

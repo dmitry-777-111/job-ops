@@ -6,6 +6,11 @@ import {
   signInWithCredentials,
   signupWithCredentials,
 } from "@client/api";
+import {
+  InterfaceLanguageMenu,
+  useInterfaceLanguage,
+} from "@client/components/LanguagePreferencesMenu";
+import { translateUi } from "@client/lib/i18n";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -28,9 +33,9 @@ import {
 type AuthMode = "sign-in" | "signup";
 
 function resolveNextPath(rawNext: string | null): string {
-  if (!rawNext || !rawNext.startsWith("/")) return "/jobs/ready";
+  if (!rawNext || !rawNext.startsWith("/")) return "/";
   if (rawNext === "/sign-in" || rawNext.startsWith("/sign-in?")) {
-    return "/jobs/ready";
+    return "/";
   }
   return rawNext;
 }
@@ -38,6 +43,7 @@ function resolveNextPath(rawNext: string | null): string {
 export function SignInPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const interfaceLanguage = useInterfaceLanguage();
   const [authMode, setAuthMode] = useState<AuthMode>("sign-in");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -159,14 +165,20 @@ export function SignInPage() {
     setPassword("");
   };
 
-  const title = authMode === "signup" ? "Create account" : "Sign in";
+  const title = translateUi(
+    authMode === "signup" ? "Create account" : "Sign in",
+    interfaceLanguage,
+  );
   const description =
     authMode === "signup"
       ? `Create your ${PRODUCT_BRAND.name} account for this hosted workspace.`
       : `Enter your ${PRODUCT_BRAND.name} username and password.`;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.08),_transparent_45%),linear-gradient(180deg,_rgba(15,23,42,0.02),_transparent_30%)] px-4 py-16">
+    <main className="relative min-h-screen bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.08),_transparent_45%),linear-gradient(180deg,_rgba(15,23,42,0.02),_transparent_30%)] px-4 py-16">
+      <div className="absolute right-4 top-4">
+        <InterfaceLanguageMenu />
+      </div>
       <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
         <Card className="w-full border-border/60 bg-background/95 shadow-xl">
           <CardHeader className="space-y-2">
@@ -199,7 +211,7 @@ export function SignInPage() {
             {authMode === "sign-in" && rememberedUsers.length > 0 ? (
               <div className="mb-5 space-y-2">
                 <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Remembered on this browser
+                  {translateUi("Remembered on this browser", interfaceLanguage)}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {rememberedUsers.map((user) => (
@@ -251,20 +263,20 @@ export function SignInPage() {
               ) : null}
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="auth-username">
-                  Username
+                  {translateUi("Username", interfaceLanguage)}
                 </label>
                 <Input
                   id="auth-username"
                   autoComplete="username"
                   value={username}
                   onChange={(event) => setUsername(event.currentTarget.value)}
-                  placeholder="Enter username"
+                  placeholder={translateUi("Enter username", interfaceLanguage)}
                   disabled={isBusy}
                 />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="auth-password">
-                  Password
+                  {translateUi("Password", interfaceLanguage)}
                 </label>
                 <Input
                   id="auth-password"
@@ -274,7 +286,7 @@ export function SignInPage() {
                   }
                   value={password}
                   onChange={(event) => setPassword(event.currentTarget.value)}
-                  placeholder="Enter password"
+                  placeholder={translateUi("Enter password", interfaceLanguage)}
                   disabled={isBusy}
                 />
               </div>
@@ -289,8 +301,8 @@ export function SignInPage() {
                     ? "Creating account..."
                     : "Signing in..."
                   : authMode === "signup"
-                    ? "Create account"
-                    : "Sign in"}
+                    ? translateUi("Create account", interfaceLanguage)
+                    : translateUi("Sign in", interfaceLanguage)}
               </Button>
             </form>
           </CardContent>

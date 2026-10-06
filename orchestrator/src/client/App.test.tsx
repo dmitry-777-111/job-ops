@@ -10,6 +10,15 @@ vi.mock("./hooks/useDemoInfo", () => ({
   useDemoInfo: vi.fn(),
 }));
 
+vi.mock("@client/api", async () => {
+  const actual =
+    await vi.importActual<typeof import("@client/api")>("@client/api");
+  return {
+    ...actual,
+    hasAuthenticatedSession: vi.fn(() => true),
+  };
+});
+
 vi.mock("react-transition-group", () => ({
   SwitchTransition: ({ children }: { children: React.ReactNode }) => children,
   CSSTransition: ({ children }: { children: React.ReactNode }) => children,

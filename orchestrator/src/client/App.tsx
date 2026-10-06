@@ -2,6 +2,7 @@
  * Main App component.
  */
 
+import { hasAuthenticatedSession } from "@client/api";
 import { X } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -64,6 +65,11 @@ export const App: React.FC = () => {
   const navigate = useNavigate();
   const nodeRef = useRef<HTMLDivElement>(null);
   const isSignInPage = location.pathname === "/sign-in";
+  const isPublicPage =
+    isSignInPage ||
+    location.pathname === "/onboarding" ||
+    location.pathname === "/offline";
+  const needsAuthRedirect = !isPublicPage && !hasAuthenticatedSession();
   const demoInfo = useDemoInfo({ enabled: !isSignInPage });
   const showDemoBanners = !isSignInPage && demoInfo?.demoMode;
   const [demoWaitlistBannerDismissed, setDemoWaitlistBannerDismissed] =
@@ -85,6 +91,12 @@ export const App: React.FC = () => {
   }, [location.pathname]);
 
   useEffect(() => {
+    if (!needsAuthRedirect) return;
+    const next = location.pathname + location.search;
+    navigate("/sign-in?next=" + encodeURIComponent(next), { replace: true });
+  }, [location.pathname, location.search, navigate, needsAuthRedirect]);
+
+  useEffect(() => {
     setAuthNavigator((nextPath) => {
       const search = new URLSearchParams();
       if (
@@ -103,6 +115,8 @@ export const App: React.FC = () => {
       setAuthNavigator(null);
     };
   }, [navigate]);
+
+  if (needsAuthRedirect) return null;
 
   return (
     <>
