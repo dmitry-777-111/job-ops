@@ -72,11 +72,11 @@ const translations: Record<
     ru: "Выйти",
     de: "Abmelden",
   },
-  "Set up Pathfinder": {
-    es: "Configurar Pathfinder",
-    fr: "Configurer Pathfinder",
-    ru: "Настройка Pathfinder",
-    de: "Pathfinder einrichten",
+  "Set up The JobAgent": {
+    es: "Configurar The JobAgent",
+    fr: "Configurer The JobAgent",
+    ru: "Настройка The JobAgent",
+    de: "The JobAgent einrichten",
   },
   "A few focused choices, then you're in. You can review the strategy before it becomes active.":
     {

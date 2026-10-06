@@ -339,10 +339,10 @@ function getModelValidationMessage(args: {
 }): string {
   const baseMessage =
     args.validation.message ||
-    `Pathfinder could not verify ${args.providerLabel}. Check the connection and try again.`;
+    `The JobAgent could not verify ${args.providerLabel}. Check the connection and try again.`;
 
   if (args.provider === "ollama" && isUnavailable(args.validation)) {
-    return `${baseMessage} Local Ollama models can be slow or unavailable on smaller hardware. Try a smaller or faster model, make sure Ollama is reachable from the Pathfinder container, add more CPU/GPU/RAM, or switch provider from the model step.`;
+    return `${baseMessage} Local Ollama models can be slow or unavailable on smaller hardware. Try a smaller or faster model, make sure Ollama is reachable from the The JobAgent container, add more CPU/GPU/RAM, or switch provider from the model step.`;
   }
 
   return baseMessage;
@@ -451,8 +451,8 @@ async function buildResumeRequirement(): Promise<OnboardingRequirement> {
         confirmedSource === source ? "Resume confirmed" : "Review your resume",
       message:
         confirmedSource === source
-          ? "You confirmed the resume Pathfinder should use for matching and applications."
-          : "Check the parsed resume, then confirm that Pathfinder loaded the correct document.",
+          ? "You confirmed the resume The JobAgent should use for matching and applications."
+          : "Check the parsed resume, then confirm that The JobAgent loaded the correct document.",
       primaryAction: confirmedSource === source ? "none" : "confirm_resume",
       details: {
         source: "local",
@@ -472,7 +472,7 @@ async function buildResumeRequirement(): Promise<OnboardingRequirement> {
         status: "needs_action",
         title: "Choose a Reactive Resume template",
         message:
-          "Reactive Resume is connected. Select the resume Pathfinder should use for matching, fit assessment, and applications.",
+          "Reactive Resume is connected. Select the resume The JobAgent should use for matching, fit assessment, and applications.",
         primaryAction: "select_rxresume_template",
         details: { source: "rxresume" },
       });
@@ -483,7 +483,7 @@ async function buildResumeRequirement(): Promise<OnboardingRequirement> {
       status: "needs_action",
       title: "Load your resume",
       message:
-        "Upload a resume file, or connect Reactive Resume and choose a template. This gives Pathfinder the baseline it needs for matching, fit assessment, and better application workflows.",
+        "Upload a resume file, or connect Reactive Resume and choose a template. This gives The JobAgent the baseline it needs for matching, fit assessment, and better application workflows.",
       primaryAction: "upload_resume",
       details: {
         source: "none",
@@ -502,7 +502,7 @@ async function buildResumeRequirement(): Promise<OnboardingRequirement> {
         confirmedSource === source ? "Resume confirmed" : "Review your resume",
       message:
         confirmedSource === source
-          ? "You confirmed the Reactive Resume template Pathfinder should use."
+          ? "You confirmed the Reactive Resume template The JobAgent should use."
           : "Check the selected Reactive Resume document, then confirm it before continuing.",
       primaryAction: confirmedSource === source ? "none" : "confirm_resume",
       details: {
@@ -526,7 +526,7 @@ async function buildResumeRequirement(): Promise<OnboardingRequirement> {
         : "Resume source needs attention",
     message:
       validation.message ||
-      "Pathfinder could not verify the selected resume. Recheck the source or choose another template.",
+      "The JobAgent could not verify the selected resume. Recheck the source or choose another template.",
     primaryAction:
       status === "checking_unavailable"
         ? "recheck"
@@ -560,7 +560,7 @@ async function buildHostedResumeRequirement(): Promise<OnboardingRequirement> {
     status: "needs_action",
     title: "Upload your existing resume, PDF or DOCX",
     message:
-      "Upload your existing resume as a PDF or DOCX. Pathfinder will use it as the baseline for matching, fit assessment, search terms, and application workflows.",
+      "Upload your existing resume as a PDF or DOCX. The JobAgent will use it as the baseline for matching, fit assessment, search terms, and application workflows.",
     primaryAction: "upload_resume",
     details: { source: "upload" },
   });
@@ -674,7 +674,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
     message:
       profileCompleted === "1"
         ? "Your location and workplace preferences will seed future runs."
-        : "Add your preferred locations and workplace style so Pathfinder can prepare sensible run defaults and sponsor-focused sources.",
+        : "Add your preferred locations and workplace style so The JobAgent can prepare sensible run defaults and sponsor-focused sources.",
     primaryAction: profileCompleted === "1" ? "none" : "save_profile",
   });
   const activeStrategy = hostedMode ? await getActiveCandidateStrategy() : null;
@@ -687,7 +687,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
           : "Confirm your career strategy",
         message: activeStrategy
           ? `Strategy version ${activeStrategy.version} is active for this candidate.`
-          : "Add the roles, constraints, and priorities Pathfinder should use, review the proposed strategy, then confirm it explicitly.",
+          : "Add the roles, constraints, and priorities The JobAgent should use, review the proposed strategy, then confirm it explicitly.",
         primaryAction: activeStrategy ? "none" : "save_strategy",
         details: activeStrategy
           ? { strategyId: activeStrategy.id, version: activeStrategy.version }

@@ -68,7 +68,7 @@ export function CandidateSettingsPage() {
                   </Badge>
                 </div>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Pathfinder uses AI to explain fit, tailor application
+                  The JobAgent uses AI to explain fit, tailor application
                   materials and surface profile improvements. Provider, model
                   and infrastructure controls are managed separately by the
                   system administrator.

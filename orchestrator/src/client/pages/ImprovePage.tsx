@@ -58,8 +58,8 @@ export function ImprovePage() {
           " are available for calibration.",
         recommendation:
           applications.length >= 5
-            ? "Pathfinder can start comparing response quality by role, source, geography and compensation."
-            : "Pathfinder will avoid strong salary or positioning conclusions until the outcome sample is larger.",
+            ? "The JobAgent can start comparing response quality by role, source, geography and compensation."
+            : "The JobAgent will avoid strong salary or positioning conclusions until the outcome sample is larger.",
       },
       {
         title:
@@ -126,7 +126,7 @@ export function ImprovePage() {
               <Badge variant="outline">No silent profile changes</Badge>
             </div>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight">
-              Pathfinder improves quality, not application volume alone
+              The JobAgent improves quality, not application volume alone
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
               Recommendations use your profile, matching opportunities and
@@ -154,7 +154,7 @@ export function ImprovePage() {
                   </div>
                   <p className="mt-1 text-sm">{insight.evidence}</p>
                   <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Pathfinder suggestion
+                    The JobAgent suggestion
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {insight.recommendation}

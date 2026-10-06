@@ -1,4 +1,4 @@
 export const PRODUCT_BRAND = {
-  name: "Pathfinder",
+  name: "The JobAgent",
   internalName: "JobOps",
 } as const;

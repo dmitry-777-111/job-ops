@@ -107,10 +107,10 @@ export function CandidateHomePage() {
     adaptiveMode === "learn"
       ? "You have enough application activity to start learning from market response."
       : adaptiveMode === "review"
-        ? "You have active applications. Review progress while Pathfinder keeps searching."
+        ? "You have active applications. Review progress while The JobAgent keeps searching."
         : adaptiveMode === "apply"
           ? "Strong matches are ready. The best next action is to review and prepare applications."
-          : "Pathfinder is building market evidence and watching for stronger matches.";
+          : "The JobAgent is building market evidence and watching for stronger matches.";
 
   return (
     <>
@@ -154,7 +154,7 @@ export function CandidateHomePage() {
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Sparkles className="h-4 w-4" />
-                  Your Pathfinder journey
+                  Your The JobAgent journey
                 </div>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   {adaptiveMessage}
@@ -205,7 +205,7 @@ export function CandidateHomePage() {
 
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="text-sm text-muted-foreground">
-              Pathfinder found
+              The JobAgent found
             </div>
             <div className="mt-1 text-3xl font-semibold tracking-tight">
               {jobs.length} {jobs.length === 1 ? "match" : "matches"}

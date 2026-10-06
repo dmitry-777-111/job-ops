@@ -50,7 +50,7 @@ function OwnPasswordControl(props: {
         <Badge variant="outline">{props.workspaceName}</Badge>
       </div>
       <p className="text-xs text-muted-foreground">
-        Set a new password you know. Pathfinder never displays the stored
+        Set a new password you know. The JobAgent never displays the stored
         password.
       </p>
       <div className="flex max-w-md gap-2">
