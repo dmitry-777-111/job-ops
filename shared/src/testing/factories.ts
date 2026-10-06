@@ -203,6 +203,16 @@ export const createAppSettings = (
     default: "",
     override: null,
   },
+  onboardingJobProfilesCompleted: {
+    value: false,
+    default: false,
+    override: null,
+  },
+  jobPlatformProfileUrls: {
+    value: [],
+    default: [],
+    override: null,
+  },
   onboardingLegacyMigrationPending: {
     value: false,
     default: false,

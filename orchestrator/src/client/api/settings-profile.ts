@@ -275,6 +275,18 @@ export async function activateOnboardingStrategy(
   );
 }
 
+export async function saveOnboardingJobProfiles(
+  urls: string[],
+): Promise<OnboardingStatusResponse> {
+  return fetchApi<OnboardingStatusResponse>(
+    "/onboarding/actions/job-profiles",
+    {
+      method: "POST",
+      body: JSON.stringify({ urls }),
+    },
+  );
+}
+
 export async function confirmOnboardingResume(
   source: string,
 ): Promise<OnboardingStatusResponse> {

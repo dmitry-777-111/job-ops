@@ -107,6 +107,7 @@ vi.mock("@infra/logger", () => ({
 import {
   confirmOnboardingResumeAction,
   getOnboardingStatus,
+  saveOnboardingJobProfilesAction,
   saveOnboardingModelAction,
   saveOnboardingProfileAction,
   saveOnboardingRxResumeAction,
@@ -193,6 +194,8 @@ describe("onboarding status engine", () => {
         onboardingProfileCompleted: "1",
         onboardingLlmCompleted: "1",
         onboardingResumeConfirmedSource: "local:doc-1",
+        onboardingJobProfilesCompleted: "1",
+        jobPlatformProfileUrls: "[]",
       };
       return values[key] ?? null;
     });
@@ -221,7 +224,7 @@ describe("onboarding status engine", () => {
     });
   });
 
-  it("returns model as next when the connection has not been completed", async () => {
+  it("omits model setup from onboarding when the connection has not been completed", async () => {
     mocks.getSetting.mockImplementation(async (key: string) => {
       const values: Record<string, string | null> = {
         llmApiKey: "sk-test",
@@ -231,22 +234,19 @@ describe("onboarding status engine", () => {
         onboardingProfileCompleted: "1",
         onboardingLlmCompleted: null,
         onboardingResumeConfirmedSource: "local:doc-1",
+        onboardingJobProfilesCompleted: "1",
+        jobPlatformProfileUrls: "[]",
       };
       return values[key] ?? null;
     });
 
     const status = await getOnboardingStatus();
 
-    expect(status.complete).toBe(false);
-    expect(status.nextRequirementId).toBe("model");
-    expect(status.requirements[1]).toMatchObject({
-      id: "model",
-      status: "needs_action",
-      primaryAction: "connect_model",
-    });
+    expect(status.complete).toBe(true);
+    expect(status.nextRequirementId).toBeNull();
+    expect(status.requirements.some((item) => item.id === "model")).toBe(false);
     expect(mocks.applySettingsUpdates).not.toHaveBeenCalled();
   });
-
   it("does not expose model setup as a candidate onboarding requirement", async () => {
     mocks.isSystemAdmin.mockReturnValue(false);
     mocks.getSetting.mockImplementation(async (key: string) => {
@@ -258,6 +258,8 @@ describe("onboarding status engine", () => {
         onboardingProfileCompleted: "1",
         onboardingLlmCompleted: null,
         onboardingResumeConfirmedSource: "local:doc-1",
+        onboardingJobProfilesCompleted: "1",
+        jobPlatformProfileUrls: "[]",
       };
       return values[key] ?? null;
     });
@@ -280,6 +282,8 @@ describe("onboarding status engine", () => {
       onboardingProfileCompleted: null,
       onboardingLlmCompleted: null,
       onboardingResumeConfirmedSource: null,
+      onboardingJobProfilesCompleted: "1",
+      jobPlatformProfileUrls: "[]",
     };
     mocks.getSetting.mockImplementation(async (key: string) =>
       Object.hasOwn(values, key) ? values[key] : null,
@@ -328,6 +332,8 @@ describe("onboarding status engine", () => {
         onboardingProfileCompleted: "1",
         onboardingLlmCompleted: "1",
         onboardingResumeConfirmedSource: "local:doc-1",
+        onboardingJobProfilesCompleted: "1",
+        jobPlatformProfileUrls: "[]",
       };
       return values[key] ?? null;
     });
@@ -338,15 +344,10 @@ describe("onboarding status engine", () => {
 
     const status = await getOnboardingStatus();
 
-    expect(status.complete).toBe(false);
-    expect(status.nextRequirementId).toBe("model");
-    expect(status.requirements[1]).toMatchObject({
-      id: "model",
-      status: "needs_action",
-      title: "Reconnect Codex",
-      primaryAction: "connect_model",
-    });
-    expect(status.requirements[1]?.message).toMatch(/access token expired/i);
+    expect(status.complete).toBe(true);
+    expect(status.nextRequirementId).toBeNull();
+    expect(status.requirements.some((item) => item.id === "model")).toBe(false);
+    expect(mocks.validateLlmCredentials).not.toHaveBeenCalled();
   });
 
   it("returns resume as next when no resume is ready", async () => {
@@ -356,14 +357,14 @@ describe("onboarding status engine", () => {
 
     expect(status.complete).toBe(false);
     expect(status.nextRequirementId).toBe("resume");
-    expect(status.requirements[2]).toMatchObject({
+    expect(status.requirements[1]).toMatchObject({
       id: "resume",
       status: "needs_action",
       primaryAction: "upload_resume",
     });
   });
 
-  it("keeps Ollama onboarding on the model step until a model is selected", async () => {
+  it("does not expose Ollama model selection in onboarding", async () => {
     mocks.getSetting.mockImplementation(async (key: string) => {
       const values: Record<string, string | null> = {
         llmApiKey: null,
@@ -374,6 +375,41 @@ describe("onboarding status engine", () => {
         onboardingProfileCompleted: "1",
         onboardingLlmCompleted: "1",
         onboardingResumeConfirmedSource: "local:doc-1",
+        onboardingJobProfilesCompleted: "1",
+        jobPlatformProfileUrls: "[]",
+      };
+      return values[key] ?? null;
+    });
+
+    const status = await getOnboardingStatus();
+
+    expect(status.complete).toBe(true);
+    expect(status.nextRequirementId).toBeNull();
+    expect(status.requirements.some((item) => item.id === "model")).toBe(false);
+  });
+  it("is complete when all durable requirements are complete", async () => {
+    const status = await getOnboardingStatus();
+
+    expect(status).toMatchObject({
+      complete: true,
+      nextRequirementId: null,
+    });
+  });
+
+  it("shows job-platform profiles as the next step after the resume", async () => {
+    mocks.isSystemAdmin.mockReturnValue(false);
+    mocks.getSetting.mockImplementation(async (key: string) => {
+      const values: Record<string, string | null> = {
+        llmApiKey: "sk-test",
+        llmProvider: "openrouter",
+        llmBaseUrl: "",
+        model: "gpt-4o",
+        rxresumeUrl: null,
+        onboardingProfileCompleted: "1",
+        onboardingLlmCompleted: "1",
+        onboardingResumeConfirmedSource: "local:doc-1",
+        onboardingJobProfilesCompleted: null,
+        jobPlatformProfileUrls: "[]",
       };
       return values[key] ?? null;
     });
@@ -381,21 +417,28 @@ describe("onboarding status engine", () => {
     const status = await getOnboardingStatus();
 
     expect(status.complete).toBe(false);
-    expect(status.nextRequirementId).toBe("model");
-    expect(status.requirements[1]).toMatchObject({
-      id: "model",
+    expect(status.nextRequirementId).toBe("job_profiles");
+    expect(status.requirements.at(-1)).toMatchObject({
+      id: "job_profiles",
       status: "needs_action",
-      title: "Choose an Ollama model",
-      primaryAction: "connect_model",
+      primaryAction: "save_job_profiles",
     });
   });
 
-  it("is complete when all durable requirements are complete", async () => {
-    const status = await getOnboardingStatus();
+  it("persists up to six job-platform profile links and completes the step", async () => {
+    await saveOnboardingJobProfilesAction({
+      urls: [
+        "https://example.com/profile-one",
+        "https://example.com/profile-two",
+      ],
+    });
 
-    expect(status).toMatchObject({
-      complete: true,
-      nextRequirementId: null,
+    expect(mocks.applySettingsUpdates).toHaveBeenCalledWith({
+      jobPlatformProfileUrls: [
+        "https://example.com/profile-one",
+        "https://example.com/profile-two",
+      ],
+      onboardingJobProfilesCompleted: true,
     });
   });
 
@@ -633,7 +676,7 @@ describe("onboarding status engine", () => {
       complete: false,
       nextRequirementId: "resume",
     });
-    expect(status.requirements[2]).toMatchObject({
+    expect(status.requirements[1]).toMatchObject({
       primaryAction: "select_rxresume_template",
     });
   });

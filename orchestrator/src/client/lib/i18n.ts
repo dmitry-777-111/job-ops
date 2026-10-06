@@ -1157,6 +1157,73 @@ const translations: Record<
       ru: "Эти подключения необязательны. По мере появления интеграций The JobAgent будет использовать их для оценки качества профиля, поиска слабых или незаполненных разделов и конкретных рекомендаций по улучшению.",
       de: "Diese Verbindungen sind optional. Sobald Integrationen verfügbar sind, nutzt The JobAgent sie zur Bewertung der Profilqualität, zum Erkennen fehlender oder schwacher Bereiche und für konkrete Verbesserungsvorschläge.",
     },
+  "Job-platform profiles": {
+    es: "Perfiles en plataformas de empleo",
+    fr: "Profils sur les plateformes d’emploi",
+    ru: "Профили на job-платформах",
+    de: "Profile auf Job-Plattformen",
+  },
+  "Add links to your job-platform profiles": {
+    es: "Añade enlaces a tus perfiles de empleo",
+    fr: "Ajoutez les liens vers vos profils d’emploi",
+    ru: "Добавьте ссылки на профили на job-платформах",
+    de: "Links zu Ihren Job-Profilen hinzufügen",
+  },
+  "Paste links to the profiles you use on job-search platforms. The JobAgent will later use them to assess profile completeness, positioning and consistency and suggest improvements.":
+    {
+      es: "Pega enlaces a los perfiles que utilizas en plataformas de empleo. Más adelante The JobAgent los usará para evaluar la integridad, el posicionamiento y la coherencia del perfil y sugerir mejoras.",
+      fr: "Collez les liens vers les profils que vous utilisez sur les plateformes d’emploi. The JobAgent les utilisera ensuite pour évaluer la complétude, le positionnement et la cohérence du profil et proposer des améliorations.",
+      ru: "Вставьте ссылки на профили, которыми вы пользуетесь на платформах поиска работы. В дальнейшем The JobAgent будет оценивать их полноту, позиционирование и согласованность и предлагать улучшения.",
+      de: "Fügen Sie Links zu den Profilen ein, die Sie auf Job-Plattformen nutzen. The JobAgent wird später Vollständigkeit, Positionierung und Konsistenz bewerten und Verbesserungen vorschlagen.",
+    },
+  "Job-platform profile link": {
+    es: "Enlace al perfil de empleo",
+    fr: "Lien vers le profil d’emploi",
+    ru: "Ссылка на профиль job-платформы",
+    de: "Link zum Job-Profil",
+  },
+  "Remove link": {
+    es: "Eliminar enlace",
+    fr: "Supprimer le lien",
+    ru: "Удалить ссылку",
+    de: "Link entfernen",
+  },
+  "Add another link": {
+    es: "Añadir otro enlace",
+    fr: "Ajouter un autre lien",
+    ru: "Добавить ещё ссылку",
+    de: "Weiteren Link hinzufügen",
+  },
+  "Skip for now": {
+    es: "Omitir por ahora",
+    fr: "Ignorer pour l’instant",
+    ru: "Пропустить пока",
+    de: "Vorerst überspringen",
+  },
+  "Save and finish": {
+    es: "Guardar y finalizar",
+    fr: "Enregistrer et terminer",
+    ru: "Сохранить и завершить",
+    de: "Speichern und abschließen",
+  },
+  "You can add up to 6 profile links.": {
+    es: "Puedes añadir hasta 6 enlaces de perfil.",
+    fr: "Vous pouvez ajouter jusqu’à 6 liens de profil.",
+    ru: "Можно добавить до 6 ссылок на профили.",
+    de: "Sie können bis zu 6 Profil-Links hinzufügen.",
+  },
+  "Use a full http:// or https:// profile link.": {
+    es: "Usa un enlace completo http:// o https://.",
+    fr: "Utilisez un lien complet http:// ou https://.",
+    ru: "Используйте полную ссылку с http:// или https://.",
+    de: "Verwenden Sie einen vollständigen http://- oder https://-Link.",
+  },
+  "https://example.com/your-profile": {
+    es: "https://example.com/tu-perfil",
+    fr: "https://example.com/votre-profil",
+    ru: "https://example.com/ваш-профиль",
+    de: "https://example.com/ihr-profil",
+  },
 };
 
 export function translateUi(text: string, language: InterfaceLanguage): string {

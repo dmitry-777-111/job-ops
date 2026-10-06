@@ -14,6 +14,16 @@ const onboardingCritical = [
   "Save and continue",
   "Back",
   "Saving...",
+  "Job-platform profiles",
+  "Add links to your job-platform profiles",
+  "Paste links to the profiles you use on job-search platforms. The JobAgent will later use them to assess profile completeness, positioning and consistency and suggest improvements.",
+  "Job-platform profile link",
+  "Remove link",
+  "Add another link",
+  "Skip for now",
+  "Save and finish",
+  "You can add up to 6 profile links.",
+  "Use a full http:// or https:// profile link.",
 ] as const;
 
 describe("onboarding profile localization", () => {

@@ -11,6 +11,7 @@ import { suggestOnboardingSearchTerms } from "@server/services/onboarding-search
 import {
   confirmOnboardingResumeAction,
   getOnboardingStatus,
+  saveOnboardingJobProfilesAction,
   saveOnboardingModelAction,
   saveOnboardingProfileAction,
   saveOnboardingRxResumeAction,
@@ -90,6 +91,10 @@ const strategyActivateActionSchema = z.object({
 
 const resumeConfirmActionSchema = z.object({
   source: z.string().trim().min(1).max(300),
+});
+
+const jobProfilesActionSchema = z.object({
+  urls: z.array(z.string().trim().url().max(2000)).max(6),
 });
 
 onboardingRouter.get(
@@ -173,6 +178,19 @@ onboardingRouter.post(
 
     const input = modelActionSchema.parse(req.body ?? {});
     const data = await saveOnboardingModelAction(input);
+    ok(res, data);
+  }),
+);
+
+onboardingRouter.post(
+  "/actions/job-profiles",
+  asyncRoute(async (req: Request, res: Response) => {
+    if (isDemoMode()) {
+      return okWithMeta(res, await getOnboardingStatus(), { simulated: true });
+    }
+    const data = await saveOnboardingJobProfilesAction(
+      jobProfilesActionSchema.parse(req.body ?? {}),
+    );
     ok(res, data);
   }),
 );

@@ -1,4 +1,4 @@
-import { FileText, Link2, Upload } from "lucide-react";
+import { FileText, Upload } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
@@ -161,7 +161,6 @@ export const BaseResumeStep: React.FC<{
   onTemplateResumeChange,
 }) => {
   const interfaceLanguage = useInterfaceLanguage();
-  const [showProfileConnections, setShowProfileConnections] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const effectiveResumeSetupMode = allowReactiveResume
     ? resumeSetupMode
@@ -269,69 +268,6 @@ export const BaseResumeStep: React.FC<{
           })}
         </RadioGroup>
       ) : null}
-
-      <section
-        className="rounded-xl border border-border/60 bg-card/40 p-4"
-        data-onboarding-target="profile-connections"
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background">
-              <Link2 className="h-4 w-4" aria-hidden="true" />
-            </div>
-            <div>
-              <div className="font-medium">
-                {translateUi(
-                  "Connect LinkedIn, Indeed & more",
-                  interfaceLanguage,
-                )}
-              </div>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-                {translateUi(
-                  "Connect job-search profiles so The JobAgent can compare profile completeness, positioning and consistency across platforms and suggest improvements.",
-                  interfaceLanguage,
-                )}
-              </p>
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="shrink-0"
-            onClick={() => setShowProfileConnections((visible) => !visible)}
-          >
-            {translateUi(
-              showProfileConnections
-                ? "Hide connection options"
-                : "Connect job profiles",
-              interfaceLanguage,
-            )}
-          </Button>
-        </div>
-        {showProfileConnections ? (
-          <div className="mt-4 grid gap-3 border-t pt-4 sm:grid-cols-2">
-            {["LinkedIn", "Indeed", "Job Bank", "Employer sites"].map(
-              (channel) => (
-                <div
-                  key={channel}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background px-3 py-2"
-                >
-                  <span className="text-sm font-medium">{channel}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {translateUi("Not connected", interfaceLanguage)}
-                  </span>
-                </div>
-              ),
-            )}
-            <p className="sm:col-span-2 text-xs leading-5 text-muted-foreground">
-              {translateUi(
-                "These connections are optional. As channel integrations become available, The JobAgent will use them to score profile quality, identify missing or weak sections and recommend concrete improvements.",
-                interfaceLanguage,
-              )}
-            </p>
-          </div>
-        ) : null}
-      </section>
 
       {effectiveResumeSetupMode === "upload" ? (
         <>

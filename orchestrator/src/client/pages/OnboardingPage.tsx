@@ -48,6 +48,7 @@ import {
   getTextLengthBucket,
 } from "./onboarding/analytics";
 import { BaseResumeStep } from "./onboarding/components/BaseResumeStep";
+import { JobProfilesStep } from "./onboarding/components/JobProfilesStep";
 import { LlmConnectionStep } from "./onboarding/components/LlmConnectionStep";
 import { VoiceTextInputButton } from "./onboarding/components/VoiceTextInputButton";
 import type { ValidationState } from "./onboarding/types";
@@ -58,6 +59,7 @@ const STEP_ORDER: OnboardingRequirementId[] = [
   "strategy",
   "model",
   "resume",
+  "job_profiles",
 ];
 const ONBOARDING_COUNTRY_KEYS = [
   "canada",
@@ -115,7 +117,8 @@ function stepTitle(id: OnboardingRequirementId): string {
   if (id === "profile") return "Your search";
   if (id === "strategy") return "Your strategy";
   if (id === "model") return "AI connection";
-  return "Your resume";
+  if (id === "resume") return "Your resume";
+  return "Job-platform profiles";
 }
 
 function getRequirementAnalyticsStatus(
@@ -359,6 +362,7 @@ function LaunchSetup({
   const [profileBusy, setProfileBusy] = useState(false);
   const [strategyBusy, setStrategyBusy] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const [jobProfilesBusy, setJobProfilesBusy] = useState(false);
   const [strategyPreview, setStrategyPreview] =
     useState<api.CandidateStrategyOnboardingPreviewResponse["preview"]>(null);
   const [targetRoles, setTargetRoles] = useState("");
@@ -392,6 +396,7 @@ function LaunchSetup({
   const strategyRequirement = getRequirement(status, "strategy");
   const modelRequirement = getRequirement(status, "model");
   const resumeRequirement = getRequirement(status, "resume");
+  const jobProfilesRequirement = getRequirement(status, "job_profiles");
   const activeRequirement = getRequirement(status, activeStep);
   const strategyQuestionsQuery = useQuery({
     queryKey: ["onboarding", "strategy", "questions"],
@@ -433,6 +438,7 @@ function LaunchSetup({
       strategyRequirement?.status,
       modelRequirement?.status,
       resumeRequirement?.status,
+      jobProfilesRequirement?.status,
     ]);
     if (lastStatusCheckRef.current === key) return;
     lastStatusCheckRef.current = key;
@@ -450,6 +456,7 @@ function LaunchSetup({
     profileRequirement,
     strategyRequirement,
     resumeRequirement,
+    jobProfilesRequirement,
     status,
   ]);
 
@@ -580,6 +587,17 @@ function LaunchSetup({
   const saveModel = async () => {
     const next = await flow.handleSaveModel();
     if (next) applyStatus(next);
+  };
+
+  const saveJobProfiles = async (urls: string[]) => {
+    try {
+      setJobProfilesBusy(true);
+      applyStatus(await api.saveOnboardingJobProfiles(urls));
+    } catch (error) {
+      showErrorToast(error, "Could not save job-platform profiles");
+    } finally {
+      setJobProfilesBusy(false);
+    }
   };
 
   const confirmResume = async () => {
@@ -755,6 +773,17 @@ function LaunchSetup({
                     label="Connect and continue"
                   />
                 </StepShell>
+              ) : activeStep === "job_profiles" ? (
+                <JobProfilesStep
+                  initialUrls={
+                    Array.isArray(jobProfilesRequirement?.details?.urls)
+                      ? (jobProfilesRequirement.details.urls as string[])
+                      : []
+                  }
+                  busy={jobProfilesBusy}
+                  onBack={() => setSelectedStep("resume")}
+                  onSave={saveJobProfiles}
+                />
               ) : (
                 <ResumeStep
                   flow={flow}

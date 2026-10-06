@@ -585,6 +585,20 @@ export const settingsRegistry = {
     serialize: (value: string | null | undefined): string | null =>
       value ?? null,
   },
+  onboardingJobProfilesCompleted: {
+    kind: "typed" as const,
+    schema: z.boolean(),
+    default: (): boolean => false,
+    parse: parseBitBoolOrNull,
+    serialize: serializeBitBool,
+  },
+  jobPlatformProfileUrls: {
+    kind: "typed" as const,
+    schema: z.array(z.string().trim().url().max(2000)).max(6),
+    default: (): string[] => [],
+    parse: parseJsonArrayOrNull,
+    serialize: serializeNullableJsonArray,
+  },
   onboardingLegacyMigrationPending: {
     kind: "typed" as const,
     schema: z.boolean(),

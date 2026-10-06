@@ -209,7 +209,8 @@ export type OnboardingRequirementId =
   | "profile"
   | "strategy"
   | "model"
-  | "resume";
+  | "resume"
+  | "job_profiles";
 
 export type OnboardingRequirementStatus =
   | "ready"
@@ -226,6 +227,7 @@ export type OnboardingRequirementPrimaryAction =
   | "upload_resume"
   | "connect_rxresume"
   | "select_rxresume_template"
+  | "save_job_profiles"
   | "recheck"
   | "none";
 
@@ -280,6 +282,8 @@ export interface AppSettings {
   onboardingProfileCompleted: Resolved<boolean>;
   onboardingLlmCompleted: Resolved<boolean>;
   onboardingResumeConfirmedSource: Resolved<string>;
+  onboardingJobProfilesCompleted: Resolved<boolean>;
+  jobPlatformProfileUrls: Resolved<string[]>;
   onboardingLegacyMigrationPending: Resolved<boolean>;
   blockedCompanyKeywords: Resolved<string[]>;
   scoringInstructions: Resolved<string>;

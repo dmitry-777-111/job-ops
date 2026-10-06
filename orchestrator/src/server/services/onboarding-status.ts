@@ -1,6 +1,6 @@
 import { forbidden, unprocessableEntity } from "@infra/errors";
 import { logger } from "@infra/logger";
-import { getRequestId } from "@infra/request-context";
+import { getRequestId, isSystemAdmin } from "@infra/request-context";
 import { getJobOpsAppStatus } from "@server/config/app-mode";
 import { isDemoMode } from "@server/config/demo";
 import {
@@ -60,6 +60,10 @@ export type OnboardingProfileActionInput = {
 
 export type OnboardingResumeConfirmActionInput = {
   source: string;
+};
+
+export type OnboardingJobProfilesActionInput = {
+  urls: string[];
 };
 
 export type OnboardingRxResumeActionInput = {
@@ -537,6 +541,41 @@ async function buildResumeRequirement(): Promise<OnboardingRequirement> {
   });
 }
 
+async function buildJobProfilesRequirement(): Promise<OnboardingRequirement> {
+  const [completed, rawUrls] = await Promise.all([
+    getSetting("onboardingJobProfilesCompleted"),
+    getSetting("jobPlatformProfileUrls"),
+  ]);
+  let urls: string[] = [];
+  if (rawUrls) {
+    try {
+      const parsed = JSON.parse(rawUrls);
+      if (Array.isArray(parsed)) {
+        urls = parsed.filter(
+          (value): value is string => typeof value === "string",
+        );
+      }
+    } catch {
+      urls = [];
+    }
+  }
+  const ready = completed === "1";
+  return buildRequirement({
+    id: "job_profiles",
+    status: ready ? "ready" : "needs_action",
+    title: ready
+      ? "Job-platform profiles saved"
+      : "Add your job-platform profiles",
+    message: ready
+      ? urls.length > 0
+        ? "The JobAgent can use these profile links for future profile-quality analysis and improvement suggestions."
+        : "You skipped profile links for now. You can add them later from your profile settings."
+      : "Paste up to six links to your profiles on job-search platforms. This step is optional and can be skipped.",
+    primaryAction: ready ? "none" : "save_job_profiles",
+    details: { urls },
+  });
+}
+
 async function buildHostedResumeRequirement(): Promise<OnboardingRequirement> {
   const localStatus = await getDesignResumeStatus();
   if (localStatus.exists) {
@@ -694,6 +733,13 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
           : undefined,
       })
     : null;
+  const jobProfilesRequirement = isSystemAdmin()
+    ? null
+    : await buildJobProfilesRequirement();
+  const pendingJobProfilesRequirement =
+    !jobProfilesRequirement || jobProfilesRequirement.status === "ready"
+      ? []
+      : [jobProfilesRequirement];
   const requirements = showLlmRequirement
     ? [
         profileRequirement,
@@ -702,6 +748,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
         hostedMode
           ? await buildHostedResumeRequirement()
           : await buildResumeRequirement(),
+        ...pendingJobProfilesRequirement,
       ]
     : [
         profileRequirement,
@@ -709,6 +756,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
         hostedMode
           ? await buildHostedResumeRequirement()
           : await buildResumeRequirement(),
+        ...pendingJobProfilesRequirement,
       ];
   const nextRequirement = requirements.find(
     (requirement) => requirement.status !== "ready",
@@ -828,6 +876,20 @@ export async function saveOnboardingProfileAction(
       onboardingProfileCompleted: true,
     },
     route,
+  );
+  return getOnboardingStatus();
+}
+
+export async function saveOnboardingJobProfilesAction(
+  input: OnboardingJobProfilesActionInput,
+): Promise<OnboardingStatusResponse> {
+  const urls = input.urls.map((url) => url.trim()).filter(Boolean);
+  await persistOnboardingSettings(
+    {
+      jobPlatformProfileUrls: urls,
+      onboardingJobProfilesCompleted: true,
+    },
+    "POST /api/onboarding/actions/job-profiles",
   );
   return getOnboardingStatus();
 }
