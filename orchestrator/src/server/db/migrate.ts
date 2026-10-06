@@ -2181,6 +2181,24 @@ function ensureCandidateProfileAndStrategyTables(): void {
       ON candidate_strategy_versions(tenant_id, coalesce(user_id, ''))
       WHERE status = 'active';
 
+    CREATE TABLE IF NOT EXISTS career_recommendation_decisions (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL DEFAULT 'tenant_default',
+      user_id TEXT,
+      recommendation_key TEXT NOT NULL,
+      snapshot TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'proposed' CHECK(status IN ('proposed','accepted','rejected')),
+      decided_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_career_recommendation_decisions_owner_key_unique
+      ON career_recommendation_decisions(tenant_id, coalesce(user_id, ''), recommendation_key);
+    CREATE INDEX IF NOT EXISTS idx_career_recommendation_decisions_owner_updated
+      ON career_recommendation_decisions(tenant_id, user_id, updated_at);
+
     CREATE TABLE IF NOT EXISTS candidate_evaluations (
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL DEFAULT 'tenant_default',

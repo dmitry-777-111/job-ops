@@ -12,6 +12,10 @@ import {
   getActiveCandidateStrategy,
   listCandidateStrategyVersions,
 } from "@server/repositories/candidate-strategy";
+import {
+  decideCareerRecommendation,
+  listCareerRecommendationDecisions,
+} from "@server/repositories/career-recommendations";
 import { listExternalConnections } from "@server/repositories/external-connections";
 import { deriveCandidateReadiness } from "@server/services/candidate-readiness";
 import { bootstrapCurrentCandidateStrategy } from "@server/services/candidate-strategy-bootstrap";
@@ -26,6 +30,48 @@ import { type Request, type Response, Router } from "express";
 import { z } from "zod";
 
 export const candidateRouter = Router();
+
+const recommendationDecisionSchema = z.object({
+  key: z.string().trim().min(1).max(300),
+  status: z.enum(["accepted", "rejected"]),
+  snapshot: z.object({
+    stage: z.enum(["market_entry", "screening", "interview", "final"]),
+    confidence: z.enum(["emerging", "moderate", "strong"]),
+    target: z.enum([
+      "strategy",
+      "profile",
+      "interview_behavior",
+      "job_platform_profile",
+      "mixed",
+    ]),
+    title: z.string().trim().min(1).max(1000),
+    evidence: z.string().trim().min(1).max(5000),
+    recommendation: z.string().trim().min(1).max(5000),
+  }),
+});
+
+candidateRouter.get(
+  "/recommendations",
+  async (_req: Request, res: Response) => {
+    try {
+      ok(res, await listCareerRecommendationDecisions());
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+candidateRouter.post(
+  "/recommendations/decision",
+  async (req: Request, res: Response) => {
+    try {
+      const input = recommendationDecisionSchema.parse(req.body ?? {});
+      ok(res, await decideCareerRecommendation(input));
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
 
 const constraintSchema = z.object({
   id: z.string().trim().min(1).max(200),

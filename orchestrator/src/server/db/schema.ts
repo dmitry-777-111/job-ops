@@ -1546,6 +1546,38 @@ export const candidateStrategyVersions = sqliteTable(
   }),
 );
 
+export const careerRecommendationDecisions = sqliteTable(
+  "career_recommendation_decisions",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .default("tenant_default")
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+    recommendationKey: text("recommendation_key").notNull(),
+    snapshot: text("snapshot", { mode: "json" }).notNull(),
+    status: text("status", { enum: ["proposed", "accepted", "rejected"] })
+      .notNull()
+      .default("proposed"),
+    decidedAt: text("decided_at"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => ({
+    ownerKeyUnique: uniqueIndex(
+      "idx_career_recommendation_decisions_owner_key_unique",
+    ).on(
+      table.tenantId,
+      sql`coalesce(${table.userId}, '')`,
+      table.recommendationKey,
+    ),
+    ownerUpdatedIndex: index(
+      "idx_career_recommendation_decisions_owner_updated",
+    ).on(table.tenantId, table.userId, table.updatedAt),
+  }),
+);
+
 export const candidateEvaluations = sqliteTable(
   "candidate_evaluations",
   {

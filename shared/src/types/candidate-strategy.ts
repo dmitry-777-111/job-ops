@@ -55,6 +55,42 @@ export interface CandidateStrategyDelta {
   likelySearchImpact: string[];
 }
 
+export type CareerLearningStage =
+  | "market_entry"
+  | "screening"
+  | "interview"
+  | "final";
+
+export type CareerRecommendationConfidence = "emerging" | "moderate" | "strong";
+
+export type CareerRecommendationTarget =
+  | "strategy"
+  | "profile"
+  | "interview_behavior"
+  | "job_platform_profile"
+  | "mixed";
+
+export type CareerRecommendationStatus = "proposed" | "accepted" | "rejected";
+
+export interface CareerRecommendationSnapshot {
+  stage: CareerLearningStage;
+  confidence: CareerRecommendationConfidence;
+  target: CareerRecommendationTarget;
+  title: string;
+  evidence: string;
+  recommendation: string;
+}
+
+export interface CareerRecommendationDecision {
+  id: string;
+  key: string;
+  snapshot: CareerRecommendationSnapshot;
+  status: CareerRecommendationStatus;
+  createdAt: string;
+  decidedAt?: string | null;
+  updatedAt: string;
+}
+
 export const CANDIDATE_PROFILE_VERSION_STATUSES = [
   "draft",
   "active",

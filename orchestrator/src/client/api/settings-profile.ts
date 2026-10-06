@@ -3,6 +3,8 @@ import type {
   AppSettings,
   CandidateStrategyDelta,
   CandidateStrategyProfile,
+  CareerRecommendationDecision,
+  CareerRecommendationSnapshot,
   DesignResumeAiFieldSuggestionRequest,
   DesignResumeAiFieldSuggestionResponse,
   DesignResumeDocument,
@@ -22,6 +24,26 @@ import type { CodexAuthStatusResponse } from "./auth";
 import { fetchApi, fetchBlobApi, normalizeApiPath } from "./core";
 
 let settingsPromise: Promise<AppSettings> | null = null;
+
+export async function listCareerRecommendationDecisions(): Promise<
+  CareerRecommendationDecision[]
+> {
+  return fetchApi<CareerRecommendationDecision[]>("/candidate/recommendations");
+}
+
+export async function decideCareerRecommendation(input: {
+  key: string;
+  snapshot: CareerRecommendationSnapshot;
+  status: "accepted" | "rejected";
+}): Promise<CareerRecommendationDecision> {
+  return fetchApi<CareerRecommendationDecision>(
+    "/candidate/recommendations/decision",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+}
 
 export async function getSettings(): Promise<AppSettings> {
   if (settingsPromise) return settingsPromise;
