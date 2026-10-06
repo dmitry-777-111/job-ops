@@ -3,9 +3,10 @@ import { useDesignResume } from "@client/hooks/useDesignResume";
 import { useOnboardingStatus } from "@client/hooks/useOnboardingStatus";
 import {
   formatCountryLabel,
-  SUPPORTED_COUNTRY_KEYS,
+  getCountryIso2Code,
 } from "@shared/location-support.js";
 import type {
+  InterfaceLanguage,
   OnboardingRequirement,
   OnboardingRequirementId,
   OnboardingStatusResponse,
@@ -58,12 +59,40 @@ const STEP_ORDER: OnboardingRequirementId[] = [
   "model",
   "resume",
 ];
-const COUNTRY_OPTIONS = SUPPORTED_COUNTRY_KEYS.filter(
-  (country) => country !== "usa/ca",
-).map((country) => ({
-  value: country,
-  label: formatCountryLabel(country),
-}));
+const ONBOARDING_COUNTRY_KEYS = [
+  "canada",
+  "united states",
+  "russia",
+  "china",
+  "mexico",
+  "brazil",
+  "argentina",
+] as const;
+
+const DISPLAY_LOCALE_BY_INTERFACE_LANGUAGE: Record<InterfaceLanguage, string> =
+  {
+    en: "en",
+    es: "es",
+    fr: "fr",
+    ru: "ru",
+    de: "de",
+  };
+
+function getOnboardingCountryOptions(language: InterfaceLanguage) {
+  const displayNames = new Intl.DisplayNames(
+    [DISPLAY_LOCALE_BY_INTERFACE_LANGUAGE[language]],
+    { type: "region" },
+  );
+  return ONBOARDING_COUNTRY_KEYS.map((country) => {
+    const iso2 = getCountryIso2Code(country);
+    return {
+      value: country,
+      label: iso2
+        ? displayNames.of(iso2) || formatCountryLabel(country)
+        : formatCountryLabel(country),
+    };
+  });
+}
 
 function getRequirement(
   status: OnboardingStatusResponse | null,
@@ -849,7 +878,7 @@ function ProfileStep(props: {
         <Field label="Country or market">
           <SearchableDropdown
             value={props.country}
-            options={COUNTRY_OPTIONS}
+            options={getOnboardingCountryOptions(interfaceLanguage)}
             onValueChange={props.onCountryChange}
             placeholder={translateUi("Select country", interfaceLanguage)}
             searchPlaceholder={translateUi(

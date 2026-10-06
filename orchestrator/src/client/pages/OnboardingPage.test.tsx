@@ -319,7 +319,7 @@ describe("OnboardingPage", () => {
     );
     const countrySearch = screen.getByPlaceholderText("Search country...");
     fireEvent.change(countrySearch, {
-      target: { value: "United Kingdom" },
+      target: { value: "Canada" },
     });
     await waitFor(() =>
       expect(
@@ -332,7 +332,7 @@ describe("OnboardingPage", () => {
     await waitFor(() =>
       expect(api.saveOnboardingProfile).toHaveBeenCalledWith(
         expect.objectContaining({
-          country: "united kingdom",
+          country: "canada",
           cities: [],
         }),
       ),
