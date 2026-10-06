@@ -44,12 +44,12 @@ import {
   loadRememberedAuthUsers,
   type RememberedAuthUser,
 } from "../lib/remembered-auth-users";
+import { JobAgentMark } from "./JobAgentMark";
 import {
   InterfaceLanguageMenu,
   useInterfaceLanguage,
 } from "./LanguagePreferencesMenu";
 import { isNavActive, resolveNavLinks } from "./navigation";
-import { PathfinderMark } from "./PathfinderMark";
 import { StatusBadgeIndicator } from "./StatusIndicator";
 import { ThemeToggle } from "./ThemeToggle";
 import { Tip } from "./Tip";
@@ -188,7 +188,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             <SheetContent side="left" className="w-64 flex flex-col">
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
-                  <PathfinderMark className="h-5 w-5" />
+                  <JobAgentMark className="h-5 w-5" />
                   <span>{PRODUCT_BRAND.name}</span>
                 </SheetTitle>
                 {!isSystemAdmin ? (

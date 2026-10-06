@@ -154,7 +154,7 @@ export function CandidateHomePage() {
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Sparkles className="h-4 w-4" />
-                  Your The JobAgent journey
+                  Your JobAgent journey
                 </div>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                   {adaptiveMessage}

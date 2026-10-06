@@ -97,7 +97,7 @@ No final tag/cutover or production prefilter activation. No destructive cleanup;
 - No blind CI reruns.
 - No Docker image/container deletion without inspected rollback safety.
 
-## Latest checkpoint — 2026-10-05 Series 3
+## Latest checkpoint ï¿½ 2026-10-05 Series 3
 
 - Source tree `6d9d61c2fe5b37c12b5a0e7d3aa29521c9f6561d` is validated by CI run `37389730244` SUCCESS through source-equivalent commit `5454f371fe3a0e48a623dbd65b1f1d0e588a9c3d`.
 - Immutable image `career-os-freeze3:7e5a411` passed startup/restart, focused versioned-delta acceptance, ordinary-path 1,257-job bulk acceptance, and duplicate-legacy fallback acceptance.
@@ -105,3 +105,5 @@ No final tag/cutover or production prefilter activation. No destructive cleanup;
 - Production is still untouched. F3-7 overall cutover remains OPEN only for resource/capacity acceptance, 3-5 clean daily stability runs, and final explicit cutover approval.
 - Evidence: `evidence/F3_7_SERIES3.json`.
 - Do not repeat F3-0..F3-6 or Series 1/2 acceptance. Next unit is resource/capacity gate on the actual runtime host, then controlled daily-run stability evidence.
+
+Operational constraint: Remote Desktop Commander usage must follow docs/career-os/REMOTE_DESKTOP_COMMANDER_POLICY.md (mandatory call-economy policy).

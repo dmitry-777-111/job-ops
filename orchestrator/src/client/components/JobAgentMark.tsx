@@ -1,6 +1,6 @@
 import type React from "react";
 
-export const PathfinderMark: React.FC<{ className?: string }> = ({
+export const JobAgentMark: React.FC<{ className?: string }> = ({
   className,
 }) => (
   <svg

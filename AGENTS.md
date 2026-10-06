@@ -139,3 +139,18 @@ In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the re
 
 If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
 <!-- CODEGRAPH_END -->
+
+## Remote Desktop Commander Economy Policy
+
+Remote Desktop Commander is a scarce monthly resource (10,000 free tool calls/month) and MUST NOT be the default development path for CAREER OS / The JobAgent.
+
+- Use GitHub/CI/direct tools for repository work whenever possible.
+- Use Remote Desktop Commander only for Windows-specific staging, browser review, local process control, or one bundled operation that genuinely requires the Windows machine.
+- Batch inspect/edit/test/report work into as few calls as practical; do not use one call per file or per command.
+- Do not tight-poll long processes; start once and poll sparsely.
+- Do not reread unchanged files; rely on checkpoints, git diff and git status.
+- At <=10% monthly quota remaining, stop nonessential Remote Desktop Commander work and switch workflows.
+- Never upgrade to paid Pro without explicit user approval after a cost/benefit review.
+- Durable checkpoints are mandatory before long operations to avoid repeating work after interruptions.
+
+Full policy: `docs/career-os/REMOTE_DESKTOP_COMMANDER_POLICY.md`.

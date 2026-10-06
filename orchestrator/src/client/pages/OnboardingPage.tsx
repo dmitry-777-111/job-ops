@@ -27,8 +27,8 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as api from "@/client/api";
+import { JobAgentMark } from "@/client/components/JobAgentMark";
 import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
-import { PathfinderMark } from "@/client/components/PathfinderMark";
 import { translateUi } from "@/client/lib/i18n";
 import { PRODUCT_BRAND } from "@/client/lib/product-brand";
 import { queryKeys } from "@/client/lib/queryKeys";
@@ -172,7 +172,7 @@ function LoadingState({ message }: { message: string }) {
   return (
     <>
       <PageHeader
-        icon={PathfinderMark}
+        icon={JobAgentMark}
         title={`Set up ${PRODUCT_BRAND.name}`}
         subtitle={message}
       />
@@ -582,7 +582,7 @@ function LaunchSetup({
   return (
     <>
       <PageHeader
-        icon={PathfinderMark}
+        icon={JobAgentMark}
         title={`Set up ${PRODUCT_BRAND.name}`}
         subtitle="A few focused choices, then you're in. You can review the strategy before it becomes active."
       />
