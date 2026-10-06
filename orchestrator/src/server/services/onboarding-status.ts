@@ -1,6 +1,6 @@
 import { forbidden, unprocessableEntity } from "@infra/errors";
 import { logger } from "@infra/logger";
-import { getRequestId, isSystemAdmin } from "@infra/request-context";
+import { getRequestId } from "@infra/request-context";
 import { getJobOpsAppStatus } from "@server/config/app-mode";
 import { isDemoMode } from "@server/config/demo";
 import {
@@ -614,7 +614,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
   const userEditableLlmSettings = hostedMode
     ? (await getCurrentAccountEntitlements()).userEditableLlmSettings
     : appStatus.capabilities.userEditableLlmSettings;
-  const showLlmRequirement = userEditableLlmSettings && isSystemAdmin();
+  const showLlmRequirement = false;
 
   if (isDemoMode()) {
     const requirements: OnboardingRequirement[] = [
