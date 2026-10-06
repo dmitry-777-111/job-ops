@@ -188,7 +188,7 @@ export async function analyzeInterviewEvent(
   });
 
   if (!result.success) {
-    throw new Error("AI interview analysis failed: " + result.error);
+    throw new Error(`AI interview analysis failed: ${result.error}`);
   }
 
   return {

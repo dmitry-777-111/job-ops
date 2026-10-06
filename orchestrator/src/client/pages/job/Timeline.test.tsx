@@ -119,10 +119,40 @@ describe("JobTimeline", () => {
     expect(screen.getAllByTitle("Delete event")).toHaveLength(1);
   });
 
+  it("offers AI interview advice only when a debrief exists", () => {
+    const onAnalyzeInterview = vi.fn();
+    const interviewEvent = makeEvent({
+      id: "event-interview",
+      title: "Recruiter Screen",
+      toStage: "recruiter_screen",
+      metadata: {
+        eventType: "interview_log",
+        interviewDebrief:
+          "They asked about weekend availability and customer conflict.",
+      },
+    });
+
+    render(
+      <JobTimeline
+        events={[interviewEvent]}
+        onAnalyzeInterview={onAnalyzeInterview}
+      />,
+    );
+
+    expect(screen.getByText("Interview debrief")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ask AI about this interview" }),
+    );
+    expect(onAnalyzeInterview).toHaveBeenCalledWith(interviewEvent);
+  });
+
   it("omits edit and delete controls when callbacks are missing", () => {
     render(<JobTimeline events={[baseEvent]} />);
 
     expect(screen.queryByTitle("Edit event")).not.toBeInTheDocument();
     expect(screen.queryByTitle("Delete event")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Ask AI about this interview" }),
+    ).not.toBeInTheDocument();
   });
 });

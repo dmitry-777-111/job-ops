@@ -2,6 +2,7 @@ import { resolveResumeProjectSelection } from "@shared/resume-projects";
 import {
   type ApplicationStage,
   type ApplicationTask,
+  type InterviewAdviceResponse,
   type Job,
   type JobNote,
   type ResumeProjectCatalogItem,
@@ -154,6 +155,10 @@ export const JobPage: React.FC = () => {
   const [editingEvent, setEditingEvent] = React.useState<StageEvent | null>(
     null,
   );
+  const [interviewAdvice, setInterviewAdvice] =
+    React.useState<InterviewAdviceResponse | null>(null);
+  const [analyzingInterviewEventId, setAnalyzingInterviewEventId] =
+    React.useState<string | null>(null);
   const [catalog, setCatalog] = React.useState<ResumeProjectCatalogItem[]>([]);
   const pendingEventRef = React.useRef<StageEvent | null>(null);
   const uploadPdfInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -207,6 +212,22 @@ export const JobPage: React.FC = () => {
 
   const job = jobQuery.data ?? null;
   const events = mergeEvents(eventsQuery.data ?? [], pendingEventRef.current);
+
+  const handleAnalyzeInterview = React.useCallback(
+    async (event: StageEvent) => {
+      if (!id) return;
+      setInterviewAdvice(null);
+      setAnalyzingInterviewEventId(event.id);
+      try {
+        setInterviewAdvice(await api.getInterviewAdvice(id, event.id));
+      } catch (error) {
+        showErrorToast(error, "Could not analyze this interview");
+      } finally {
+        setAnalyzingInterviewEventId(null);
+      }
+    },
+    [id],
+  );
   const notes = React.useMemo(
     () => sortNotesByUpdatedAtDesc(notesQuery.data ?? []),
     [notesQuery.data],
@@ -858,7 +879,88 @@ export const JobPage: React.FC = () => {
                     discoveredAt={job.discoveredAt}
                     onEdit={canLogEvents ? handleEditEvent : undefined}
                     onDelete={canLogEvents ? confirmDeleteEvent : undefined}
+                    onAnalyzeInterview={handleAnalyzeInterview}
+                    analyzingEventId={analyzingInterviewEventId}
                   />
+                  {interviewAdvice ? (
+                    <section className="mt-4 rounded-xl border border-border/60 bg-muted/15 p-4">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        <h3 className="font-semibold">AI interview advice</h3>
+                      </div>
+                      <p className="mt-2 text-sm">
+                        {interviewAdvice.advice.summary}
+                      </p>
+                      {interviewAdvice.advice.risks.length > 0 ? (
+                        <div className="mt-4">
+                          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Signals to review
+                          </div>
+                          <div className="mt-2 space-y-2">
+                            {interviewAdvice.advice.risks.map((risk) => (
+                              <div
+                                key={risk.signal}
+                                className="rounded-md border border-border/50 p-3 text-sm"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">
+                                    {risk.signal}
+                                  </span>
+                                  <Badge variant="outline">
+                                    {risk.confidence}
+                                  </Badge>
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {risk.evidence}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      <div className="mt-4">
+                        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Next steps
+                        </div>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                          {interviewAdvice.advice.nextSteps.map((step) => (
+                            <li key={step}>{step}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      {interviewAdvice.advice.practiceAnswer ? (
+                        <div className="mt-4">
+                          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Answer to practice
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {interviewAdvice.advice.practiceAnswer}
+                          </p>
+                        </div>
+                      ) : null}
+                      {interviewAdvice.advice.profileWording.length > 0 ? (
+                        <div className="mt-4">
+                          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Profile wording ideas
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Suggestions only — edit LinkedIn, Indeed or other
+                            job-platform profiles yourself.
+                          </p>
+                          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                            {interviewAdvice.advice.profileWording.map(
+                              (wording) => (
+                                <li key={wording}>{wording}</li>
+                              ),
+                            )}
+                          </ul>
+                        </div>
+                      ) : null}
+                      <p className="mt-4 border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                        {interviewAdvice.advice.caveat}
+                      </p>
+                    </section>
+                  ) : null}
                 </div>
               </section>
             )}

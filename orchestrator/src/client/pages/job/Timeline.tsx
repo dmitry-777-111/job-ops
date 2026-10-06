@@ -13,6 +13,7 @@ import {
   PhoneCall,
   Presentation,
   SearchCheck,
+  Sparkles,
   Trash2,
   UserRound,
   Video,
@@ -20,6 +21,7 @@ import {
 import React from "react";
 import { EvidenceSummary } from "@/client/components/EvidenceSummary";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn, formatTimestamp, formatTimestampWithTime } from "@/lib/utils";
 
 const stageIcons: Record<ApplicationStage, React.ReactNode> = {
@@ -58,6 +60,8 @@ interface JobTimelineProps {
   discoveredAt?: string | null;
   onEdit?: (event: StageEvent) => void;
   onDelete?: (eventId: string) => void;
+  onAnalyzeInterview?: (event: StageEvent) => void;
+  analyzingEventId?: string | null;
 }
 
 export const JobTimeline: React.FC<JobTimelineProps> = ({
@@ -65,6 +69,8 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
   discoveredAt,
   onEdit,
   onDelete,
+  onAnalyzeInterview,
+  analyzingEventId,
 }) => {
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(
     {},
@@ -150,6 +156,7 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
         if (entry.kind === "event") {
           const title = entry.event.title || STAGE_LABELS[entry.event.toStage];
           const note = entry.event.metadata?.note;
+          const debrief = entry.event.metadata?.interviewDebrief;
           const reason = entry.event.metadata?.reasonCode;
           const isCurrent =
             currentStage === entry.event.toStage &&
@@ -177,6 +184,29 @@ export const JobTimeline: React.FC<JobTimelineProps> = ({
               {note && (
                 <div className="text-sm text-muted-foreground">{note}</div>
               )}
+              {debrief ? (
+                <div className="mt-2 rounded-md border border-border/50 bg-muted/20 p-3">
+                  <div className="text-xs font-medium">Interview debrief</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {debrief}
+                  </div>
+                  {onAnalyzeInterview ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="mt-3"
+                      disabled={analyzingEventId === entry.event.id}
+                      onClick={() => onAnalyzeInterview(entry.event)}
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      {analyzingEventId === entry.event.id
+                        ? "Analyzing..."
+                        : "Ask AI about this interview"}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
               {salary && (
                 <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
                   {salary}
