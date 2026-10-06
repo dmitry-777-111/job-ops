@@ -1,3 +1,5 @@
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
+import { translateUi } from "@client/lib/i18n";
 import type { VariantProps } from "class-variance-authority";
 import { ExternalLink } from "lucide-react";
 import type React from "react";
@@ -22,6 +24,8 @@ export const OpenJobListingButton: React.FC<OpenJobListingButtonProps> = ({
   disabled = false,
   onClick,
 }) => {
+  const interfaceLanguage = useInterfaceLanguage();
+
   if (disabled) {
     return (
       <Button
@@ -31,7 +35,9 @@ export const OpenJobListingButton: React.FC<OpenJobListingButtonProps> = ({
         disabled
       >
         <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">Open Job Listing</span>
+        <span className="truncate">
+          {translateUi("Open Job Listing", interfaceLanguage)}
+        </span>
         {shortcut ? <KbdHint shortcut={shortcut} className="ml-auto" /> : null}
       </Button>
     );

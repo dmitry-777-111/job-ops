@@ -48,7 +48,7 @@ export function SignInPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
-  const [hostedSignupEnabled, setHostedSignupEnabled] = useState(false);
+  const [signupEnabled, setSignupEnabled] = useState(false);
   const [isBusy, setIsBusy] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rememberedUsers, setRememberedUsers] = useState(() =>
@@ -77,9 +77,10 @@ export function SignInPage() {
         const appStatus = await getAppStatus();
         if (cancelled) return;
         const canSignup =
-          appStatus.appMode === "hosted" &&
-          appStatus.capabilities.hostedSignups;
-        setHostedSignupEnabled(canSignup);
+          appStatus.appMode === "local" ||
+          (appStatus.appMode === "hosted" &&
+            appStatus.capabilities.hostedSignups);
+        setSignupEnabled(canSignup);
 
         const bootstrap = await getAuthBootstrapStatus();
         if (cancelled) return;
@@ -169,10 +170,12 @@ export function SignInPage() {
     authMode === "signup" ? "Create account" : "Sign in",
     interfaceLanguage,
   );
-  const description =
+  const description = translateUi(
     authMode === "signup"
-      ? `Create your ${PRODUCT_BRAND.name} account for this hosted workspace.`
-      : `Enter your ${PRODUCT_BRAND.name} username and password.`;
+      ? "Create your The JobAgent account."
+      : "Enter your The JobAgent username and password.",
+    interfaceLanguage,
+  );
 
   return (
     <main className="relative min-h-screen bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.08),_transparent_45%),linear-gradient(180deg,_rgba(15,23,42,0.02),_transparent_30%)] px-4 py-16">
@@ -186,7 +189,7 @@ export function SignInPage() {
             <CardDescription>{description}</CardDescription>
           </CardHeader>
           <CardContent>
-            {hostedSignupEnabled ? (
+            {signupEnabled ? (
               <Tabs
                 value={authMode}
                 onValueChange={(value) => resetFormFeedback(value as AuthMode)}
@@ -197,13 +200,13 @@ export function SignInPage() {
                     value="sign-in"
                     onClick={() => resetFormFeedback("sign-in")}
                   >
-                    Sign in
+                    {translateUi("Sign in", interfaceLanguage)}
                   </TabsTrigger>
                   <TabsTrigger
                     value="signup"
                     onClick={() => resetFormFeedback("signup")}
                   >
-                    Create account
+                    {translateUi("Create account", interfaceLanguage)}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -247,7 +250,7 @@ export function SignInPage() {
                     className="text-sm font-medium"
                     htmlFor="auth-display-name"
                   >
-                    Name
+                    {translateUi("Name", interfaceLanguage)}
                   </label>
                   <Input
                     id="auth-display-name"
@@ -256,7 +259,7 @@ export function SignInPage() {
                     onChange={(event) =>
                       setDisplayName(event.currentTarget.value)
                     }
-                    placeholder="Your name"
+                    placeholder={translateUi("Your name", interfaceLanguage)}
                     disabled={isBusy}
                   />
                 </div>
@@ -298,8 +301,8 @@ export function SignInPage() {
               <Button className="w-full" type="submit" disabled={isBusy}>
                 {isBusy
                   ? authMode === "signup"
-                    ? "Creating account..."
-                    : "Signing in..."
+                    ? translateUi("Creating account...", interfaceLanguage)
+                    : translateUi("Signing in...", interfaceLanguage)
                   : authMode === "signup"
                     ? translateUi("Create account", interfaceLanguage)
                     : translateUi("Sign in", interfaceLanguage)}

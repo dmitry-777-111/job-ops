@@ -7,6 +7,7 @@ import {
 import { GhostwriterDrawer } from "@client/components/ghostwriter/GhostwriterDrawer";
 import { JobDetailsEditDrawer } from "@client/components/JobDetailsEditDrawer";
 import { KbdHint } from "@client/components/KbdHint";
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import { OpenJobListingButton } from "@client/components/OpenJobListingButton";
 import { Tip } from "@client/components/Tip";
 import { TooltipWhenDisabled } from "@client/components/TooltipWhenDisabled";
@@ -18,6 +19,7 @@ import {
 import { useProfile } from "@client/hooks/useProfile";
 import { useRescoreJob } from "@client/hooks/useRescoreJob";
 import { useSettings } from "@client/hooks/useSettings";
+import { translateUi } from "@client/lib/i18n";
 import { uploadJobPdfFromFile } from "@client/lib/job-pdf-upload";
 import { resolveFilenameLanguage } from "@client/lib/pdf-filename";
 import {
@@ -128,38 +130,44 @@ const tabCopy: Record<
 const InspectorTabsList: React.FC<{
   inspectorTab: InspectorTab;
   disabled?: boolean;
-}> = ({ inspectorTab, disabled = false }) => (
-  <TabsList className="mb-4 grid h-auto grid-cols-3 gap-1 rounded-lg bg-muted/90 text-sm">
-    {Object.entries(tabCopy).map(([value, copy]) => {
-      const isSelected = inspectorTab === value;
-      const trigger = (
-        <TabsTrigger
-          key={value}
-          value={value}
-          disabled={disabled}
-          className={cn(
-            "flex flex-1 items-center gap-1.5 lg:flex-none",
-            isSelected && copy.selectedClassName,
-          )}
-        >
-          <span className={cn("size-1.5 rounded-full", copy.dotClassName)} />
-          <span className="text-sm">{copy.label}</span>
-        </TabsTrigger>
-      );
+}> = ({ inspectorTab, disabled = false }) => {
+  const interfaceLanguage = useInterfaceLanguage();
 
-      return (
-        <Tip
-          key={value}
-          asChild
-          content={<p>{copy.description}</p>}
-          contentClassName="max-w-xs text-center"
-        >
-          {trigger}
-        </Tip>
-      );
-    })}
-  </TabsList>
-);
+  return (
+    <TabsList className="mb-4 grid h-auto grid-cols-3 gap-1 rounded-lg bg-muted/90 text-sm">
+      {Object.entries(tabCopy).map(([value, copy]) => {
+        const isSelected = inspectorTab === value;
+        const trigger = (
+          <TabsTrigger
+            key={value}
+            value={value}
+            disabled={disabled}
+            className={cn(
+              "flex flex-1 items-center gap-1.5 lg:flex-none",
+              isSelected && copy.selectedClassName,
+            )}
+          >
+            <span className={cn("size-1.5 rounded-full", copy.dotClassName)} />
+            <span className="text-sm">
+              {translateUi(copy.label, interfaceLanguage)}
+            </span>
+          </TabsTrigger>
+        );
+
+        return (
+          <Tip
+            key={value}
+            asChild
+            content={<p>{copy.description}</p>}
+            contentClassName="max-w-xs text-center"
+          >
+            {trigger}
+          </Tip>
+        );
+      })}
+    </TabsList>
+  );
+};
 
 const statusTone: Record<
   Job["status"],
@@ -292,6 +300,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
   onRetrySelectedJob,
 }) => {
   const navigate = useNavigate();
+  const interfaceLanguage = useInterfaceLanguage();
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("brief");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
@@ -709,7 +718,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:shrink-0">
             <GhostwriterDrawer
               job={selectedJob}
-              triggerLabel="Ask Ghostwriter"
+              triggerLabel={translateUi("Ask Ghostwriter", interfaceLanguage)}
               triggerVariant="ghost"
               triggerClassName="w-full min-w-0 justify-start overflow-hidden sm:w-auto"
             />
@@ -729,7 +738,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
               ) : (
                 <CheckCircle2 className="h-3.5 w-3.5" />
               )}
-              {getPrimaryAction(selectedJob)}
+              {translateUi(getPrimaryAction(selectedJob), interfaceLanguage)}
               {selectedJob.status === "ready" ? (
                 <KbdHint shortcut="a" className="ml-1" />
               ) : null}
@@ -740,7 +749,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  aria-label="More actions"
+                  aria-label={translateUi("More actions", interfaceLanguage)}
                   className="col-start-2 row-span-2 row-start-1 self-center"
                 >
                   <MoreHorizontal className="h-4 w-4" />
@@ -749,7 +758,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onSelect={openEditDetails}>
                   <Edit2 className="mr-2 h-4 w-4" />
-                  Edit details
+                  {translateUi("Edit details", interfaceLanguage)}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => {
@@ -757,7 +766,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                   }}
                 >
                   <Edit2 className="mr-2 h-4 w-4" />
-                  View job description
+                  {translateUi("View job description", interfaceLanguage)}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => void handleCopyInfo()}>
                   <Copy className="mr-2 h-4 w-4" />
@@ -906,13 +915,25 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground/90">
                         {applicationKitReady
-                          ? "Application materials ready"
-                          : "Application materials need review"}
+                          ? translateUi(
+                              "Application materials ready",
+                              interfaceLanguage,
+                            )
+                          : translateUi(
+                              "Application materials need review",
+                              interfaceLanguage,
+                            )}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground/75">
                         {applicationKitReady
-                          ? "Tailored summary, skills, and PDF are ready for this role."
-                          : "Check the application kit before submitting this role."}
+                          ? translateUi(
+                              "Tailored summary, skills, and PDF are ready for this role.",
+                              interfaceLanguage,
+                            )
+                          : translateUi(
+                              "Check the application kit before submitting this role.",
+                              interfaceLanguage,
+                            )}
                       </p>
                     </div>
                   </div>
@@ -923,7 +944,7 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                     className="w-full justify-center sm:w-auto sm:shrink-0"
                   >
                     <a href={`/job/${selectedJob.id}`}>
-                      Open Job Page
+                      {translateUi("Open Job Page", interfaceLanguage)}
                       <ArrowRight />
                     </a>
                   </Button>
@@ -966,34 +987,34 @@ export const JobDetailPanel: React.FC<JobDetailPanelProps> = ({
                 ) : (
                   <CheckCircle2 className="size-3.5" />
                 )}
-                Mark Applied
+                {translateUi("Mark Applied", interfaceLanguage)}
                 <KbdHint shortcut="a" className="ml-auto" />
               </Button>
             </div>
 
             <div>
               <div className="mb-2 text-lg font-semibold tracking-normal text-foreground/90">
-                Application kit
+                {translateUi("Application kit", interfaceLanguage)}
               </div>
               <div className="overflow-hidden rounded-md border border-border/45 bg-muted/5">
                 <KitStatus
                   icon={<FileText className="h-4 w-4" />}
-                  label="Tailored summary"
+                  label={translateUi("Tailored summary", interfaceLanguage)}
                   ready={hasTailoredSummary}
                 />
                 <KitStatus
                   icon={<Star className="h-4 w-4" />}
-                  label="Tailored skills"
+                  label={translateUi("Tailored skills", interfaceLanguage)}
                   ready={hasTailoredSkills}
                 />
                 <KitStatus
                   icon={<FileText className="h-4 w-4" />}
-                  label="Resume PDF"
+                  label={translateUi("Resume PDF", interfaceLanguage)}
                   ready={hasResumePdf}
                 />
                 <KitStatus
                   icon={<FolderKanban className="h-4 w-4" />}
-                  label="Selected projects"
+                  label={translateUi("Selected projects", interfaceLanguage)}
                   ready={effectiveSelectedProjectIds.length > 0}
                   readyLabel={`${effectiveSelectedProjectIds.length} included`}
                 />

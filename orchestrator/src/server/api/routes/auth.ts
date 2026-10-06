@@ -67,18 +67,6 @@ authRouter.post(
     }
 
     const appConfig = getJobOpsAppConfig();
-    if (appConfig.appMode !== "hosted") {
-      fail(res, forbidden("Signup is available only in hosted mode"));
-      return;
-    }
-    if (!appConfig.capabilities.hostedSignups) {
-      fail(res, forbidden("Hosted signups are disabled"));
-      return;
-    }
-    if (!appConfig.hostedTenantId) {
-      fail(res, serviceUnavailable("Hosted tenant is not configured"));
-      return;
-    }
 
     const parsed = setupSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -94,12 +82,28 @@ authRouter.post(
 
     let user: usersRepo.PublicUser | null;
     try {
-      user = await usersRepo.createHostedTenantUser({
-        username: parsed.data.username,
-        password: parsed.data.password,
-        displayName: parsed.data.displayName ?? parsed.data.username,
-        tenantId: appConfig.hostedTenantId,
-      });
+      if (appConfig.appMode === "hosted") {
+        if (!appConfig.capabilities.hostedSignups) {
+          fail(res, forbidden("Hosted signups are disabled"));
+          return;
+        }
+        if (!appConfig.hostedTenantId) {
+          fail(res, serviceUnavailable("Hosted tenant is not configured"));
+          return;
+        }
+        user = await usersRepo.createHostedTenantUser({
+          username: parsed.data.username,
+          password: parsed.data.password,
+          displayName: parsed.data.displayName ?? parsed.data.username,
+          tenantId: appConfig.hostedTenantId,
+        });
+      } else {
+        user = await usersRepo.createPrivateWorkspaceUser({
+          username: parsed.data.username,
+          password: parsed.data.password,
+          displayName: parsed.data.displayName ?? parsed.data.username,
+        });
+      }
     } catch (error) {
       if (isUsernameConflictError(error)) {
         fail(res, conflict("Username already exists"));

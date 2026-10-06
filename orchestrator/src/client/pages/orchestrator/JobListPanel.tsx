@@ -1,3 +1,5 @@
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
+import { translateUi } from "@client/lib/i18n";
 import type { JobListItem } from "@shared/types.js";
 import { Loader2 } from "lucide-react";
 import { forwardRef, useImperativeHandle } from "react";
@@ -58,6 +60,7 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
     },
     ref,
   ) => {
+    const interfaceLanguage = useInterfaceLanguage();
     const { ref: listRef, scrollMargin } =
       useWindowScrollMargin<HTMLDivElement>();
     const virtualizer = useVirtualizedList({
@@ -83,7 +86,9 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
         <div className="min-w-0 rounded-xl border border-border bg-card shadow-sm">
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <div className="text-sm text-muted-foreground">Loading jobs...</div>
+            <div className="text-sm text-muted-foreground">
+              {translateUi("Loading jobs...", interfaceLanguage)}
+            </div>
           </div>
         </div>
       );
@@ -93,7 +98,9 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
       return (
         <div className="min-w-0 rounded-xl border border-border bg-card shadow-sm">
           <div className="flex flex-col items-center justify-center gap-4 px-6 py-12 text-center">
-            <div className="text-base font-semibold">No jobs found</div>
+            <div className="text-base font-semibold">
+              {translateUi("No jobs found", interfaceLanguage)}
+            </div>
             <p className="max-w-md text-sm text-muted-foreground">
               {emptyStateMessage ?? emptyStateCopy[activeTab]}
             </p>
@@ -144,10 +151,10 @@ export const JobListPanel = forwardRef<VirtualListHandle, JobListPanelProps>(
                 }}
                 aria-label="Select all filtered jobs"
               />
-              Select all filtered
+              {translateUi("Select all filtered", interfaceLanguage)}
             </label>
             <span className="text-xs text-muted-foreground tabular-nums">
-              {selectedJobIds.size} selected
+              {selectedJobIds.size} {translateUi("selected", interfaceLanguage)}
             </span>
           </div>
           <div

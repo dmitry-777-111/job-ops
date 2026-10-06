@@ -284,26 +284,40 @@ describe.sequential("Auth routes", () => {
   });
 
   describe("POST /api/auth/signup gated modes", () => {
-    it("rejects signup in local mode", async () => {
+    it("creates an independent private workspace in local mode", async () => {
       ({ server, baseUrl, closeDb, tempDir } = await startServer({
         env: {
           JOBOPS_TEST_AUTH_BYPASS: "0",
         },
       }));
 
+      const tenantsBefore = await countTenants();
       const res = await fetch(`${baseUrl}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: "local-user",
+          displayName: "Local User",
           password: "local-secret",
         }),
       });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(201);
       const body = await res.json();
-      expect(body.ok).toBe(false);
-      expect(body.error.code).toBe("FORBIDDEN");
+      expect(body.ok).toBe(true);
+      expect(body.data.user).toMatchObject({
+        username: "local-user",
+        displayName: "Local User",
+        isSystemAdmin: false,
+      });
+      expect(body.data.user.workspaceId).not.toBe("tenant_default");
+      await expect(countTenants()).resolves.toBe(tenantsBefore + 1);
+      await expect(
+        getTenantMembership({ userId: body.data.user.id }),
+      ).resolves.toMatchObject({
+        tenantId: body.data.user.workspaceId,
+        role: "owner",
+      });
     });
 
     it("rejects signup when hosted signups are disabled", async () => {

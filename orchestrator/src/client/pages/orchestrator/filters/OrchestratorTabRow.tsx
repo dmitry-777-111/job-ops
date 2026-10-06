@@ -1,5 +1,7 @@
 import { KbdHint } from "@client/components/KbdHint";
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import { Tip } from "@client/components/Tip";
+import { translateUi } from "@client/lib/i18n";
 import { getDisplayKey, SHORTCUTS } from "@client/lib/shortcut-map";
 import { Filter, RotateCcw, Search } from "lucide-react";
 import type React from "react";
@@ -19,6 +21,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
   onResetFilters,
 }) => {
   const commandShortcutLabel = getDisplayKey(SHORTCUTS.search);
+  const interfaceLanguage = useInterfaceLanguage();
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -32,7 +35,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
               className="flex-1 flex items-center lg:flex-none gap-1.5"
             >
               <KbdHint shortcut={String(index + 1)} className="mr-0.5" />
-              <span>{tab.label}</span>
+              <span>{translateUi(tab.label, interfaceLanguage)}</span>
               {counts[tab.id] > 0 && (
                 <span className="text-[10px] mt-[2px] tabular-nums opacity-60">
                   {counts[tab.id]}
@@ -68,7 +71,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
             className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Reset
+            {translateUi("Reset", interfaceLanguage)}
           </Button>
         ) : null}
 
@@ -85,7 +88,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
           )}
         >
           <Filter className="h-3.5 w-3.5" />
-          Filters
+          {translateUi("Filters", interfaceLanguage)}
           {activeFilterCount > 0 ? (
             <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary/20 px-1 text-[10px] font-semibold tabular-nums text-primary">
               {activeFilterCount}
@@ -102,7 +105,7 @@ export const OrchestratorTabRow: React.FC<OrchestratorTabRowProps> = ({
           className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
         >
           <Search className="h-3.5 w-3.5" />
-          Search
+          {translateUi("Search", interfaceLanguage)}
           <span className="rounded border border-border/70 px-1 py-0.5 font-mono text-xs leading-none text-muted-foreground">
             {commandShortcutLabel}
           </span>
