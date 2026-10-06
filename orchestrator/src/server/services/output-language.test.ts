@@ -89,6 +89,10 @@ describe("resolveWritingOutputLanguage", () => {
       "spanish",
       "Buscamos una persona con experiencia en desarrollo, responsable de APIs y colaboración con los equipos.",
     ],
+    [
+      "russian",
+      "Ищем специалиста с опытом работы и разработки, ответственного за обслуживание систем и работу с командой.",
+    ],
   ] as const)("detects %s from job description text", (language, jobDescription) => {
     expect(detectJobDescriptionLanguage(jobDescription)).toBe(language);
     expect(

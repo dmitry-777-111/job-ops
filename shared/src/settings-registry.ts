@@ -10,6 +10,8 @@ import {
   CHAT_STYLE_MANUAL_LANGUAGE_VALUES,
   type ChatStyleLanguageMode,
   type ChatStyleManualLanguage,
+  INTERFACE_LANGUAGE_VALUES,
+  type InterfaceLanguage,
   LLM_PROVIDER_VALUES,
   LLM_PURPOSE_VALUES,
   type LlmProviderId,
@@ -192,6 +194,10 @@ function createEnumArrayParser<
     }
   };
 }
+
+const parseInterfaceLanguageOrNull = createEnumParser(
+  INTERFACE_LANGUAGE_VALUES,
+);
 
 const parseChatStyleLanguageModeOrNull = createEnumParser(
   CHAT_STYLE_LANGUAGE_MODE_VALUES,
@@ -548,6 +554,14 @@ export const settingsRegistry = {
     ],
     parse: parseWorkplaceTypesOrNull,
     serialize: serializeNullableJsonArray,
+  },
+  interfaceLanguage: {
+    kind: "typed" as const,
+    schema: z.enum(INTERFACE_LANGUAGE_VALUES),
+    default: (): InterfaceLanguage => "en",
+    parse: parseInterfaceLanguageOrNull,
+    serialize: (value: InterfaceLanguage | null | undefined): string | null =>
+      value ?? null,
   },
   onboardingProfileCompleted: {
     kind: "typed" as const,

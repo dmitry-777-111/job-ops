@@ -57,6 +57,19 @@ const LANGUAGE_MARKERS: Record<ChatStyleManualLanguage, Set<string>> = {
     "responsable",
     "lideré",
   ]),
+  russian: new Set([
+    "и",
+    "в",
+    "на",
+    "с",
+    "для",
+    "опыт",
+    "работа",
+    "разработка",
+    "обслуживание",
+    "ответственный",
+    "руководил",
+  ]),
 };
 
 const SPECIAL_CHARACTER_PATTERNS: Partial<
@@ -65,6 +78,7 @@ const SPECIAL_CHARACTER_PATTERNS: Partial<
   german: /[äöüß]/gi,
   french: /[àâæçéèêëîïôœùûüÿ]/gi,
   spanish: /[áéíóúñ¿¡]/gi,
+  russian: /[а-яё]/gi,
 };
 
 function collectProfileLanguageSample(profile: ResumeProfile): string {

@@ -87,6 +87,22 @@ const LATEX_RESUME_SECTION_TITLES: Record<
     volunteer: "Voluntariado",
     references: "Referencias",
   },
+  russian: {
+    profiles: "Профили",
+    summary: "Профиль",
+    customFields: "Дополнительная информация",
+    experience: "Опыт работы",
+    education: "Образование",
+    projects: "Проекты",
+    skills: "Технические навыки",
+    languages: "Языки",
+    interests: "Интересы",
+    awards: "Награды",
+    certifications: "Сертификаты",
+    publications: "Публикации",
+    volunteer: "Волонтёрство",
+    references: "Рекомендации",
+  },
 };
 
 const ORDERABLE_SECTION_KEYS = [

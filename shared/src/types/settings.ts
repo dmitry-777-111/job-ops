@@ -72,6 +72,15 @@ export const PDF_RENDERER_LABELS: Record<PdfRenderer, string> = {
 
 export type TypstTheme = (typeof TYPST_THEME_VALUES)[number];
 
+export const INTERFACE_LANGUAGE_VALUES = [
+  "en",
+  "es",
+  "fr",
+  "ru",
+  "de",
+] as const;
+export type InterfaceLanguage = (typeof INTERFACE_LANGUAGE_VALUES)[number];
+
 export const CHAT_STYLE_LANGUAGE_MODE_VALUES = [
   "manual",
   "match-resume",
@@ -86,6 +95,7 @@ export const CHAT_STYLE_MANUAL_LANGUAGE_VALUES = [
   "german",
   "french",
   "spanish",
+  "russian",
 ] as const;
 
 export type ChatStyleManualLanguage =
@@ -99,6 +109,7 @@ export const CHAT_STYLE_MANUAL_LANGUAGE_LABELS: Record<
   german: "German",
   french: "French",
   spanish: "Spanish",
+  russian: "Russian",
 };
 
 export interface ResumeProfile {
@@ -265,6 +276,7 @@ export interface AppSettings {
   jobindexMaxJobsPerTerm: Resolved<number>;
   searchTerms: Resolved<string[]>;
   workplaceTypes: Resolved<Array<"remote" | "hybrid" | "onsite">>;
+  interfaceLanguage: Resolved<InterfaceLanguage>;
   onboardingProfileCompleted: Resolved<boolean>;
   onboardingLlmCompleted: Resolved<boolean>;
   onboardingResumeConfirmedSource: Resolved<string>;

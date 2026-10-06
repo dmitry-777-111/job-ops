@@ -187,6 +187,7 @@ export const createAppSettings = (
     default: ["remote", "hybrid", "onsite"],
     override: null,
   },
+  interfaceLanguage: { value: "en", default: "en", override: null },
   onboardingProfileCompleted: {
     value: false,
     default: false,
