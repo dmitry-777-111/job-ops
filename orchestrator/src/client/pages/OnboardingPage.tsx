@@ -28,6 +28,7 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as api from "@/client/api";
+import { PRODUCT_BRAND } from "@/client/lib/product-brand";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -147,7 +148,9 @@ export const OnboardingPage: React.FC = () => {
   }
   if (bootstrapState === "error") {
     return (
-      <LoadingState message="Job Ops could not check the workspace setup. Refresh the page to try again." />
+      <LoadingState
+        message={`${PRODUCT_BRAND.name} could not check the workspace setup. Refresh the page to try again.`}
+      />
     );
   }
   if (bootstrapState === "account") {
@@ -166,7 +169,11 @@ export const OnboardingPage: React.FC = () => {
 function LoadingState({ message }: { message: string }) {
   return (
     <>
-      <PageHeader icon={Sparkles} title="Set up Job Ops" subtitle={message} />
+      <PageHeader
+        icon={Sparkles}
+        title={`Set up ${PRODUCT_BRAND.name}`}
+        subtitle={message}
+      />
       <PageMain>
         <Card className="border-border/60 shadow-none">
           <CardContent className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
@@ -219,7 +226,7 @@ function AccountSetup({ onComplete }: { onComplete: () => void }) {
       <PageHeader
         icon={UserPlus}
         title="Create your workspace account"
-        subtitle="This private account owns your Job Ops workspace."
+        subtitle={`This private account owns your ${PRODUCT_BRAND.name} workspace.`}
       />
       <PageMain>
         <Card className="mx-auto max-w-2xl border-border/60 shadow-none">
@@ -572,7 +579,7 @@ function LaunchSetup({
     <>
       <PageHeader
         icon={Sparkles}
-        title="Set up Job Ops"
+        title={`Set up ${PRODUCT_BRAND.name}`}
         subtitle="A few focused choices, then you're in. You can review the strategy before it becomes active."
       />
       <PageMain>
@@ -672,8 +679,8 @@ function LaunchSetup({
               ) : activeStep === "model" ? (
                 <StepShell
                   eyebrow="AI connection"
-                  title="Choose how Job Ops should think"
-                  description="Pick a provider first. Job Ops saves the configuration only after the server verifies the connection."
+                  title={`Choose how ${PRODUCT_BRAND.name} should think`}
+                  description={`Pick a provider first. ${PRODUCT_BRAND.name} saves the configuration only after the server verifies the connection.`}
                 >
                   <LlmConnectionStep
                     apiKey={flow.watch("llmApiKey")}
@@ -821,7 +828,7 @@ function ProfileStep(props: {
     <StepShell
       eyebrow="Your search"
       title="Where do you want to work?"
-      description="These preferences seed new runs and help Job Ops prioritize location-aware and visa-sponsor sources. You can change them later."
+      description={`These preferences seed new runs and help ${PRODUCT_BRAND.name} prioritize location-aware and visa-sponsor sources. You can change them later.`}
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Country or market">
@@ -882,8 +889,8 @@ function ProfileStep(props: {
             I need employer visa sponsorship
           </span>
           <span className="block text-sm text-muted-foreground">
-            Job Ops will show sponsor information and favor sponsor-aware
-            sources when available.
+            {PRODUCT_BRAND.name} will show sponsor information and favor
+            sponsor-aware sources when available.
           </span>
         </span>
       </Label>
@@ -928,7 +935,7 @@ function StrategyStep(props: {
     return (
       <StepShell
         eyebrow="Strategy review"
-        title="Confirm what Job Ops should optimize for"
+        title={`Confirm what ${PRODUCT_BRAND.name} should optimize for`}
         description="This draft does not affect matching until you confirm it. Review the target roles and search-impact summary first."
       >
         <div className="space-y-4 rounded-xl border border-border/60 p-5">
@@ -988,7 +995,7 @@ function StrategyStep(props: {
   return (
     <StepShell
       eyebrow="Your strategy"
-      title="What should Job Ops optimize for?"
+      title={`What should ${PRODUCT_BRAND.name} optimize for?`}
       description="Use plain text. Unknown optional answers stay unknown; they are not converted into hard exclusions. You will review a draft before it becomes active."
     >
       <div className="grid gap-5 sm:grid-cols-2">
@@ -1117,7 +1124,7 @@ function ResumeStep({
     return (
       <StepShell
         eyebrow="Your resume"
-        title="Load the resume Job Ops should use"
+        title={`Load the resume ${PRODUCT_BRAND.name} should use`}
         description="Upload a file or connect Reactive Resume. After parsing, you'll review the result before anything is marked complete."
       >
         <BaseResumeStep

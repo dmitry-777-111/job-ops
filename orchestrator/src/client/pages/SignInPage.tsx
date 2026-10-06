@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PRODUCT_BRAND } from "../lib/product-brand";
 import {
   loadRememberedAuthUsers,
   rememberAuthUser,
@@ -161,8 +162,8 @@ export function SignInPage() {
   const title = authMode === "signup" ? "Create account" : "Sign in";
   const description =
     authMode === "signup"
-      ? "Create your JobOps account for this hosted workspace."
-      : "Enter your JobOps username and password.";
+      ? `Create your ${PRODUCT_BRAND.name} account for this hosted workspace.`
+      : `Enter your ${PRODUCT_BRAND.name} username and password.`;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.08),_transparent_45%),linear-gradient(180deg,_rgba(15,23,42,0.02),_transparent_30%)] px-4 py-16">

@@ -425,7 +425,7 @@ describe("OnboardingPage", () => {
       ),
     );
     expect(
-      await screen.findByText("Confirm what Job Ops should optimize for"),
+      await screen.findByText("Confirm what Pathfinder should optimize for"),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Confirm strategy" }));

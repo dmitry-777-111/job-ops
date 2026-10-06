@@ -31,7 +31,7 @@ function salaryLabel(job: JobListItem): string | null {
   if (job.salaryMinAmount == null && job.salaryMaxAmount == null) return null;
   const currency = job.salaryCurrency ? ` ${job.salaryCurrency}` : "";
   if (job.salaryMinAmount != null && job.salaryMaxAmount != null) {
-    return `${job.salaryMinAmount.toLocaleString()}???${job.salaryMaxAmount.toLocaleString()}${currency}`;
+    return `${job.salaryMinAmount.toLocaleString()} – ${job.salaryMaxAmount.toLocaleString()}${currency}`;
   }
   const value = job.salaryMinAmount ?? job.salaryMaxAmount;
   return value == null ? null : `${value.toLocaleString()}${currency}`;
@@ -131,7 +131,7 @@ export function CandidateHomePage() {
 
           {jobsQuery.isLoading ? (
             <div className="rounded-xl border border-border/60 p-8 text-center text-sm text-muted-foreground">
-              Loading your latest matches???
+              Loading your latest matches…
             </div>
           ) : jobsQuery.error ? (
             <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
@@ -182,7 +182,7 @@ export function CandidateHomePage() {
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           {job.employer}
-                          {job.location ? " ?? " + job.location : ""}
+                          {job.location ? " · " + job.location : ""}
                         </div>
                         {salary ? (
                           <div className="mt-2 text-sm font-medium">
