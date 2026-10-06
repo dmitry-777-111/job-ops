@@ -1230,6 +1230,31 @@ const translations: Record<
     ru: "Или перетащите файл резюме сюда.",
     de: "Oder ziehen Sie eine Lebenslaufdatei hierher.",
   },
+  "Other import methods": {
+    es: "Otros métodos de importación",
+    fr: "Autres méthodes d’importation",
+    ru: "Другие способы импорта",
+    de: "Andere Importmethoden",
+  },
+  "Use these options only if your resume already lives in Reactive Resume or you have a Reactive Resume JSON export.":
+    {
+      es: "Usa estas opciones solo si tu currículum ya está en Reactive Resume o tienes una exportación JSON de Reactive Resume.",
+      fr: "Utilisez ces options uniquement si votre CV se trouve déjà dans Reactive Resume ou si vous disposez d’un export JSON Reactive Resume.",
+      ru: "Используйте эти варианты только если ваше резюме уже находится в Reactive Resume или у вас есть JSON-экспорт Reactive Resume.",
+      de: "Verwenden Sie diese Optionen nur, wenn Ihr Lebenslauf bereits in Reactive Resume liegt oder Sie einen Reactive-Resume-JSON-Export haben.",
+    },
+  "Import Reactive Resume JSON": {
+    es: "Importar JSON de Reactive Resume",
+    fr: "Importer le JSON Reactive Resume",
+    ru: "Импортировать JSON Reactive Resume",
+    de: "Reactive-Resume-JSON importieren",
+  },
+  "Connect Reactive Resume": {
+    es: "Conectar Reactive Resume",
+    fr: "Connecter Reactive Resume",
+    ru: "Подключить Reactive Resume",
+    de: "Reactive Resume verbinden",
+  },
 };
 
 export function translateUi(text: string, language: InterfaceLanguage): string {

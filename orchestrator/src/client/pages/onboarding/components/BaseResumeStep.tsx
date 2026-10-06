@@ -1,4 +1,4 @@
-import { FileText, Upload } from "lucide-react";
+import { ChevronDown, FileText, Upload } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
@@ -7,7 +7,6 @@ import { PRODUCT_BRAND } from "@/client/lib/product-brand";
 import type { LlmProviderId } from "@/client/pages/settings/utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import type { ResumeSetupMode, ValidationState } from "../types";
 import { InlineValidation } from "./InlineValidation";
@@ -162,41 +161,28 @@ export const BaseResumeStep: React.FC<{
 }) => {
   const interfaceLanguage = useInterfaceLanguage();
   const [isDraggingResume, setIsDraggingResume] = useState(false);
+  const [showOtherImportMethods, setShowOtherImportMethods] = useState(
+    resumeSetupMode === "rxresume",
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const effectiveResumeSetupMode = allowReactiveResume
-    ? resumeSetupMode
-    : "upload";
-  const uploadTitle = allowReactiveResume
-    ? translateUi("Upload a resume file", interfaceLanguage)
-    : translateUi(
-        "Upload your existing resume, PDF or DOCX",
-        interfaceLanguage,
-      );
-  const uploadDescription = allowReactiveResume
-    ? translateUi(
-        PRODUCT_BRAND.name +
-          " imports Reactive Resume JSON directly. PDF and DOCX files are sent to the configured AI service and stored as a resume. That resume drives job matching, fit assessment, search terms, and application workflows.",
-        interfaceLanguage,
-      )
-    : translateUi(
-        "Upload your existing resume as a PDF or DOCX. " +
-          PRODUCT_BRAND.name +
-          " will import it and use it as the baseline for matching, fit assessment, search terms, and application workflows.",
-        interfaceLanguage,
-      );
-  const supportedFormats = allowReactiveResume
-    ? translateUi(
-        "Supported formats: PDF, DOCX, and Reactive Resume JSON.",
-        interfaceLanguage,
-      )
-    : translateUi("Supported formats: PDF and DOCX.", interfaceLanguage);
+  const jsonInputRef = useRef<HTMLInputElement>(null);
+  const uploadTitle = translateUi(
+    "Upload your existing resume, PDF or DOCX",
+    interfaceLanguage,
+  );
+  const uploadDescription = translateUi(
+    "Upload your existing resume as a PDF or DOCX. " +
+      PRODUCT_BRAND.name +
+      " will import it and use it as the baseline for matching, fit assessment, search terms, and application workflows.",
+    interfaceLanguage,
+  );
 
   return (
     <div className="space-y-6" data-onboarding-target="resume-options">
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/json,.json"
+        accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
         className="hidden"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
@@ -207,174 +193,181 @@ export const BaseResumeStep: React.FC<{
         }}
       />
 
-      {allowReactiveResume ? (
-        <RadioGroup
-          value={resumeSetupMode}
-          onValueChange={(value) =>
-            onResumeSetupModeChange(
-              value === "rxresume" ? "rxresume" : "upload",
-            )
-          }
-          className="grid gap-4 lg:grid-cols-2"
+      {isImportingResume ? (
+        <ResumeImportProgress
+          fileName={importingResumeFileName}
+          selectedProvider={selectedProvider}
+        />
+      ) : (
+        <div
+          data-testid="resume-drop-zone"
+          role="button"
+          tabIndex={0}
+          aria-label={translateUi("Upload resume file", interfaceLanguage)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
+          className={cn(
+            "rounded-lg border border-border/60 bg-muted/10 p-5 transition-colors",
+            isDraggingResume && "border-primary bg-primary/5",
+          )}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setIsDraggingResume(true);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "copy";
+            setIsDraggingResume(true);
+          }}
+          onDragLeave={(event) => {
+            if (
+              !event.currentTarget.contains(event.relatedTarget as Node | null)
+            ) {
+              setIsDraggingResume(false);
+            }
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDraggingResume(false);
+            const file = event.dataTransfer.files?.[0];
+            if (file && !isBusy) {
+              void onImportResumeFile(file);
+            }
+          }}
         >
-          {[
-            {
-              value: "upload",
-              title: translateUi("Upload a file", interfaceLanguage),
-              description: translateUi(
-                PRODUCT_BRAND.name +
-                  " turns a PDF, DOCX, or Reactive Resume JSON into the baseline used for matching and tailoring.",
-                interfaceLanguage,
-              ),
-            },
-            {
-              value: "rxresume",
-              title: translateUi("Use Reactive Resume", interfaceLanguage),
-              description: translateUi(
-                "Connect an existing Reactive Resume so " +
-                  PRODUCT_BRAND.name +
-                  " can assess fit and build applications from it.",
-                interfaceLanguage,
-              ),
-            },
-          ].map((option) => {
-            const checked = resumeSetupMode === option.value;
-            const radioId = `resume-setup-${option.value}`;
-            return (
-              <label
-                key={option.value}
-                htmlFor={radioId}
-                className={cn(
-                  "flex cursor-pointer items-start gap-4 rounded-xl border p-4 transition-colors",
-                  checked
-                    ? "border-primary bg-muted/40"
-                    : "border-border/60 hover:bg-muted/20",
-                )}
-              >
-                <RadioGroupItem
-                  id={radioId}
-                  value={option.value}
-                  className="mt-1"
-                />
-                <div className="space-y-1">
-                  <div className="text-base font-medium text-foreground">
-                    {option.title}
-                  </div>
-                  <div className="text-sm leading-6 text-muted-foreground">
-                    {option.description}
-                  </div>
-                </div>
-              </label>
-            );
-          })}
-        </RadioGroup>
-      ) : null}
+          <div className="space-y-2">
+            <div className="text-sm font-medium">{uploadTitle}</div>
+            <p className="text-sm text-muted-foreground">{uploadDescription}</p>
+          </div>
 
-      {effectiveResumeSetupMode === "upload" ? (
-        <>
-          {isImportingResume ? (
-            <ResumeImportProgress
-              fileName={importingResumeFileName}
-              selectedProvider={selectedProvider}
-            />
-          ) : (
-            <div
-              data-testid="resume-drop-zone"
-              role="button"
-              tabIndex={0}
-              aria-label={translateUi("Upload resume file", interfaceLanguage)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  fileInputRef.current?.click();
-                }
-              }}
-              className={cn(
-                "rounded-lg border border-border/60 bg-muted/10 p-5 transition-colors",
-                isDraggingResume && "border-primary bg-primary/5",
-              )}
-              onDragEnter={(event) => {
-                event.preventDefault();
-                setIsDraggingResume(true);
-              }}
-              onDragOver={(event) => {
-                event.preventDefault();
-                event.dataTransfer.dropEffect = "copy";
-                setIsDraggingResume(true);
-              }}
-              onDragLeave={(event) => {
-                if (
-                  !event.currentTarget.contains(
-                    event.relatedTarget as Node | null,
-                  )
-                ) {
-                  setIsDraggingResume(false);
-                }
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                setIsDraggingResume(false);
-                const file = event.dataTransfer.files?.[0];
-                if (file && !isBusy) {
-                  void onImportResumeFile(file);
-                }
-              }}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isBusy}
             >
-              <div className="space-y-2">
-                <div className="text-sm font-medium">{uploadTitle}</div>
-                <p className="text-sm text-muted-foreground">
-                  {uploadDescription}
-                </p>
-              </div>
+              <Upload className="h-4 w-4" />
+              {translateUi("Upload resume file", interfaceLanguage)}
+            </Button>
+            <div className="text-xs text-muted-foreground">
+              {translateUi(
+                "Supported formats: PDF and DOCX.",
+                interfaceLanguage,
+              )}
+            </div>
+            <div className="w-full text-xs text-muted-foreground">
+              {translateUi(
+                "Or drag and drop a resume file here.",
+                interfaceLanguage,
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isBusy}
-                >
-                  <Upload className="h-4 w-4" />
-                  {translateUi("Upload resume file", interfaceLanguage)}
-                </Button>
-                <div className="text-xs text-muted-foreground">
-                  {supportedFormats}
-                </div>
-                <div className="w-full text-xs text-muted-foreground">
+      <InlineValidation
+        state={baseResumeValidation}
+        successMessage={translateUi(
+          "Your base resume is loaded and ready.",
+          interfaceLanguage,
+        )}
+      />
+
+      {allowReactiveResume ? (
+        <>
+          <input
+            ref={jsonInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              if (file) {
+                onResumeSetupModeChange("upload");
+                void onImportResumeFile(file);
+              }
+              event.currentTarget.value = "";
+            }}
+          />
+          <div className="rounded-lg border border-border/60 bg-muted/5">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium"
+              onClick={() => setShowOtherImportMethods((visible) => !visible)}
+              aria-expanded={showOtherImportMethods}
+            >
+              <span>
+                {translateUi("Other import methods", interfaceLanguage)}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  showOtherImportMethods && "rotate-180",
+                )}
+                aria-hidden="true"
+              />
+            </button>
+
+            {showOtherImportMethods ? (
+              <div className="space-y-4 border-t border-border/60 p-4">
+                <p className="text-sm leading-6 text-muted-foreground">
                   {translateUi(
-                    "Or drag and drop a resume file here.",
+                    "Use these options only if your resume already lives in Reactive Resume or you have a Reactive Resume JSON export.",
                     interfaceLanguage,
                   )}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isBusy}
+                    onClick={() => {
+                      onResumeSetupModeChange("upload");
+                      jsonInputRef.current?.click();
+                    }}
+                  >
+                    {translateUi(
+                      "Import Reactive Resume JSON",
+                      interfaceLanguage,
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isBusy}
+                    onClick={() => onResumeSetupModeChange("rxresume")}
+                  >
+                    {translateUi("Connect Reactive Resume", interfaceLanguage)}
+                  </Button>
                 </div>
-              </div>
-            </div>
-          )}
 
-          <InlineValidation
-            state={baseResumeValidation}
-            successMessage={translateUi(
-              "Your base resume is loaded and ready.",
-              interfaceLanguage,
-            )}
-          />
+                {resumeSetupMode === "rxresume" ? (
+                  <RxResumeStep
+                    allowSelfHosted={allowSelfHostedReactiveResume}
+                    baseResumeValue={baseResumeValue}
+                    hasRxResumeAccess={hasRxResumeAccess}
+                    isBusy={isBusy}
+                    isResumeReady={isResumeReady}
+                    isSelfHosted={isRxResumeSelfHosted}
+                    rxresumeApiKey={rxresumeApiKey}
+                    rxresumeApiKeyHint={rxresumeApiKeyHint}
+                    rxresumeUrl={rxresumeUrl}
+                    rxresumeValidation={rxresumeValidation}
+                    onRxresumeApiKeyChange={onRxresumeApiKeyChange}
+                    onRxresumeUrlChange={onRxresumeUrlChange}
+                    onSelfHostedChange={onRxresumeSelfHostedChange}
+                    onTemplateResumeChange={onTemplateResumeChange}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </>
-      ) : (
-        <RxResumeStep
-          allowSelfHosted={allowSelfHostedReactiveResume}
-          baseResumeValue={baseResumeValue}
-          hasRxResumeAccess={hasRxResumeAccess}
-          isBusy={isBusy}
-          isResumeReady={isResumeReady}
-          isSelfHosted={isRxResumeSelfHosted}
-          rxresumeApiKey={rxresumeApiKey}
-          rxresumeApiKeyHint={rxresumeApiKeyHint}
-          rxresumeUrl={rxresumeUrl}
-          rxresumeValidation={rxresumeValidation}
-          onRxresumeApiKeyChange={onRxresumeApiKeyChange}
-          onRxresumeUrlChange={onRxresumeUrlChange}
-          onSelfHostedChange={onRxresumeSelfHostedChange}
-          onTemplateResumeChange={onTemplateResumeChange}
-        />
-      )}
+      ) : null}
     </div>
   );
 };
