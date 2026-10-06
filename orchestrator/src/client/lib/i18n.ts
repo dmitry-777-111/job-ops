@@ -85,6 +85,13 @@ const translations: Record<
       ru: "Несколько важных шагов — и всё готово. Стратегию можно проверить до её активации.",
       de: "Ein paar gezielte Angaben, dann kann es losgehen. Die Strategie kann vor der Aktivierung geprüft werden.",
     },
+  "Find matching jobs, tailor your resume, get wording for LinkedIn, Indeed and other job profiles, and after interviews get help reading employer signals and improving your next step.":
+    {
+      es: "Encuentra vacantes adecuadas, adapta tu CV, sugiere textos para LinkedIn, Indeed y otros perfiles de empleo y, después de las entrevistas, ayuda a interpretar las señales del empleador y mejorar el siguiente paso.",
+      fr: "Trouvez des offres adaptées, adaptez votre CV, obtenez des formulations pour LinkedIn, Indeed et d’autres profils d’emploi et, après les entretiens, analysez les signaux de l’employeur pour améliorer la suite.",
+      ru: "Найдёт подходящие вакансии, адаптирует резюме, предложит формулировки для LinkedIn, Indeed и других профилей на сайтах поиска работы, а после интервью поможет понять сигналы работодателя и улучшить следующий шаг.",
+      de: "Findet passende Stellen, passt den Lebenslauf an, schlägt Formulierungen für LinkedIn, Indeed und andere Jobprofile vor und hilft nach Interviews, Arbeitgebersignale zu verstehen und den nächsten Schritt zu verbessern.",
+    },
   "Your search": {
     es: "Qué buscas",
     fr: "Votre recherche",

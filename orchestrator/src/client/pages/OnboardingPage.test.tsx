@@ -314,6 +314,11 @@ describe("OnboardingPage", () => {
     vi.mocked(api.saveOnboardingProfile).mockResolvedValue(resumeStatus);
 
     await renderPage();
+    expect(
+      screen.getByText(
+        "Find matching jobs, tailor your resume, get wording for LinkedIn, Indeed and other job profiles, and after interviews get help reading employer signals and improving your next step.",
+      ),
+    ).toBeInTheDocument();
     fireEvent.click(
       await screen.findByRole("button", { name: "Select country" }),
     );

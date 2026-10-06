@@ -632,6 +632,14 @@ function LaunchSetup({
         subtitle="A few focused choices, then you're in. You can review the strategy before it becomes active."
       />
       <PageMain>
+        {activeStep === "profile" ? (
+          <div className="mx-auto mb-4 max-w-6xl rounded-lg border border-border/50 bg-muted/10 px-4 py-3 text-xs leading-5 text-muted-foreground">
+            {translateUi(
+              "Find matching jobs, tailor your resume, get wording for LinkedIn, Indeed and other job profiles, and after interviews get help reading employer signals and improving your next step.",
+              interfaceLanguage,
+            )}
+          </div>
+        ) : null}
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
           <nav className="space-y-2" aria-label="Setup progress">
             {visibleSteps.map((step, index) => {
