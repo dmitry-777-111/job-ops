@@ -74,3 +74,21 @@ This series changes documentation/evidence only. Application CI bf68d75 remains 
 2. Implement one bounded versioned-delta integration unit from the gap document, with focused regression and relevant CI. Do not rerun passed drills unless the change affects them.
 3. Resolve resource capacity without sacrificing rollback; user was asked about VPS expansion/another server, no response or approval assumed.
 4. Complete new/changed measured daily path and immutable candidate image acceptance once feasible; retain Freeze 2 until all remaining gates pass.
+
+## Series 3 executed evidence (2026-10-05)
+
+- Versioned-delta blocker is resolved in source tree `6d9d61c2fe5b37c12b5a0e7d3aa29521c9f6561d`; fix commit `7e5a41125092981b41b81425fc287b74c652b5eb`.
+- GitHub Actions run `37365892290` for the fix was cancelled before any runner acquired work (all jobs `runner_id=0`, no steps). Because the connector lacks Actions rerun permission, source-equivalent empty commit `5454f371fe3a0e48a623dbd65b1f1d0e588a9c3d` was pushed only to trigger CI; its tree SHA is exactly the same as `7e5a411`. CI run `37389730244` completed SUCCESS.
+- Immutable image `career-os-freeze3:7e5a411` exists locally, image ID `sha256:3fe9ae0d22df53510a7535f23cf40ab939861fa02b7c506a15e4b1ea5e83678d`.
+- Immutable startup health PASS; restart->health PASS.
+- Immutable focused versioned-delta acceptance PASS: unchanged tuple reuse, one changed tuple only, dependent policy/profile/strategy invalidation, stale legacy score cleared, historical jobs hash unchanged, zero AI calls in the controlled acceptance.
+- Immutable ordinary-path bulk acceptance PASS on 1,257 scored discovered legacy jobs: 1,257 run items attached, 1,257 market observations recorded, 0 market inventory errors, 0 unmapped legacy jobs after normal `importJobsStep`, unchanged historical jobs hash, zero AI calls.
+- Duplicate legacy posting fallback PASS: both Bradken legacy IDs resolve to the same canonical market posting.
+- Evidence: `evidence/F3_7_SERIES3.json`.
+- No production deploy or cutover performed.
+
+### Remaining before cutover
+
+1. Resource/capacity gate must PASS on the actual runtime host without sacrificing rollback.
+2. Master-plan runtime stability requirement remains: 3-5 clean daily runs before stability is claimed.
+3. Final explicit cutover decision only after the above; Freeze 2 remains rollback until then.

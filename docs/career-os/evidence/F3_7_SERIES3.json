@@ -1,0 +1,67 @@
+{
+  "recordedAt": "2026-10-05",
+  "sourceTreeSha": "6d9d61c2fe5b37c12b5a0e7d3aa29521c9f6561d",
+  "fixCommit": "7e5a41125092981b41b81425fc287b74c652b5eb",
+  "ciRetryCommitSameTree": "5454f371fe3a0e48a623dbd65b1f1d0e588a9c3d",
+  "ciRun": {
+    "id": 37389730244,
+    "conclusion": "success"
+  },
+  "immutableImage": {
+    "tag": "career-os-freeze3:7e5a411",
+    "imageId": "sha256:3fe9ae0d22df53510a7535f23cf40ab939861fa02b7c506a15e4b1ea5e83678d"
+  },
+  "startupRestart": {
+    "initialHealth": "PASS",
+    "restartHealth": "PASS"
+  },
+  "versionedDeltaAcceptance": {
+    "gate": "PASS",
+    "runId": "9dcef92c-8865-465e-9d5e-3e43d53631e6",
+    "firstTargets": 1,
+    "firstSeededFromLegacy": 1,
+    "secondReusedCompleted": 1,
+    "sameEvaluationId": true,
+    "policyInvalidationTargets": 2,
+    "profileInvalidationTargets": 2,
+    "strategyInvalidationTargets": 2,
+    "historicalJobsHashUnchanged": true,
+    "aiCallsInvoked": 0
+  },
+  "ordinaryPathBulkAcceptance": {
+    "gate": "PASS",
+    "runId": "d69d51b3-7a9b-4dbe-bd11-facb0d877ba8",
+    "overlapJobs": 1257,
+    "import": {
+      "created": 0,
+      "skipped": 1257,
+      "runItemsAttached": 1257,
+      "marketInventoryRecorded": 1257,
+      "marketInventoryErrors": 0,
+      "unmappedAfterImport": 0
+    },
+    "firstPass": {
+      "seededFromLegacy": 1255,
+      "pendingTargets": 1,
+      "reusedCompleted": 1
+    },
+    "secondPass": {
+      "seededFromLegacy": 0,
+      "pendingTargets": 1,
+      "reusedCompleted": 1256
+    },
+    "historicalJobsHashUnchanged": true,
+    "aiCallsInvoked": 0
+  },
+  "legacyDuplicateFallback": {
+    "gate": "PASS",
+    "canonicalMarketPostingId": "579d0818-cdab-49f5-a2bd-98875f61c00e",
+    "bothLegacyIdsResolveSamePosting": true
+  },
+  "scope": "Immutable runtime and versioned-delta integration acceptance only. No production deploy performed.",
+  "remainingBeforeCutover": [
+    "resource/capacity gate",
+    "3-5 clean daily runtime stability runs",
+    "explicit final cutover decision"
+  ]
+}
