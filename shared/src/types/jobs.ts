@@ -286,6 +286,31 @@ export interface Interview {
   outcome: InterviewOutcome | null;
 }
 
+export type InterviewAdviceConfidence = "low" | "medium" | "high";
+
+export interface InterviewAdviceRisk {
+  signal: string;
+  confidence: InterviewAdviceConfidence;
+  evidence: string;
+}
+
+export interface InterviewAdvice {
+  summary: string;
+  employerSignals: string[];
+  strengths: string[];
+  risks: InterviewAdviceRisk[];
+  nextSteps: string[];
+  practiceAnswer: string | null;
+  profileWording: string[];
+  caveat: string;
+}
+
+export interface InterviewAdviceResponse {
+  eventId: string;
+  jobId: string;
+  advice: InterviewAdvice;
+}
+
 export interface JobNote {
   id: string;
   jobId: string;

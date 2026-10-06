@@ -444,6 +444,30 @@ describe.sequential("Application Tracking Service", () => {
     ).toEqual(evidence("submission"));
   });
 
+  it("persists interview debrief metadata for later learning", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Customer Service Associate",
+      employer: "Retail Co",
+      jobUrl: "https://example.com/interview-debrief",
+    });
+    applicationTracking.transitionStage(job.id, "applied", undefined, {
+      evidence: evidence("submission"),
+    });
+    applicationTracking.transitionStage(job.id, "recruiter_screen", undefined, {
+      actor: "user",
+      eventType: "interview_log",
+      evidence: evidence("interview"),
+      interviewDebrief:
+        "They asked about weekend availability, customer conflict and work authorization.",
+    });
+
+    const events = await applicationTracking.getStageEvents(job.id);
+    expect(events.at(-1)?.metadata?.interviewDebrief).toContain(
+      "weekend availability",
+    );
+  });
+
   it("does not infer rejection from a reason or turn an edited note into Applied", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",

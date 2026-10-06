@@ -3,6 +3,7 @@ import type {
   ApplicationTask,
   CreateHumanBridgeContactInput,
   HumanBridgeContact,
+  InterviewAdviceResponse,
   Job,
   JobActionRequest,
   JobActionResponse,
@@ -475,6 +476,16 @@ export async function getJobStageEvents(id: string): Promise<StageEvent[]> {
   return fetchApi<StageEvent[]>(
     withQuery(`/jobs/${id}/events`, { t: Date.now() }),
   );
+}
+
+export async function getInterviewAdvice(
+  jobId: string,
+  eventId: string,
+): Promise<InterviewAdviceResponse> {
+  return fetchApi<InterviewAdviceResponse>(`/jobs/${jobId}/interview-advice`, {
+    method: "POST",
+    body: JSON.stringify({ eventId }),
+  });
 }
 
 export async function getJobTasks(
