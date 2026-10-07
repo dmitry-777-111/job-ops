@@ -38,9 +38,7 @@ describe("JobProfilesStep", () => {
     );
 
     for (let index = 1; index < 6; index += 1) {
-      fireEvent.click(
-        screen.getByRole("button", { name: "Add another link" }),
-      );
+      fireEvent.click(screen.getByRole("button", { name: "Add another link" }));
     }
 
     expect(screen.getAllByRole("textbox")).toHaveLength(6);

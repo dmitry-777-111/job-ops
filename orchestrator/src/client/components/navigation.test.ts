@@ -7,7 +7,7 @@ import {
 } from "./navigation";
 
 describe("candidate navigation", () => {
-  it("shows the five product destinations to a hosted candidate", () => {
+  it("shows the six product destinations to a hosted candidate", () => {
     const links = resolveNavLinks({
       appMode: "hosted",
       isSystemAdmin: false,
@@ -17,6 +17,7 @@ describe("candidate navigation", () => {
       ["Today", "/overview"],
       ["Matches", "/jobs/ready"],
       ["Applications", "/applications/in-progress"],
+      ["Improve", "/improve"],
       ["Profile", "/design-resume"],
       ["Connections", "/settings"],
     ]);

@@ -136,11 +136,25 @@ describe.sequential("F3-5 fresh hosted candidate acceptance", () => {
     );
     const source = `local:${imported.data.id as string}`;
 
-    const completed = await expectOkJson(
+    const resumeConfirmed = await expectOkJson(
       await fetch(`${baseUrl}/api/onboarding/actions/resume/confirm`, {
         method: "POST",
         headers: authHeaders(token),
         body: JSON.stringify({ source }),
+      }),
+    );
+    expect(resumeConfirmed.data).toMatchObject({
+      complete: false,
+      nextRequirementId: "job_profiles",
+    });
+
+    const completed = await expectOkJson(
+      await fetch(`${baseUrl}/api/onboarding/actions/job-profiles`, {
+        method: "POST",
+        headers: authHeaders(token),
+        body: JSON.stringify({
+          urls: ["https://www.linkedin.com/in/fresh-hosted-candidate"],
+        }),
       }),
     );
     expect(completed.data).toMatchObject({

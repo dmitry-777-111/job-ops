@@ -73,6 +73,7 @@ vi.mock("../api", () => ({
   createWorkspaceUser: vi.fn(),
   setWorkspaceUserDisabled: vi.fn(),
   resetWorkspaceUserPassword: vi.fn(),
+  changeOwnPassword: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
