@@ -145,6 +145,7 @@ export const stageEventMetadataSchema = z
     evidence: stageEvidenceSchema.nullable().optional(),
     note: z.string().nullable().optional(),
     interviewDebrief: z.string().nullable().optional(),
+    outcomeCheck: z.enum(["waiting"]).nullable().optional(),
     actor: z.enum(["system", "user"]).optional(),
     groupId: z.string().nullable().optional(),
     groupLabel: z.string().nullable().optional(),

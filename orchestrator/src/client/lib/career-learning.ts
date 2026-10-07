@@ -5,6 +5,7 @@ import type {
   JobListItem,
   StageEvent,
 } from "@shared/types.js";
+import { isResolvedAfterStage } from "./outcome-confirmation";
 
 export type CareerLearningInsight = {
   key: string;
@@ -88,11 +89,20 @@ export function buildCareerLearningInsights(
   const finalStage = qualified.filter(({ events }) =>
     reached(events, FINAL_STAGES),
   );
-  const offers = qualified.filter(({ events }) =>
-    events.some((event) => event.toStage === "offer"),
-  );
   const debriefs = qualified.filter(({ events }) =>
     events.some((event) => Boolean(event.metadata?.interviewDebrief?.trim())),
+  );
+  const recruiterStages = new Set(["recruiter_screen"] as const);
+  const screenedResolved = screened.filter(({ job, events }) =>
+    isResolvedAfterStage(job, events, recruiterStages),
+  );
+  const interviewedResolved = interviewed.filter(({ job, events }) =>
+    isResolvedAfterStage(job, events, INTERVIEW_STAGES),
+  );
+  const finalResolved = finalStage.filter(
+    ({ job, events }) =>
+      events.some((event) => event.toStage === "offer") ||
+      isResolvedAfterStage(job, events, FINAL_STAGES),
   );
 
   const rejectionReasons = new Map<string, number>();
@@ -131,19 +141,25 @@ export function buildCareerLearningInsights(
     });
   }
 
-  const screenToInterview = ratio(interviewed.length, screened.length);
-  if (screened.length >= 5 && screenToInterview < 0.4) {
+  const screenedAdvanced = screenedResolved.filter(({ events }) =>
+    reached(events, INTERVIEW_STAGES),
+  );
+  const screenToInterview = ratio(
+    screenedAdvanced.length,
+    screenedResolved.length,
+  );
+  if (screenedResolved.length >= 5 && screenToInterview < 0.4) {
     insights.push({
       key: "screening-low-conversion",
       stage: "screening",
-      confidence: confidenceFor(screened.length, 5, 7),
+      confidence: confidenceFor(screenedResolved.length, 5, 7),
       target: "interview_behavior",
       title: "A repeatable screening-stage blocker may be forming",
       evidence:
-        String(interviewed.length) +
+        String(screenedAdvanced.length) +
         " of " +
-        String(screened.length) +
-        " recruiter screens advanced to a hiring or technical interview (" +
+        String(screenedResolved.length) +
+        " resolved recruiter screens advanced to a hiring or technical interview (" +
         percent(screenToInterview) +
         ").",
       recommendation:
@@ -151,19 +167,25 @@ export function buildCareerLearningInsights(
     });
   }
 
-  const interviewToFinal = ratio(finalStage.length, interviewed.length);
-  if (interviewed.length >= 3 && interviewToFinal < 0.34) {
+  const interviewedAdvanced = interviewedResolved.filter(({ events }) =>
+    reached(events, FINAL_STAGES),
+  );
+  const interviewToFinal = ratio(
+    interviewedAdvanced.length,
+    interviewedResolved.length,
+  );
+  if (interviewedResolved.length >= 3 && interviewToFinal < 0.34) {
     insights.push({
       key: "interview-low-final-conversion",
       stage: "interview",
-      confidence: confidenceFor(interviewed.length, 3, 5),
+      confidence: confidenceFor(interviewedResolved.length, 3, 5),
       target: "interview_behavior",
       title: "Interview performance now has enough evidence to review",
       evidence:
-        String(finalStage.length) +
+        String(interviewedAdvanced.length) +
         " of " +
-        String(interviewed.length) +
-        " interview-stage applications reached a final stage (" +
+        String(interviewedResolved.length) +
+        " resolved interview-stage applications reached a final stage (" +
         percent(interviewToFinal) +
         "). " +
         String(debriefs.length) +
@@ -219,16 +241,19 @@ export function buildCareerLearningInsights(
     }
   }
 
-  if (finalStage.length >= 2 && offers.length === 0) {
+  const finalResolvedOffers = finalResolved.filter(({ events }) =>
+    events.some((event) => event.toStage === "offer"),
+  );
+  if (finalResolved.length >= 2 && finalResolvedOffers.length === 0) {
     insights.push({
       key: "final-stage-no-offer",
       stage: "final",
-      confidence: confidenceFor(finalStage.length, 2, 3),
+      confidence: confidenceFor(finalResolved.length, 2, 3),
       target: "interview_behavior",
       title: "Final-stage conversion deserves a focused review",
       evidence:
-        String(finalStage.length) +
-        " qualified applications reached a final stage and none reached an offer.",
+        String(finalResolved.length) +
+        " resolved qualified applications reached a final stage and none reached an offer.",
       recommendation:
         "Review closing answers, salary alignment, leadership/fit examples and unresolved employer-risk concerns. Keep this separate from top-of-funnel resume changes.",
     });

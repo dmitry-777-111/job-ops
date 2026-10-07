@@ -253,6 +253,7 @@ export interface StageEventMetadata {
   reasonCode?: string | null;
   eventType?: "interview_log" | "status_update" | "note" | null;
   interviewDebrief?: string | null;
+  outcomeCheck?: "waiting" | null;
 }
 
 export interface StageEvent {

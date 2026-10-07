@@ -80,7 +80,10 @@ describe("buildCareerLearningInsights", () => {
       events:
         i < 5
           ? [
-              event(`j${i}-s`, "recruiter_screen"),
+              {
+                ...event(`j${i}-s`, "recruiter_screen"),
+                outcome: i === 0 ? null : ("rejected" as const),
+              },
               ...(i === 0
                 ? [event("j0-i", "technical_interview", "PLC question")]
                 : []),
@@ -96,11 +99,14 @@ describe("buildCareerLearningInsights", () => {
     const input = Array.from({ length: 3 }, (_, i) => ({
       job: job(`j${i}`),
       events: [
-        event(
-          `j${i}-i`,
-          "technical_interview",
-          "Repeated PLC and travel questions",
-        ),
+        {
+          ...event(
+            `j${i}-i`,
+            "technical_interview",
+            "Repeated PLC and travel questions",
+          ),
+          outcome: "rejected" as const,
+        },
       ],
     }));
     const insights = buildCareerLearningInsights(input);
@@ -112,6 +118,17 @@ describe("buildCareerLearningInsights", () => {
       confidence: "moderate",
     });
     expect(interview?.recommendation).toMatch(/debriefs/i);
+  });
+
+  it("does not count unresolved interviews as failed conversion", () => {
+    const input = Array.from({ length: 5 }, (_, i) => ({
+      job: job(`j${i}`),
+      events: [event(`j${i}-i`, "technical_interview", "Debrief captured")],
+    }));
+    const insights = buildCareerLearningInsights(input);
+    expect(
+      insights.some((item) => item.title.includes("enough evidence to review")),
+    ).toBe(false);
   });
 
   it("does not count low-fit applications toward the trigger sample", () => {

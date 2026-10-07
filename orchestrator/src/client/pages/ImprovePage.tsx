@@ -6,11 +6,13 @@ import { ArrowRight, CircleHelp, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildCareerLearningInsights } from "@/client/lib/career-learning";
+import { getPendingOutcomeConfirmation } from "@/client/lib/outcome-confirmation";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CareerProfileRevisionPanel } from "./improve/CareerProfileRevisionPanel";
 import { CareerStrategyRevisionPanel } from "./improve/CareerStrategyRevisionPanel";
+import { OutcomeConfirmationCard } from "./improve/OutcomeConfirmationCard";
 
 type Insight = {
   title: string;
@@ -82,6 +84,15 @@ export function ImprovePage() {
         (decisionQuery.data ?? []).map((decision) => [decision.key, decision]),
       ),
     [decisionQuery.data],
+  );
+
+  const pendingOutcomeConfirmations = useMemo(
+    () =>
+      (applicationQuery.data?.applications ?? []).flatMap(({ job, events }) => {
+        const pending = getPendingOutcomeConfirmation(job, events);
+        return pending ? [pending] : [];
+      }),
+    [applicationQuery.data],
   );
 
   const insights = useMemo<Insight[]>(() => {
@@ -217,6 +228,17 @@ export function ImprovePage() {
               control.
             </p>
           </div>
+
+          {pendingOutcomeConfirmations.length > 0 ? (
+            <div className="space-y-3">
+              {pendingOutcomeConfirmations.slice(0, 3).map((pending) => (
+                <OutcomeConfirmationCard
+                  key={`${pending.job.id}:${pending.interviewEvent.id}`}
+                  pending={pending}
+                />
+              ))}
+            </div>
+          ) : null}
 
           {loading ? (
             <div className="rounded-xl border border-border/60 p-8 text-center text-sm text-muted-foreground">
