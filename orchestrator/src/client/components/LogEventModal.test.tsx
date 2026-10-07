@@ -36,6 +36,26 @@ vi.mock("@/components/ui/alert-dialog", () => ({
   ),
 }));
 
+vi.mock("@/client/components/VoiceTextInputButton", () => ({
+  VoiceTextInputButton: ({
+    onTranscript,
+  }: {
+    onTranscript: (text: string) => void;
+  }) => (
+    <button
+      type="button"
+      aria-label="Add interview debrief by voice"
+      onClick={() =>
+        onTranscript(
+          "They asked about weekend availability and customer conflict.",
+        )
+      }
+    >
+      Talk to TJAgent
+    </button>
+  ),
+}));
+
 vi.mock("@/components/ui/select", () => ({
   Select: ({
     children,
@@ -71,6 +91,28 @@ vi.mock("@/components/ui/select", () => ({
 describe("LogEventModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("adds a voice transcript to the interview debrief field", async () => {
+    render(<LogEventModal isOpen onClose={vi.fn()} onLog={vi.fn()} />);
+
+    const stageSelect = screen.getAllByTestId("select")[0];
+    fireEvent.change(stageSelect, { target: { value: "recruiter_screen" } });
+
+    const debrief = await screen.findByPlaceholderText(
+      "What did they ask? What felt difficult? What signals did you notice?",
+    );
+    fireEvent.change(debrief, {
+      target: { value: "It was a short screening." },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add interview debrief by voice" }),
+    );
+
+    expect(debrief).toHaveValue(
+      "It was a short screening. They asked about weekend availability and customer conflict.",
+    );
   });
 
   it("shows the rejection reason selector and submits the form", async () => {

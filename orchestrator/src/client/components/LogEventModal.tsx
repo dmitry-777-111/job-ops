@@ -4,6 +4,7 @@ import { STAGE_LABELS } from "@shared/types.js";
 import React from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
+import { VoiceTextInputButton } from "@/client/components/VoiceTextInputButton";
 import { evidenceKindForStage } from "@/client/lib/evidence";
 import {
   AlertDialog,
@@ -116,6 +117,7 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
   });
 
   const selectedStage = watch("stage");
+  const interviewDebrief = watch("interviewDebrief") ?? "";
 
   React.useEffect(() => {
     if (isOpen) {
@@ -240,10 +242,26 @@ export const LogEventModal: React.FC<LogEventModalProps> = ({
                 {...register("interviewDebrief")}
                 placeholder="What did they ask? What felt difficult? What signals did you notice?"
               />
+              <div className="flex flex-wrap items-center gap-2">
+                <VoiceTextInputButton
+                  idleLabel="Talk to TJAgent"
+                  startAriaLabel="Add interview debrief by voice"
+                  onTranscript={(text) =>
+                    setValue(
+                      "interviewDebrief",
+                      [interviewDebrief.trim(), text].filter(Boolean).join(" "),
+                      { shouldDirty: true },
+                    )
+                  }
+                />
+                <span className="text-xs text-muted-foreground">
+                  Speak naturally; TJAgent converts it to text for review.
+                </span>
+              </div>
               <p className="text-xs text-muted-foreground">
-                After the interview, tell The JobAgent what happened. It can use
-                this together with the real outcome to improve your next-step
-                advice.
+                After the interview, tell TJAgent what happened. It will compare
+                your account with the real outcome before suggesting what to
+                improve next.
               </p>
             </Field>
           ) : null}
