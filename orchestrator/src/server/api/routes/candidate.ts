@@ -25,6 +25,7 @@ import {
   CANDIDATE_CONSTRAINT_KINDS,
   CANDIDATE_CONSTRAINT_SOURCES,
   type CandidateConstraint,
+  type ResumeProfile,
 } from "@shared/types";
 import { type Request, type Response, Router } from "express";
 import { z } from "zod";
@@ -126,6 +127,33 @@ candidateRouter.get(
   async (_req: Request, res: Response) => {
     try {
       ok(res, await listMasterCareerProfileVersions());
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+const profileDraftSchema = z.object({
+  profile: z.record(z.string(), z.unknown()),
+  sourceRef: z.string().trim().max(500).nullable().optional(),
+  provenance: z.record(z.string(), z.unknown()).nullable().optional(),
+});
+
+candidateRouter.post(
+  "/profile/versions",
+  async (req: Request, res: Response) => {
+    try {
+      const input = profileDraftSchema.parse(req.body ?? {});
+      ok(
+        res,
+        await createMasterCareerProfileDraft({
+          profile: input.profile as ResumeProfile,
+          source: "manual",
+          sourceRef: input.sourceRef ?? null,
+          provenance: input.provenance ?? null,
+        }),
+        201,
+      );
     } catch (error) {
       fail(res, toAppError(error));
     }

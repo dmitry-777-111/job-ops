@@ -9,6 +9,7 @@ import { buildCareerLearningInsights } from "@/client/lib/career-learning";
 import { queryKeys } from "@/client/lib/queryKeys";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CareerProfileRevisionPanel } from "./improve/CareerProfileRevisionPanel";
 import { CareerStrategyRevisionPanel } from "./improve/CareerStrategyRevisionPanel";
 
 type Insight = {
@@ -24,6 +25,10 @@ export function ImprovePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [strategyRevision, setStrategyRevision] = useState<{
+    key: string;
+    snapshot: CareerRecommendationSnapshot;
+  } | null>(null);
+  const [profileRevision, setProfileRevision] = useState<{
     key: string;
     snapshot: CareerRecommendationSnapshot;
   } | null>(null);
@@ -270,6 +275,27 @@ export function ImprovePage() {
                             </p>
                             {decision.status === "accepted" &&
                             insight.snapshot &&
+                            (insight.snapshot.target === "profile" ||
+                              insight.snapshot.target ===
+                                "job_platform_profile" ||
+                              insight.snapshot.target === "mixed") ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setProfileRevision({
+                                    key: decision.key,
+                                    snapshot:
+                                      insight.snapshot as CareerRecommendationSnapshot,
+                                  })
+                                }
+                              >
+                                Prepare profile revision
+                              </Button>
+                            ) : null}
+                            {decision.status === "accepted" &&
+                            insight.snapshot &&
                             (insight.snapshot.target === "strategy" ||
                               insight.snapshot.target === "mixed") ? (
                               <Button
@@ -345,6 +371,14 @@ export function ImprovePage() {
               })}
             </div>
           )}
+
+          {profileRevision ? (
+            <CareerProfileRevisionPanel
+              recommendationKey={profileRevision.key}
+              snapshot={profileRevision.snapshot}
+              onClose={() => setProfileRevision(null)}
+            />
+          ) : null}
 
           {strategyRevision ? (
             <CareerStrategyRevisionPanel

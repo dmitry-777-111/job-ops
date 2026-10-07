@@ -13,6 +13,7 @@ import type {
   DesignResumePatchRequest,
   DesignResumePdfResponse,
   DesignResumeStatusResponse,
+  MasterCareerProfileVersion,
   OnboardingStatusResponse,
   ProfileStatusResponse,
   ResumeProfile,
@@ -42,6 +43,32 @@ export async function decideCareerRecommendation(input: {
       method: "POST",
       body: JSON.stringify(input),
     },
+  );
+}
+
+export async function getActiveMasterCareerProfile(): Promise<MasterCareerProfileVersion | null> {
+  return fetchApi<MasterCareerProfileVersion | null>(
+    "/candidate/profile/active",
+  );
+}
+
+export async function createMasterCareerProfileDraft(input: {
+  profile: ResumeProfile;
+  sourceRef?: string | null;
+  provenance?: Record<string, unknown> | null;
+}): Promise<MasterCareerProfileVersion> {
+  return fetchApi<MasterCareerProfileVersion>("/candidate/profile/versions", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function activateMasterCareerProfileVersion(
+  versionId: string,
+): Promise<MasterCareerProfileVersion> {
+  return fetchApi<MasterCareerProfileVersion>(
+    `/candidate/profile/versions/${encodeURIComponent(versionId)}/activate`,
+    { method: "POST" },
   );
 }
 
