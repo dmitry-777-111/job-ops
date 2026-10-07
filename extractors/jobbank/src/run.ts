@@ -121,7 +121,14 @@ export function parseJobBankFeed(xml: string): CreateJobInput[] {
       jobUrlDirect: jobUrl,
       applicationLink: jobUrl,
       location: location || undefined,
-      locationEvidence: location ? { location, source: "jobbank" } : undefined,
+      locationEvidence: location
+        ? {
+            location,
+            country: "canada",
+            countryKey: "canada",
+            source: "jobbank",
+          }
+        : undefined,
       salary: salary || undefined,
       datePosted: updated || undefined,
       jobDescription: stripTags(summary) || undefined,
