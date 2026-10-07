@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getJobById: vi.fn(),
   getStageEvents: vi.fn(),
+  listPostApplicationMessagesForJob: vi.fn(),
   createConfiguredLlmService: vi.fn(),
   resolveLlmModel: vi.fn(),
   callJson: vi.fn(),
@@ -14,6 +15,10 @@ vi.mock("@server/repositories/jobs", () => ({
 
 vi.mock("@server/services/applicationTracking", () => ({
   getStageEvents: mocks.getStageEvents,
+}));
+
+vi.mock("@server/repositories/post-application-messages", () => ({
+  listPostApplicationMessagesForJob: mocks.listPostApplicationMessagesForJob,
 }));
 
 vi.mock("@server/services/modelSelection", () => ({
@@ -50,6 +55,10 @@ beforeEach(() => {
     callJson: mocks.callJson,
   });
   mocks.resolveLlmModel.mockResolvedValue("test-model");
+  mocks.listPostApplicationMessagesForJob.mockResolvedValue({
+    items: [],
+    total: 0,
+  });
   mocks.getJobById.mockResolvedValue({
     id: "job-1",
     title: "Retail Associate",
@@ -133,6 +142,38 @@ describe("analyzeInterviewEvent", () => {
         outcome: "rejected",
       },
     ]);
+    mocks.listPostApplicationMessagesForJob.mockResolvedValue({
+      items: [
+        {
+          accountDisplayName: "Recruiting",
+          message: {
+            provider: "gmail",
+            senderName: "Recruiter",
+            subject: "Next steps",
+            receivedAt: 1_700_000_050,
+            snippet:
+              "Thanks for speaking with us. Before we proceed, please confirm your work authorization.",
+            messageType: "update",
+            relevanceDecision: "relevant",
+            processingStatus: "auto_linked",
+          },
+        },
+        {
+          accountDisplayName: "Recruiting",
+          message: {
+            provider: "gmail",
+            senderName: "Unknown",
+            subject: "Noise",
+            receivedAt: 1_700_000_060,
+            snippet: "Unverified classifier noise.",
+            messageType: "other",
+            relevanceDecision: "needs_llm",
+            processingStatus: "pending_user",
+          },
+        },
+      ],
+      total: 2,
+    });
     mocks.callJson.mockResolvedValue({ success: true, data: advice });
 
     const result = await analyzeInterviewEvent("job-1", "evt-1");
@@ -156,6 +197,12 @@ describe("analyzeInterviewEvent", () => {
     );
     expect(payload.messages[1].content).toContain(
       "Do not assume the candidate is technical",
+    );
+    expect(payload.messages[1].content).toContain(
+      "please confirm your work authorization",
+    );
+    expect(payload.messages[1].content).not.toContain(
+      "Unverified classifier noise",
     );
   });
 });

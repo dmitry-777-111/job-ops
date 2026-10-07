@@ -1,5 +1,6 @@
 import { AppError } from "@infra/errors";
 import * as jobsRepo from "@server/repositories/jobs";
+import { listPostApplicationMessagesForJob } from "@server/repositories/post-application-messages";
 import { getStageEvents } from "@server/services/applicationTracking";
 import {
   createConfiguredLlmService,
@@ -57,6 +58,14 @@ function buildPrompt(args: {
   event: StageEvent;
   laterEvents: StageEvent[];
   currentOutcome: string | null;
+  correspondence: Array<{
+    provider: string;
+    senderName: string | null;
+    subject: string;
+    receivedAt: number;
+    snippet: string;
+    messageType: string;
+  }>;
 }) {
   const laterOutcome =
     args.laterEvents.find((event) => event.outcome)?.outcome ??
@@ -90,7 +99,12 @@ function buildPrompt(args: {
     laterOutcome ?? "Unknown / pending",
     "EXPLICIT LATER REASON",
     laterReason ?? "None recorded",
+    "LINKED EMPLOYER CORRESPONDENCE",
+    args.correspondence.length
+      ? JSON.stringify(args.correspondence)
+      : "No verified linked correspondence available",
     "",
+    "Treat raw correspondence snippets as direct evidence of what was written, but treat classifier messageType labels only as hints.",
     "Return concise, practical advice. The caveat must explicitly say when the real cause is still uncertain.",
   ].join("\n");
 }
@@ -99,9 +113,10 @@ export async function analyzeInterviewEvent(
   jobId: string,
   eventId: string,
 ): Promise<InterviewAdviceResponse> {
-  const [job, events] = await Promise.all([
+  const [job, events, messageResult] = await Promise.all([
     jobsRepo.getJobById(jobId),
     getStageEvents(jobId),
+    listPostApplicationMessagesForJob(jobId, 50),
   ]);
   if (!job) {
     throw new AppError({
@@ -115,6 +130,24 @@ export async function analyzeInterviewEvent(
   const laterEvents = events.filter(
     (candidate) => candidate.occurredAt > event.occurredAt,
   );
+  const correspondence = messageResult.items
+    .map((item) => item.message)
+    .filter(
+      (message) =>
+        message.relevanceDecision === "relevant" &&
+        (message.processingStatus === "auto_linked" ||
+          message.processingStatus === "manual_linked") &&
+        Boolean(message.snippet.trim()),
+    )
+    .slice(0, 12)
+    .map((message) => ({
+      provider: message.provider,
+      senderName: message.senderName,
+      subject: message.subject,
+      receivedAt: message.receivedAt,
+      snippet: message.snippet.slice(0, 1500),
+      messageType: message.messageType,
+    }));
 
   const [llm, model] = await Promise.all([
     createConfiguredLlmService("default"),
@@ -140,6 +173,7 @@ export async function analyzeInterviewEvent(
           event,
           laterEvents,
           currentOutcome: job.outcome,
+          correspondence,
         }),
       },
     ],

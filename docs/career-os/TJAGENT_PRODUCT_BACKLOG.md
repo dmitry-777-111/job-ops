@@ -19,6 +19,18 @@ Requirements:
 - Product changes should be made only when feedback is material and survives normal engineering validation (reproduce -> root cause -> minimal fix -> tests -> acceptance).
 - Keep raw user feedback distinct from inferred product conclusions.
 
+## Job-platform correspondence connectors
+
+Status: **PARTIALLY AVAILABLE / DIRECT JOB-PLATFORM CONNECTORS DEFERRED**
+
+Current post-application correspondence providers are Gmail and IMAP. TJAgent may use employer/recruiter messages that are linked to a job as evidence, but it must not claim direct visibility into Indeed, LinkedIn or another job platform unless a supported connector or explicit user-provided import exists.
+
+Future direction:
+- add supported job-platform message connectors where provider terms and APIs allow it;
+- alternatively allow a user to paste/import a conversation and mark its source;
+- preserve provenance and distinguish raw message text from AI classification;
+- correspondence may strengthen a recommendation, but must not silently change profile or strategy.
+
 ## Future product-gap audit
 
 Status: **AGREED / RECURRING MANUAL REVIEW, NOT A MONITORING JOB**
