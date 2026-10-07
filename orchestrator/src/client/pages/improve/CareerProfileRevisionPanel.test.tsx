@@ -5,12 +5,14 @@ import { CareerProfileRevisionPanel } from "./CareerProfileRevisionPanel";
 
 const mocks = vi.hoisted(() => ({
   getActiveMasterCareerProfile: vi.fn(),
+  suggestCareerProfileRevision: vi.fn(),
   createMasterCareerProfileDraft: vi.fn(),
   activateMasterCareerProfileVersion: vi.fn(),
 }));
 
 vi.mock("@client/api", () => ({
   getActiveMasterCareerProfile: mocks.getActiveMasterCareerProfile,
+  suggestCareerProfileRevision: mocks.suggestCareerProfileRevision,
   createMasterCareerProfileDraft: mocks.createMasterCareerProfileDraft,
   activateMasterCareerProfileVersion: mocks.activateMasterCareerProfileVersion,
 }));
@@ -94,6 +96,38 @@ function renderPanel() {
 }
 
 describe("CareerProfileRevisionPanel", () => {
+  it("lets AI suggest wording but keeps the result editable and inactive", async () => {
+    mocks.getActiveMasterCareerProfile.mockResolvedValue(active);
+    mocks.suggestCareerProfileRevision.mockResolvedValue({
+      label: "Retail Associate",
+      headline: "Customer-focused retail candidate",
+      summary: "Transferable communication and problem-solving experience.",
+      rationale: [
+        "Uses only transferable evidence already present in the profile.",
+      ],
+      caveat: "Verify this wording before activating a new profile version.",
+    });
+
+    renderPanel();
+
+    await screen.findByDisplayValue("Teacher");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Suggest wording with AI" }),
+    );
+
+    expect(
+      await screen.findByDisplayValue("Retail Associate"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue("Customer-focused retail candidate"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Uses only transferable evidence/),
+    ).toBeInTheDocument();
+    expect(mocks.createMasterCareerProfileDraft).not.toHaveBeenCalled();
+    expect(mocks.activateMasterCareerProfileVersion).not.toHaveBeenCalled();
+  });
+
   it("creates a profile draft without activating it, then activates only on a separate click", async () => {
     mocks.getActiveMasterCareerProfile.mockResolvedValue(active);
     mocks.createMasterCareerProfileDraft.mockResolvedValue(draft);

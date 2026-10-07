@@ -91,6 +91,14 @@ export interface CareerRecommendationDecision {
   updatedAt: string;
 }
 
+export interface CareerProfileRevisionSuggestion {
+  label: string | null;
+  headline: string | null;
+  summary: string | null;
+  rationale: string[];
+  caveat: string;
+}
+
 export const CANDIDATE_PROFILE_VERSION_STATUSES = [
   "draft",
   "active",

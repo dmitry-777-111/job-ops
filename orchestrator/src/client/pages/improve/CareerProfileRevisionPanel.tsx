@@ -40,6 +40,8 @@ export function CareerProfileRevisionPanel({
   const [draft, setDraft] = React.useState<MasterCareerProfileVersion | null>(
     null,
   );
+  const [aiRationale, setAiRationale] = React.useState<string[]>([]);
+  const [aiCaveat, setAiCaveat] = React.useState<string | null>(null);
   const [activatedVersion, setActivatedVersion] = React.useState<number | null>(
     null,
   );
@@ -74,6 +76,21 @@ export function CareerProfileRevisionPanel({
           : null,
       ].filter(Boolean)
     : [];
+
+  const suggestionMutation = useMutation({
+    mutationFn: () =>
+      api.suggestCareerProfileRevision({
+        key: recommendationKey,
+        snapshot,
+      }),
+    onSuccess: (suggestion) => {
+      if (suggestion.label != null) setLabel(suggestion.label);
+      if (suggestion.headline != null) setHeadline(suggestion.headline);
+      if (suggestion.summary != null) setSummary(suggestion.summary);
+      setAiRationale(suggestion.rationale);
+      setAiCaveat(suggestion.caveat);
+    },
+  });
 
   const createDraftMutation = useMutation({
     mutationFn: async () => {
@@ -172,6 +189,49 @@ export function CareerProfileRevisionPanel({
         projects, education and other profile evidence are preserved unchanged.
         Creating a draft does not activate it.
       </p>
+
+      <div className="mt-4">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={suggestionMutation.isPending}
+          onClick={() => suggestionMutation.mutate()}
+        >
+          {suggestionMutation.isPending
+            ? "Preparing wording…"
+            : "Suggest wording with AI"}
+        </Button>
+        <p className="mt-2 text-xs text-muted-foreground">
+          TJAgent may rewrite positioning, but it must not invent experience,
+          credentials or skills. Review every suggestion before creating a
+          draft.
+        </p>
+        {suggestionMutation.error ? (
+          <p className="mt-2 text-sm text-destructive">
+            {suggestionMutation.error instanceof Error
+              ? suggestionMutation.error.message
+              : "Could not generate wording suggestions."}
+          </p>
+        ) : null}
+        {aiRationale.length > 0 || aiCaveat ? (
+          <div className="mt-3 rounded-lg border border-border/50 bg-card/60 p-3">
+            <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Why TJAgent suggests this
+            </div>
+            {aiRationale.length > 0 ? (
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                {aiRationale.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            ) : null}
+            {aiCaveat ? (
+              <p className="mt-2 text-xs text-muted-foreground">{aiCaveat}</p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       <div className="mt-4 grid gap-3">
         <label htmlFor="career-profile-label" className="grid gap-1 text-sm">

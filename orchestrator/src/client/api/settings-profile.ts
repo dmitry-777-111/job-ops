@@ -3,6 +3,7 @@ import type {
   AppSettings,
   CandidateStrategyDelta,
   CandidateStrategyProfile,
+  CareerProfileRevisionSuggestion,
   CareerRecommendationDecision,
   CareerRecommendationSnapshot,
   DesignResumeAiFieldSuggestionRequest,
@@ -49,6 +50,19 @@ export async function decideCareerRecommendation(input: {
 export async function getActiveMasterCareerProfile(): Promise<MasterCareerProfileVersion | null> {
   return fetchApi<MasterCareerProfileVersion | null>(
     "/candidate/profile/active",
+  );
+}
+
+export async function suggestCareerProfileRevision(input: {
+  key: string;
+  snapshot: CareerRecommendationSnapshot;
+}): Promise<CareerProfileRevisionSuggestion> {
+  return fetchApi<CareerProfileRevisionSuggestion>(
+    "/candidate/profile/revision-suggestion",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
   );
 }
 

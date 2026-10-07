@@ -20,6 +20,7 @@ import { listExternalConnections } from "@server/repositories/external-connectio
 import { deriveCandidateReadiness } from "@server/services/candidate-readiness";
 import { bootstrapCurrentCandidateStrategy } from "@server/services/candidate-strategy-bootstrap";
 import { deriveCandidateStrategyDelta } from "@server/services/candidate-strategy-delta";
+import { suggestCareerProfileRevision } from "@server/services/career-profile-revision";
 import { getProfile } from "@server/services/profile";
 import {
   CANDIDATE_CONSTRAINT_KINDS,
@@ -68,6 +69,29 @@ candidateRouter.post(
     try {
       const input = recommendationDecisionSchema.parse(req.body ?? {});
       ok(res, await decideCareerRecommendation(input));
+    } catch (error) {
+      fail(res, toAppError(error));
+    }
+  },
+);
+
+const profileRevisionSuggestionSchema = recommendationDecisionSchema.pick({
+  key: true,
+  snapshot: true,
+});
+
+candidateRouter.post(
+  "/profile/revision-suggestion",
+  async (req: Request, res: Response) => {
+    try {
+      const input = profileRevisionSuggestionSchema.parse(req.body ?? {});
+      ok(
+        res,
+        await suggestCareerProfileRevision({
+          recommendationKey: input.key,
+          snapshot: input.snapshot,
+        }),
+      );
     } catch (error) {
       fail(res, toAppError(error));
     }
