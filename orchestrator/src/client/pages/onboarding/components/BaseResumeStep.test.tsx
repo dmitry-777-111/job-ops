@@ -39,6 +39,31 @@ describe("BaseResumeStep", () => {
     vi.useRealTimers();
   });
 
+  it("opens the file picker and imports the selected resume", () => {
+    const onImportResumeFile = vi.fn().mockResolvedValue(undefined);
+    const { container } = render(
+      <BaseResumeStep
+        {...defaultProps}
+        onImportResumeFile={onImportResumeFile}
+      />,
+    );
+
+    const input = container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const clickSpy = vi.spyOn(input, "click");
+    fireEvent.click(
+      screen.getByRole("button", { name: /upload resume file/i }),
+    );
+    expect(clickSpy).toHaveBeenCalled();
+
+    const file = new File(["resume"], "resume.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    fireEvent.change(input, { target: { files: [file] } });
+    expect(onImportResumeFile).toHaveBeenCalledWith(file);
+  });
+
   it("imports a resume dropped onto the upload zone", () => {
     const onImportResumeFile = vi.fn().mockResolvedValue(undefined);
     render(

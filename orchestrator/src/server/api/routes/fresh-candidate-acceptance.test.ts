@@ -135,6 +135,24 @@ describe.sequential("F3-5 fresh hosted candidate acceptance", () => {
     expect(confirmRes.status).toBe(200);
     const confirmBody = await confirmRes.json();
     expect(confirmBody.data).toMatchObject({
+      complete: false,
+      nextRequirementId: "job_profiles",
+    });
+
+    const jobProfilesRes = await postJson(
+      baseUrl,
+      "/api/onboarding/actions/job-profiles",
+      token,
+      {
+        urls: [
+          "https://www.linkedin.com/in/freshcandidate",
+          "https://jobs.example.com/freshcandidate",
+        ],
+      },
+    );
+    expect(jobProfilesRes.status).toBe(200);
+    const jobProfilesBody = await jobProfilesRes.json();
+    expect(jobProfilesBody.data).toMatchObject({
       complete: true,
       nextRequirementId: null,
     });
