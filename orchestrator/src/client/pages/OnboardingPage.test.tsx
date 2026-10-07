@@ -512,12 +512,23 @@ describe("OnboardingPage", () => {
       },
     });
     vi.mocked(api.confirmOnboardingResume).mockResolvedValue(completeStatus);
+    const flow = mockFlow();
 
     await renderPage();
 
     expect(
       screen.getByRole("link", { name: /edit in resume studio/i }),
     ).toHaveAttribute("href", "/design-resume/basics");
+    expect(
+      screen.getByRole("button", { name: /upload another resume/i }),
+    ).toBeInTheDocument();
+    const replacement = new File(["replacement"], "replacement.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+    fireEvent.change(screen.getByLabelText(/upload another resume/i), {
+      target: { files: [replacement] },
+    });
+    expect(flow.handleImportResumeFile).toHaveBeenCalledWith(replacement);
     expect(await screen.findByText("Sam")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /use this resume/i }));
 

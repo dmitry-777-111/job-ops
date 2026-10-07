@@ -22,6 +22,7 @@ import {
   EyeOff,
   FileCheck2,
   MapPin,
+  Upload,
   UserPlus,
 } from "lucide-react";
 import type React from "react";
@@ -1211,6 +1212,7 @@ function ResumeStep({
   onConfirm: () => void;
 }) {
   const interfaceLanguage = useInterfaceLanguage();
+  const replacementFileInputRef = useRef<HTMLInputElement>(null);
   const experience = profile?.sections?.experience?.items ?? [];
   if (!hasResume) {
     return (
@@ -1311,6 +1313,20 @@ function ResumeStep({
           </div>
         </div>
         <div className="space-y-3">
+          <input
+            ref={replacementFileInputRef}
+            type="file"
+            aria-label={translateUi("Upload another resume", interfaceLanguage)}
+            accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/json,.json"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              if (file) {
+                void flow.handleImportResumeFile(file);
+              }
+              event.currentTarget.value = "";
+            }}
+          />
           <div className="rounded-xl bg-muted/40 p-4">
             <FileCheck2 className="mb-3 h-5 w-5" />
             <div className="text-sm font-medium">
@@ -1324,6 +1340,16 @@ function ResumeStep({
               )}
             </div>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={flow.isBusy}
+            onClick={() => replacementFileInputRef.current?.click()}
+          >
+            <Upload className="h-4 w-4" />
+            {translateUi("Upload another resume", interfaceLanguage)}
+          </Button>
           <Button type="button" variant="outline" className="w-full" asChild>
             <a href="/design-resume/basics">
               <BriefcaseBusiness className="h-4 w-4" />

@@ -68,6 +68,9 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.settings.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.designResume.all }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.profile.current(),
+        }),
       ]);
     },
     [queryClient],

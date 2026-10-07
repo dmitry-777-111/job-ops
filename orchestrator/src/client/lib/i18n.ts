@@ -1042,6 +1042,12 @@ const translations: Record<
     ru: "Редактировать резюме",
     de: "In Resume Studio bearbeiten",
   },
+  "Upload another resume": {
+    es: "Subir otro currículum",
+    fr: "Téléverser un autre CV",
+    ru: "Загрузить другое резюме",
+    de: "Anderen Lebenslauf hochladen",
+  },
   "Use this resume": {
     es: "Usar este currículum",
     fr: "Utiliser ce CV",
