@@ -93,7 +93,7 @@ This series changes documentation/evidence only. Application CI bf68d75 remains 
 2. Master-plan runtime stability requirement remains: 3-5 clean daily runs before stability is claimed.
 3. Final explicit cutover decision only after the above; Freeze 2 remains rollback until then.
 
-## Resource gate measurement � 2026-10-05
+## Resource gate measurement � 2026-10-05
 
 - Actual VPS root filesystem: 34G root partition, 30G used, 2.2G available, 94% utilization.
 - `/dev/vda` is 35G total and fully partitioned (34G root + 1G swap); there is no unallocated disk space to grow into locally.
@@ -102,3 +102,14 @@ This series changes documentation/evidence only. Application CI bf68d75 remains 
 - Resource gate = FAIL. No deploy/cutover/image deletion/cleanup performed.
 - Safe capacity target before cutover: at least 60GB total disk; at least 4GB RAM, preferably 6-8GB if browser/visa workloads remain on the same VPS.
 - Evidence: `evidence/F3_7_RESOURCE_GATE.json`.
+
+## Resource gate re-measurement — 2026-10-06
+
+- Actual VPS root filesystem after the approved expansion and rollback-safe cleanup: 99G total, 22G used, 73G available, 23% utilization.
+- RAM: 5.8GiB total, about 4.8GiB available at measurement time.
+- Swap: 4.0GiB total, 0B used.
+- Load average at sample: 0.06 / 0.02 / 0.00.
+- Freeze 2 production remains healthy as the retained rollback/runtime lane: `career-os-v2-job-ops`, image `ghcr.io/dmitry-777-111/job-ops:v2-candidate-20261003-03`, image ID `335efe1eff9b`.
+- Docker currently retains only the active Freeze 2 production image plus its mounted volumes; no rollback-critical volume was removed.
+- **Resource gate = PASS.** Current host exceeds the master-plan safety target of at least 60GB disk and at least 4GB RAM without sacrificing Freeze 2 rollback.
+- Remaining F3-7 blocker is runtime stability on the current Freeze 3 candidate: 3–5 clean daily runs, then explicit final cutover approval. This measurement does not itself authorize cutover.

@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-10-06T21:56:15-04:00",
+  "host": "racknerd-af00191",
+  "root_filesystem": { "total": "99G", "used": "22G", "available": "73G", "use_percent": 23 },
+  "memory": { "total": "5.8GiB", "available": "4.8GiB" },
+  "swap": { "total": "4.0GiB", "used": "0B" },
+  "load_average": [0.06, 0.02, 0.00],
+  "freeze2": {
+    "container": "career-os-v2-job-ops",
+    "status": "healthy",
+    "image": "ghcr.io/dmitry-777-111/job-ops:v2-candidate-20261003-03",
+    "image_id": "335efe1eff9b"
+  },
+  "docker": { "images": 1, "active_containers": 1, "volumes": 2, "build_cache": "0B" },
+  "decision": "PASS: capacity exceeds the F3-7 safety target while retaining Freeze 2 rollback. Cutover is still blocked by the required 3-5 clean daily Freeze 3 stability runs and explicit final approval."
+}
