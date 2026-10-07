@@ -1,9 +1,10 @@
 import * as api from "@client/api";
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import { PageHeader, PageMain } from "@client/components/layout";
 import type { CareerRecommendationSnapshot } from "@shared/types.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CircleHelp, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { buildCareerLearningInsights } from "@/client/lib/career-learning";
 import { getPendingOutcomeConfirmation } from "@/client/lib/outcome-confirmation";
@@ -24,6 +25,11 @@ type Insight = {
 };
 
 export function ImprovePage() {
+  const language = useInterfaceLanguage();
+  const tr = useCallback(
+    (en: string, ru: string) => (language === "ru" ? ru : en),
+    [language],
+  );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [strategyRevision, setStrategyRevision] = useState<{
@@ -140,32 +146,58 @@ export function ImprovePage() {
       ...(learningInsights.length === 0
         ? [
             {
-              title: "Build outcome evidence before changing strategy",
+              title: tr(
+                "Build outcome evidence before changing strategy",
+                "Сначала накопите данные по результатам откликов, затем меняйте стратегию",
+              ),
               evidence:
-                String(applications.length) +
-                " active or submitted application" +
-                (applications.length === 1 ? "" : "s") +
-                " are available for calibration.",
-              recommendation:
+                language === "ru"
+                  ? String(applications.length) +
+                    " активных или отправленных откликов доступны для калибровки."
+                  : String(applications.length) +
+                    " active or submitted application" +
+                    (applications.length === 1 ? "" : "s") +
+                    " are available for calibration.",
+              recommendation: tr(
                 "The JobAgent will keep learning from applications, employer responses and interview debriefs, but it will not propose a career-direction change from a small sample.",
+                "The JobAgent продолжит учиться на откликах, ответах работодателей и разборе интервью, но не будет предлагать смену карьерного направления по слишком маленькой выборке.",
+              ),
             },
           ]
         : []),
       {
         title:
           salaryCount >= 5
-            ? "Salary evidence is becoming useful"
-            : "Salary evidence is still thin",
+            ? tr(
+                "Salary evidence is becoming useful",
+                "Данных по зарплате уже достаточно для первых выводов",
+              )
+            : tr(
+                "Salary evidence is still thin",
+                "Данных по зарплате пока мало",
+              ),
         evidence:
-          String(salaryCount) +
-          " current opportunit" +
-          (salaryCount === 1 ? "y exposes" : "ies expose") +
-          " salary information.",
+          language === "ru"
+            ? String(salaryCount) +
+              " текущих вакансий содержат данные о зарплате."
+            : String(salaryCount) +
+              " current opportunit" +
+              (salaryCount === 1 ? "y exposes" : "ies expose") +
+              " salary information.",
         recommendation:
           salaryCount >= 5
-            ? "This can support salary calibration, but no target will be changed without your confirmation."
-            : "No salary-target recommendation will be made until the market sample is large enough.",
-        action: { label: "Review profile", path: "/design-resume" },
+            ? tr(
+                "This can support salary calibration, but no target will be changed without your confirmation.",
+                "Эти данные уже можно использовать для калибровки зарплаты, но цель не будет изменена без вашего подтверждения.",
+              )
+            : tr(
+                "No salary-target recommendation will be made until the market sample is large enough.",
+                "Рекомендация по целевой зарплате не будет сформирована, пока выборка рынка не станет достаточно большой.",
+              ),
+        action: {
+          label: tr("Review profile", "Проверить профиль"),
+          path: "/design-resume/basics",
+        },
       },
     ];
 
@@ -183,21 +215,29 @@ export function ImprovePage() {
       });
     } else {
       result.push({
-        title: "Cross-platform profile coverage",
+        title: tr(
+          "Cross-platform profile coverage",
+          "Покрытие профиля на разных площадках",
+        ),
         evidence:
           jobs.length === 0
-            ? "There is not enough market data to compare sources yet."
+            ? tr(
+                "There is not enough market data to compare sources yet.",
+                "Пока недостаточно рыночных данных, чтобы сравнивать источники.",
+              )
             : String(sourceCounts.size) +
               " source" +
               (sourceCounts.size === 1 ? "" : "s") +
               " appear in the current sample.",
-        recommendation:
+        recommendation: tr(
           "LinkedIn, Indeed, Job Bank and employer-site improvements will appear here only when supported by evidence.",
+          "Рекомендации по LinkedIn, Indeed, Job Bank и сайтам работодателей появятся здесь только тогда, когда их будут подтверждать данные.",
+        ),
       });
     }
 
     return result;
-  }, [applicationQuery.data, readyQuery.data]);
+  }, [applicationQuery.data, readyQuery.data, language, tr]);
 
   const loading =
     readyQuery.isLoading ||
@@ -208,24 +248,37 @@ export function ImprovePage() {
     <>
       <PageHeader
         icon={Sparkles}
-        title="Improve"
-        subtitle="Use real market response to improve fit, positioning and profile quality"
+        title={tr("Improve", "Улучшить")}
+        subtitle={tr(
+          "Use real market response to improve fit, positioning and profile quality",
+          "Используйте реальную реакцию рынка, чтобы улучшать соответствие, позиционирование и профиль",
+        )}
       />
       <PageMain>
         <section className="mx-auto max-w-5xl space-y-5">
           <div className="rounded-2xl border border-border/60 bg-card/70 p-5">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline">Evidence first</Badge>
-              <Badge variant="outline">No silent profile changes</Badge>
+              <Badge variant="outline">
+                {tr("Evidence first", "Сначала факты")}
+              </Badge>
+              <Badge variant="outline">
+                {tr(
+                  "No silent profile changes",
+                  "Без скрытых изменений профиля",
+                )}
+              </Badge>
             </div>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight">
-              The JobAgent improves quality, not application volume alone
+              {tr(
+                "The JobAgent improves quality, not application volume alone",
+                "The JobAgent улучшает качество, а не просто увеличивает число откликов",
+              )}
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-              Recommendations use your profile, matching opportunities,
-              application outcomes and interview evidence. You decide whether to
-              use a recommendation. Profile and strategy changes stay under your
-              control.
+              {tr(
+                "Recommendations use your profile, matching opportunities, application outcomes and interview evidence. You decide whether to use a recommendation. Profile and strategy changes stay under your control.",
+                "Рекомендации основаны на вашем профиле, подходящих вакансиях, результатах откликов и данных интервью. Вы сами решаете, применять рекомендацию или нет. Изменения профиля и стратегии остаются под вашим контролем.",
+              )}
             </p>
           </div>
 
@@ -242,7 +295,10 @@ export function ImprovePage() {
 
           {loading ? (
             <div className="rounded-xl border border-border/60 p-8 text-center text-sm text-muted-foreground">
-              Building your evidence snapshot…
+              {tr(
+                "Building your evidence snapshot…",
+                "Собираем картину по накопленным данным…",
+              )}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
@@ -265,11 +321,14 @@ export function ImprovePage() {
                       ) : null}
                     </div>
                     <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Evidence
+                      {tr("Evidence", "Факты")}
                     </div>
                     <p className="mt-1 text-sm">{insight.evidence}</p>
                     <div className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      The JobAgent suggestion
+                      {tr(
+                        "The JobAgent suggestion",
+                        "Рекомендация The JobAgent",
+                      )}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {insight.recommendation}

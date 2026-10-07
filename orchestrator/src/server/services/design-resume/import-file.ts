@@ -955,10 +955,8 @@ function buildLocalTextFallbackResume(
   fileName: string,
 ): DesignResumeJson {
   const resume = buildDefaultReactiveResumeDocument() as DesignResumeJson;
-  const lines = documentText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const rawLines = documentText.split(/\r?\n/).map((line) => line.trim());
+  const lines = rawLines.filter(Boolean);
   const email =
     documentText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? "";
   const phone =
@@ -979,6 +977,168 @@ function buildLocalTextFallbackResume(
   resume.basics.phone = phone;
   resume.summary.content = documentText.slice(0, 20_000);
   resume.summary.title = "Imported resume text";
+
+  const headingKind = (
+    line: string,
+  ): "experience" | "education" | "skills" | "languages" | null => {
+    const normalized = line
+      .toLowerCase()
+      .replace(/[:：]$/, "")
+      .trim();
+    if (
+      /^(work\s+experience|professional\s+experience|employment(?:\s+history)?|experience|опыт\s+работы)$/.test(
+        normalized,
+      )
+    )
+      return "experience";
+    if (/^(education|academic\s+background|образование)$/.test(normalized))
+      return "education";
+    if (
+      /^(skills|technical\s+skills|core\s+skills|competencies|навыки|ключевые\s+навыки)$/.test(
+        normalized,
+      )
+    )
+      return "skills";
+    if (
+      /^(languages|language\s+skills|языки|знание\s+языков)$/.test(normalized)
+    )
+      return "languages";
+    return null;
+  };
+  const parsedSections: Record<string, string[]> = {
+    experience: [],
+    education: [],
+    skills: [],
+    languages: [],
+  };
+  let current: keyof typeof parsedSections | null = null;
+  for (const line of rawLines) {
+    const kind = headingKind(line);
+    if (kind) {
+      current = kind;
+      continue;
+    }
+    if (current) parsedSections[current].push(line);
+  }
+  const nonEmptyBlocks = (input: string[]): string[][] => {
+    const blocks: string[][] = [];
+    let block: string[] = [];
+    for (const line of input) {
+      if (!line) {
+        if (block.length) {
+          blocks.push(block);
+          block = [];
+        }
+        continue;
+      }
+      block.push(line);
+    }
+    if (block.length) blocks.push(block);
+    return blocks;
+  };
+  const periodPattern =
+    /(?:19|20)\d{2}[^\n]{0,40}(?:(?:19|20)\d{2}|present|current|now|настоящее|н\.?в\.?)/i;
+  const splitByPeriods = (input: string[]): string[][] => {
+    const blocks = nonEmptyBlocks(input);
+    if (blocks.length > 1) return blocks;
+    const flat = input.filter(Boolean);
+    const starts = flat
+      .map((line, index) => (periodPattern.test(line) ? index : -1))
+      .filter((index) => index >= 0);
+    if (starts.length < 2) return flat.length ? [flat] : [];
+    return starts
+      .map((start, i) => {
+        const from =
+          i === 0
+            ? Math.max(0, start - 2)
+            : Math.max(starts[i - 1] + 1, start - 2);
+        const to =
+          i + 1 < starts.length
+            ? Math.max(start + 1, starts[i + 1] - 2)
+            : flat.length;
+        return flat.slice(from, to);
+      })
+      .filter((block) => block.length);
+  };
+  const html = (parts: string[]) =>
+    parts.length ? `<p>${parts.join("<br>")}</p>` : "";
+  const experienceItems = splitByPeriods(parsedSections.experience)
+    .slice(0, 20)
+    .map((block, index) => {
+      const periodLine = block.find((line) => periodPattern.test(line)) ?? "";
+      const content = block.filter((line) => line !== periodLine);
+      const first = content[0] ?? "";
+      const split = first
+        .split(/\s+[|–—-]\s+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+      const company =
+        split[0] || content[0] || `Experience ${String(index + 1)}`;
+      const position = split[1] || content[1] || "";
+      const descriptionLines = content.slice(split.length > 1 ? 1 : 2);
+      return {
+        id: "",
+        hidden: false,
+        company,
+        position,
+        location: "",
+        period: periodLine,
+        website: { url: "", label: "", inlineLink: false },
+        description: html(descriptionLines),
+        roles: [],
+      };
+    })
+    .filter((item) => item.company);
+  if (experienceItems.length)
+    resume.sections.experience.items = experienceItems;
+
+  const educationItems = splitByPeriods(parsedSections.education)
+    .slice(0, 10)
+    .map((block, index) => {
+      const periodLine = block.find((line) => periodPattern.test(line)) ?? "";
+      const content = block.filter((line) => line !== periodLine);
+      return {
+        id: "",
+        hidden: false,
+        school: content[0] || `Education ${String(index + 1)}`,
+        degree: content[1] || "",
+        area: content[2] || "",
+        grade: "",
+        location: "",
+        period: periodLine,
+        website: { url: "", label: "", inlineLink: false },
+        description: html(content.slice(3)),
+      };
+    })
+    .filter((item) => item.school);
+  if (educationItems.length) resume.sections.education.items = educationItems;
+
+  const tokenList = (input: string[]) =>
+    input
+      .join(",")
+      .split(/[,;•·|]/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 1 && item.length < 120);
+  const skills = tokenList(parsedSections.skills).slice(0, 40);
+  if (skills.length)
+    resume.sections.skills.items = skills.map((name) => ({
+      id: "",
+      hidden: false,
+      icon: "",
+      name,
+      proficiency: "",
+      level: 0,
+      keywords: [],
+    }));
+  const languages = tokenList(parsedSections.languages).slice(0, 20);
+  if (languages.length)
+    resume.sections.languages.items = languages.map((language) => ({
+      id: "",
+      hidden: false,
+      language,
+      fluency: "",
+      level: 0,
+    }));
 
   return sanitizeNormalizedResume(resume);
 }

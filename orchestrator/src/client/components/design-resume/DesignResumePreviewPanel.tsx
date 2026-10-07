@@ -1,3 +1,4 @@
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import type {
   DesignResumeDocument,
   PdfRenderer,
@@ -42,6 +43,13 @@ export function DesignResumePreviewPanel({
   onTypstThemeChange,
   className,
 }: DesignResumePreviewPanelProps) {
+  const language = useInterfaceLanguage();
+  const rendererLabel = (value: PdfRenderer) => {
+    if (language !== "ru") return PDF_RENDERER_LABELS[value];
+    if (value === "rxresume") return "Экспорт RxResume";
+    if (value === "typst") return "Локальный Typst";
+    return "Локальный LaTeX";
+  };
   return (
     <section
       className={cn("flex min-h-0 min-w-0 flex-col overflow-hidden", className)}
@@ -53,12 +61,16 @@ export function DesignResumePreviewPanel({
           disabled={isUpdatingRenderer}
         >
           <SelectTrigger id="design-resume-template" className="w-full sm:w-72">
-            <SelectValue placeholder="Choose a template" />
+            <SelectValue
+              placeholder={
+                language === "ru" ? "Выберите шаблон" : "Choose a template"
+              }
+            />
           </SelectTrigger>
           <SelectContent>
             {PDF_RENDERER_VALUES.map((value) => (
               <SelectItem key={value} value={value}>
-                {PDF_RENDERER_LABELS[value]}
+                {rendererLabel(value)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -73,7 +85,13 @@ export function DesignResumePreviewPanel({
               id="design-resume-typst-theme"
               className="w-full sm:w-52"
             >
-              <SelectValue placeholder="Choose a Typst theme" />
+              <SelectValue
+                placeholder={
+                  language === "ru"
+                    ? "Выберите тему Typst"
+                    : "Choose a Typst theme"
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               {TYPST_THEME_VALUES.map((value) => (

@@ -1,4 +1,5 @@
 import * as api from "@client/api";
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import type {
   DesignResumeDocument,
   PdfRenderer,
@@ -10,7 +11,7 @@ import {
   getDocument,
   type PDFDocumentProxy,
 } from "pdfjs-dist";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trackProductEvent } from "@/lib/analytics";
 
 type DesignResumePdfPreviewProps = {
@@ -80,6 +81,11 @@ export function DesignResumePdfPreview({
   isDirty,
   saveState,
 }: DesignResumePdfPreviewProps) {
+  const language = useInterfaceLanguage();
+  const tr = useCallback(
+    (en: string, ru: string) => (language === "ru" ? ru : en),
+    [language],
+  );
   const [previewState, setPreviewState] = useState<PreviewState>("idle");
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
@@ -151,7 +157,12 @@ export function DesignResumePdfPreview({
       setPreviewState((current) =>
         current === "waiting-for-save" ? "error" : current,
       );
-      setPreviewError("Changes could not be saved. Please try again.");
+      setPreviewError(
+        tr(
+          "Changes could not be saved. Please try again.",
+          "Не удалось сохранить изменения. Попробуйте ещё раз.",
+        ),
+      );
       return;
     }
 
@@ -213,7 +224,10 @@ export function DesignResumePdfPreview({
         setPreviewError(
           error instanceof Error
             ? error.message
-            : "Could not render the PDF preview.",
+            : tr(
+                "Could not render the PDF preview.",
+                "Не удалось отобразить предпросмотр PDF.",
+              ),
         );
         setPreviewState("error");
         setIsRenderingPages(false);
@@ -231,6 +245,7 @@ export function DesignResumePdfPreview({
     revisionKey,
     saveState,
     typstTheme,
+    tr,
   ]);
 
   useEffect(() => {
@@ -288,7 +303,10 @@ export function DesignResumePdfPreview({
       setPreviewError(
         error instanceof Error
           ? error.message
-          : "Could not render the PDF preview.",
+          : tr(
+              "Could not render the PDF preview.",
+              "Не удалось отобразить предпросмотр PDF.",
+            ),
       );
       setPreviewState("error");
       setIsRenderingPages(false);
@@ -297,7 +315,7 @@ export function DesignResumePdfPreview({
     return () => {
       cancelled = true;
     };
-  }, [pageCount, pdfDocument, renderWidth]);
+  }, [pageCount, pdfDocument, renderWidth, tr]);
 
   const showLoader =
     previewState === "loading" ||
@@ -371,10 +389,16 @@ export function DesignResumePdfPreview({
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               <div className="text-sm font-medium text-foreground">
                 {isUpdatingRenderer
-                  ? "Updating template before refreshing the preview"
+                  ? tr(
+                      "Updating template before refreshing the preview",
+                      "Обновляем шаблон перед предпросмотром",
+                    )
                   : previewState === "waiting-for-save"
-                    ? "Saving changes before updating the preview"
-                    : "Rendering PDF preview"}
+                    ? tr(
+                        "Saving changes before updating the preview",
+                        "Сохраняем изменения перед предпросмотром",
+                      )
+                    : tr("Rendering PDF preview", "Формируем предпросмотр PDF")}
               </div>
             </div>
           </div>
@@ -385,10 +409,14 @@ export function DesignResumePdfPreview({
             <div className="flex max-w-sm flex-col items-center gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-6 py-5 text-center">
               <FileText className="h-6 w-6 text-rose-300" />
               <div className="text-sm font-medium text-rose-200">
-                Preview unavailable
+                {tr("Preview unavailable", "Предпросмотр недоступен")}
               </div>
               <div className="text-xs leading-6 text-rose-200/80">
-                {previewError ?? "Could not render the PDF preview."}
+                {previewError ??
+                  tr(
+                    "Could not render the PDF preview.",
+                    "Не удалось отобразить предпросмотр PDF.",
+                  )}
               </div>
             </div>
           </div>

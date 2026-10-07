@@ -15,6 +15,7 @@ import {
   getDesignResumeDialogItem,
   toText,
 } from "@client/components/design-resume/utils";
+import { useInterfaceLanguage } from "@client/components/LanguagePreferencesMenu";
 import { PageHeader, PageMain } from "@client/components/layout";
 import { SectionWorkspacePanel } from "@client/components/section-workspace/SectionWorkspace";
 import { useDesignResumeStudio } from "@client/hooks/useDesignResumeStudio";
@@ -58,6 +59,8 @@ import { cn } from "@/lib/utils";
 import { formatUserFacingError } from "../lib/error-format";
 
 export const DesignResumePage: React.FC = () => {
+  const language = useInterfaceLanguage();
+  const tr = (en: string, ru: string) => (language === "ru" ? ru : en);
   const navigate = useNavigate();
   const {
     draft,
@@ -114,8 +117,8 @@ export const DesignResumePage: React.FC = () => {
       <div className="flex h-dvh flex-col overflow-hidden">
         <PageHeader
           icon={PenSquare}
-          title="Resume Studio"
-          subtitle="Loading your resume"
+          title={tr("Resume Studio", "Редактор резюме")}
+          subtitle={tr("Loading your resume", "Загружаем резюме")}
         />
         <PageMain className={DESIGN_RESUME_PAGE_MAIN_CLASS_NAME}>
           <div className="rounded-2xl border border-border/70 bg-card px-6 py-20 text-center text-sm text-muted-foreground">
@@ -179,7 +182,7 @@ export const DesignResumePage: React.FC = () => {
       <PageHeader
         icon={PenSquare}
         title="Resume Studio"
-        subtitle="Edit your resume details"
+        subtitle={tr("Edit your resume details", "Редактируйте данные резюме")}
         actions={
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap sm:justify-end">
             <div className="hidden items-center gap-2 sm:flex">
@@ -190,7 +193,9 @@ export const DesignResumePage: React.FC = () => {
                 disabled={resumeImporting}
               >
                 <Import className="mr-2 h-4 w-4" />
-                {resumeImporting ? "Importing File" : "Import File"}
+                {resumeImporting
+                  ? tr("Importing File", "Импортируем файл")
+                  : tr("Import File", "Импорт файла")}
               </Button>
 
               <Button
@@ -201,10 +206,10 @@ export const DesignResumePage: React.FC = () => {
               >
                 <Import className="mr-2 h-4 w-4" />
                 {resumeImporting
-                  ? "Importing RxResume"
+                  ? tr("Importing RxResume", "Импортируем RxResume")
                   : status?.exists
                     ? "Re-import RxResume"
-                    : "Import RxResume"}
+                    : tr("Import RxResume", "Импортировать RxResume")}
               </Button>
 
               <Button
@@ -214,7 +219,9 @@ export const DesignResumePage: React.FC = () => {
                 disabled={!canDownloadPdf}
               >
                 <FileDown className="mr-2 h-4 w-4" />
-                {pdfDownloading ? "Preparing PDF" : "Download PDF"}
+                {pdfDownloading
+                  ? tr("Preparing PDF", "Готовим PDF")
+                  : tr("Download PDF", "Скачать PDF")}
               </Button>
 
               <Button
@@ -224,7 +231,7 @@ export const DesignResumePage: React.FC = () => {
                 disabled={!status?.exists}
               >
                 <Download className="mr-2 h-4 w-4" />
-                Export
+                {tr("Export", "Экспорт")}
               </Button>
             </div>
 
@@ -246,7 +253,9 @@ export const DesignResumePage: React.FC = () => {
                   disabled={resumeImporting}
                 >
                   <Import className="mr-2 h-4 w-4" />
-                  {resumeImporting ? "Importing File" : "Import File"}
+                  {resumeImporting
+                    ? tr("Importing File", "Импортируем файл")
+                    : tr("Import File", "Импорт файла")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => handleImportWithConfirm()}
@@ -254,24 +263,26 @@ export const DesignResumePage: React.FC = () => {
                 >
                   <Import className="mr-2 h-4 w-4" />
                   {resumeImporting
-                    ? "Importing RxResume"
+                    ? tr("Importing RxResume", "Импортируем RxResume")
                     : status?.exists
                       ? "Re-import RxResume"
-                      : "Import RxResume"}
+                      : tr("Import RxResume", "Импортировать RxResume")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => handleDownloadPdf()}
                   disabled={!canDownloadPdf}
                 >
                   <FileDown className="mr-2 h-4 w-4" />
-                  {pdfDownloading ? "Preparing PDF" : "Download PDF"}
+                  {pdfDownloading
+                    ? tr("Preparing PDF", "Готовим PDF")
+                    : tr("Download PDF", "Скачать PDF")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => handleExport()}
                   disabled={!status?.exists}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Export JSON
+                  {tr("Export JSON", "Экспорт JSON")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -287,11 +298,16 @@ export const DesignResumePage: React.FC = () => {
                 Resume Studio
               </div>
               <h2 className="text-3xl font-semibold tracking-tight text-foreground">
-                Import your resume to start editing it here.
+                {tr(
+                  "Import your resume to start editing it here.",
+                  "Импортируйте резюме, чтобы начать редактирование здесь.",
+                )}
               </h2>
               <p className="text-sm leading-7 text-muted-foreground">
-                Once imported, you can update your resume here without jumping
-                between tools.
+                {tr(
+                  "Once imported, you can update your resume here without jumping between tools.",
+                  "После импорта резюме можно редактировать прямо здесь, без переходов между сервисами.",
+                )}
               </p>
               <div className="flex justify-center gap-3">
                 <Button

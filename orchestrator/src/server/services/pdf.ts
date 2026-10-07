@@ -463,13 +463,35 @@ async function generateDesignResumePdfImpl(options?: {
       typstTheme,
     });
   } else {
-    await renderRxResumePdf({
-      preparedResume,
-      outputPath,
-      jobId: "design-resume",
-      name: designResume.title,
-      requestOrigin: options?.requestOrigin ?? null,
-    });
+    try {
+      await renderRxResumePdf({
+        preparedResume,
+        outputPath,
+        jobId: "design-resume",
+        name: designResume.title,
+        requestOrigin: options?.requestOrigin ?? null,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (
+        !/api key.*not configured|rxresume.*(?:credential|api key)/i.test(
+          message,
+        )
+      )
+        throw error;
+      logger.warn(
+        "RxResume is unavailable for Resume Studio; using local Typst fallback",
+        { documentId: designResume.documentId },
+      );
+      await renderResumePdf({
+        resumeJson: designResume.data,
+        outputPath,
+        jobId: "design-resume",
+        language,
+        renderer: "typst",
+        typstTheme: await resolveTypstTheme(),
+      });
+    }
   }
 
   return {

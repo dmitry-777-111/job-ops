@@ -159,6 +159,51 @@ describe("importDesignResumeFromFile", () => {
     expect(result.resumeJson.basics.name).toBe("Dmitrii Kolpachnikov");
   });
 
+  it("imports a plain DOCX locally and preserves work experience when no API key is configured", async () => {
+    modelSelection.resolveLlmRuntimeSettings.mockResolvedValue({
+      provider: "openai",
+      model: "gpt-4.1",
+      baseUrl: null,
+      apiKey: null,
+    });
+    const docxBase64 = await makeDocxBase64(
+      [
+        "Dmitrii Kolpachnikov",
+        "Industrial Maintenance Technician",
+        "dmitrii@example.com",
+        "",
+        "Work Experience",
+        "Fiera Foods",
+        "Electromechanic",
+        "2024 - Present",
+        "Maintained production equipment and diagnosed electrical faults.",
+        "",
+        "Education",
+        "Master of Radioengineering",
+      ].join("\n"),
+    );
+
+    const result = await importDesignResumeFromFile({
+      fileName: "resume.docx",
+      mediaType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      dataBase64: docxBase64,
+    });
+
+    expect(fetch).not.toHaveBeenCalled();
+    expect(result.resumeJson.basics.name).toBe("Dmitrii Kolpachnikov");
+    expect(result.resumeJson.sections.experience.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          company: "Fiera Foods",
+          position: "Electromechanic",
+          period: expect.stringContaining("2024"),
+          description: expect.stringContaining("production equipment"),
+        }),
+      ]),
+    );
+  });
+
   it("imports Reactive Resume JSON directly without model extraction", async () => {
     const resumeJson = buildDefaultReactiveResumeDocument() as DesignResumeJson;
     resumeJson.basics.name = "Jordan Park";

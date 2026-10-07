@@ -1325,7 +1325,7 @@ function ResumeStep({
             </div>
           </div>
           <Button type="button" variant="outline" className="w-full" asChild>
-            <a href="/design-resume">
+            <a href="/design-resume/basics">
               <BriefcaseBusiness className="h-4 w-4" />
               {translateUi("Edit in Resume Studio", interfaceLanguage)}
             </a>
