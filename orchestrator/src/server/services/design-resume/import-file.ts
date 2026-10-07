@@ -313,6 +313,7 @@ Rules:
 - For rich text descriptions and summaries, preserve structure using simple HTML tags only: <p>, <ul>, <li>, <strong>, <em>.
 - Do not add sections or keys that do not exist in the template.
 - Keep dates, names, locations, and organization names exactly as written when possible.
+- Preserve LinkedIn and other professional profile URLs in sections.profiles when they are present in the resume.
 `.trim();
 
 type RecordLike = Record<string, unknown>;
@@ -961,6 +962,10 @@ function buildLocalTextFallbackResume(
     documentText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? "";
   const phone =
     documentText.match(/(?:\+?\d[\d().\s-]{7,}\d)/)?.[0]?.trim() ?? "";
+  const linkedInUrl =
+    documentText
+      .match(/https?:\/\/(?:www\.)?linkedin\.com\/in\/[^\s<>()]+/i)?.[0]
+      ?.replace(/[.,;:]+$/, "") ?? "";
   const fileStem = fileName
     .replace(/\.[^.]+$/, "")
     .replace(/[_-]+/g, " ")
@@ -975,6 +980,23 @@ function buildLocalTextFallbackResume(
   resume.basics.headline = lines[1]?.slice(0, 160) ?? "";
   resume.basics.email = email;
   resume.basics.phone = phone;
+  if (linkedInUrl) {
+    const username = linkedInUrl.split("/in/")[1]?.replace(/\/$/, "") ?? "";
+    resume.sections.profiles.items = [
+      {
+        id: "",
+        hidden: false,
+        icon: "",
+        network: "LinkedIn",
+        username,
+        website: {
+          url: linkedInUrl,
+          label: "LinkedIn",
+          inlineLink: false,
+        },
+      },
+    ];
+  }
   resume.summary.content = documentText.slice(0, 20_000);
   resume.summary.title = "Imported resume text";
 

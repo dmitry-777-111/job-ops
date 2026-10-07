@@ -784,11 +784,28 @@ function LaunchSetup({
                 </StepShell>
               ) : activeStep === "job_profiles" ? (
                 <JobProfilesStep
-                  initialUrls={
-                    Array.isArray(jobProfilesRequirement?.details?.urls)
+                  initialUrls={[
+                    ...(Array.isArray(jobProfilesRequirement?.details?.urls)
                       ? (jobProfilesRequirement.details.urls as string[])
-                      : []
-                  }
+                      : []),
+                    ...(
+                      designResume.document?.resumeJson.sections.profiles
+                        .items ?? []
+                    )
+                      .map((item) => item.website?.url?.trim())
+                      .filter(
+                        (url): url is string =>
+                          Boolean(url) &&
+                          !(
+                            Array.isArray(
+                              jobProfilesRequirement?.details?.urls,
+                            ) &&
+                            (
+                              jobProfilesRequirement.details.urls as string[]
+                            ).includes(url)
+                          ),
+                      ),
+                  ].slice(0, 6)}
                   busy={jobProfilesBusy}
                   onBack={() => setSelectedStep("resume")}
                   onSave={saveJobProfiles}
@@ -798,6 +815,7 @@ function LaunchSetup({
                   flow={flow}
                   requirement={resumeRequirement}
                   profile={profileQuery.data ?? null}
+                  document={designResume.document}
                   hasResume={Boolean(resumeSource)}
                   busy={confirmBusy}
                   onBack={() =>
@@ -1198,6 +1216,7 @@ function ResumeStep({
   flow,
   requirement,
   profile,
+  document,
   hasResume,
   busy,
   onBack,
@@ -1206,6 +1225,7 @@ function ResumeStep({
   flow: ReturnType<typeof useOnboardingFlow>;
   requirement: OnboardingRequirement | null;
   profile: ResumeProfile | null;
+  document: ReturnType<typeof useDesignResume>["document"];
   hasResume: boolean;
   busy: boolean;
   onBack: () => void;
@@ -1214,6 +1234,16 @@ function ResumeStep({
   const interfaceLanguage = useInterfaceLanguage();
   const replacementFileInputRef = useRef<HTMLInputElement>(null);
   const experience = profile?.sections?.experience?.items ?? [];
+  const parsed = document?.resumeJson;
+  const education = parsed?.sections.education.items ?? [];
+  const skills = parsed?.sections.skills.items ?? [];
+  const languages = parsed?.sections.languages.items ?? [];
+  const profiles = parsed?.sections.profiles.items ?? [];
+  const linkedIn = profiles.find(
+    (item) =>
+      item.network.toLowerCase().includes("linkedin") ||
+      item.website?.url?.toLowerCase().includes("linkedin.com/"),
+  );
   if (!hasResume) {
     return (
       <StepShell
@@ -1271,7 +1301,7 @@ function ResumeStep({
       description="Confirm the parsed identity and recent experience. Completion is tied to this exact resume source, so replacing it requires confirmation again."
     >
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        <div className="min-h-80 rounded-xl border border-border/60 bg-muted/15 p-6">
+        <div className="max-h-[38rem] min-h-80 overflow-y-auto rounded-xl border border-border/60 bg-muted/15 p-6">
           <div className="mb-6 border-b pb-5">
             <h3 className="text-2xl font-semibold">
               {profile?.basics?.name ||
@@ -1290,7 +1320,7 @@ function ResumeStep({
             </p>
           </div>
           <div className="space-y-4">
-            {experience.slice(0, 4).map((item) => (
+            {experience.map((item) => (
               <div key={item.id} className="grid gap-1 sm:grid-cols-[1fr_auto]">
                 <div>
                   <div className="font-medium">{item.position}</div>
@@ -1309,6 +1339,56 @@ function ResumeStep({
                   interfaceLanguage,
                 )}
               </p>
+            ) : null}
+            {education.length > 0 ? (
+              <div className="border-t pt-4">
+                <div className="mb-2 text-sm font-semibold">
+                  {translateUi("Education", interfaceLanguage)}
+                </div>
+                <div className="space-y-2">
+                  {education.map((item) => (
+                    <div key={item.id} className="text-sm">
+                      <div className="font-medium">
+                        {item.degree || item.area}
+                      </div>
+                      <div className="text-muted-foreground">
+                        {item.school}
+                        {item.period ? ` · ${item.period}` : ""}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {skills.length > 0 ? (
+              <div className="border-t pt-4">
+                <div className="mb-2 text-sm font-semibold">
+                  {translateUi("Skills", interfaceLanguage)}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((item) => (
+                    <span
+                      key={item.id}
+                      className="rounded-full border px-2 py-1 text-xs text-muted-foreground"
+                    >
+                      {item.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {linkedIn?.website?.url ? (
+              <div className="border-t pt-4 text-sm">
+                <div className="mb-1 font-semibold">LinkedIn</div>
+                <a
+                  href={linkedIn.website.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="break-all text-muted-foreground underline"
+                >
+                  {linkedIn.website.url}
+                </a>
+              </div>
             ) : null}
           </div>
         </div>
@@ -1332,13 +1412,40 @@ function ResumeStep({
             <div className="text-sm font-medium">
               {translateUi("Parsed successfully", interfaceLanguage)}
             </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {experience.length} {translateUi("experience", interfaceLanguage)}{" "}
-              {translateUi(
-                experience.length === 1 ? "entry" : "entries",
-                interfaceLanguage,
-              )}
+            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+              <div>
+                {experience.length}{" "}
+                {translateUi("experience entries", interfaceLanguage)}
+              </div>
+              <div>
+                {education.length}{" "}
+                {translateUi("education entries", interfaceLanguage)}
+              </div>
+              <div>
+                {skills.length} {translateUi("skills", interfaceLanguage)}
+              </div>
+              <div>
+                {languages.length} {translateUi("languages", interfaceLanguage)}
+              </div>
+              <div>
+                {translateUi(
+                  linkedIn?.website?.url
+                    ? "LinkedIn detected"
+                    : "LinkedIn not detected",
+                  interfaceLanguage,
+                )}
+              </div>
             </div>
+            {linkedIn?.website?.url ? (
+              <a
+                href={linkedIn.website.url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 block break-all text-xs underline"
+              >
+                {linkedIn.website.url}
+              </a>
+            ) : null}
           </div>
           <Button
             type="button"

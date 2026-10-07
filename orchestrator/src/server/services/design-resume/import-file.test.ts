@@ -171,6 +171,7 @@ describe("importDesignResumeFromFile", () => {
         "Dmitrii Kolpachnikov",
         "Industrial Maintenance Technician",
         "dmitrii@example.com",
+        "https://www.linkedin.com/in/dmitrii-kolpachnikov",
         "",
         "Work Experience",
         "Fiera Foods",
@@ -192,6 +193,16 @@ describe("importDesignResumeFromFile", () => {
 
     expect(fetch).not.toHaveBeenCalled();
     expect(result.resumeJson.basics.name).toBe("Dmitrii Kolpachnikov");
+    expect(result.resumeJson.sections.profiles.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          network: "LinkedIn",
+          website: expect.objectContaining({
+            url: "https://www.linkedin.com/in/dmitrii-kolpachnikov",
+          }),
+        }),
+      ]),
+    );
     expect(result.resumeJson.sections.experience.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
