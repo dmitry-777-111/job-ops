@@ -1,0 +1,86 @@
+name: Freeze3 build and deploy
+
+on:
+  push:
+    branches: [freeze3-dev]
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Deploy this revision or restore the previous container and data
+        type: choice
+        options: [deploy, rollback, status]
+        default: deploy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: freeze3-racknerd
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/freeze3-dev' && (github.event_name == 'push' || inputs.operation == 'deploy')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.image.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        id: image
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64
+          tags: ghcr.io/dmitry-777-111/job-ops-freeze3:${{ github.sha }}
+          labels: org.opencontainers.image.source=https://github.com/dmitry-777-111/job-ops
+          secrets: github_token=${{ secrets.GITHUB_TOKEN }}
+          cache-from: type=gha,scope=freeze3
+          cache-to: type=gha,mode=max,scope=freeze3
+
+  deploy:
+    needs: build
+    if: always() && github.ref == 'refs/heads/freeze3-dev' && (needs.build.result == 'success' || inputs.operation == 'rollback' || inputs.operation == 'status')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      packages: read
+    steps:
+      - name: Deploy using restricted SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.FREEZE3_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.FREEZE3_KNOWN_HOSTS }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIGEST: ${{ needs.build.outputs.digest }}
+          REVISION: ${{ github.sha }}
+          OPERATION: ${{ inputs.operation || 'deploy' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          key_dir=$(mktemp -d)
+          trap 'rm -rf "$key_dir"' EXIT
+          printf '%s\n' "$DEPLOY_KEY" > "$key_dir/key"
+          printf '%s\n' "$KNOWN_HOSTS" > "$key_dir/known_hosts"
+          ssh_args=(-i "$key_dir/key" -o BatchMode=yes -o IdentitiesOnly=yes
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$key_dir/known_hosts"
+            -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=20)
+          case "$OPERATION" in
+            deploy)
+              printf '%s\n' "$REGISTRY_TOKEN" | ssh "${ssh_args[@]}" root@107.172.61.239 "deploy $DIGEST $REVISION"
+              ;;
+            rollback|status)
+              ssh "${ssh_args[@]}" root@107.172.61.239 "$OPERATION"
+              ;;
+            *) exit 2 ;;
+          esac
