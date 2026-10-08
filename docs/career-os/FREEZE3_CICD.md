@@ -15,7 +15,7 @@ Deployment must continue when the developer's PC is off. GitHub builds and publi
 
 ## How to use it
 
-1. Commit and push to `freeze3-dev`, or edit that branch on GitHub.
+1. Commit and push to `freeze3-dev`, or edit that branch on GitHub. Documentation-only commits may include `[skip ci]` to avoid an unnecessary rebuild.
 2. Open Actions → Freeze3 build and deploy. Wait for both build and deploy to succeed.
 3. The deploy prints `DEPLOY_OK` only after Docker health checks succeed.
 
