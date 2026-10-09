@@ -53,7 +53,7 @@ function salaryLabel(job: JobListItem): string | null {
 export function CandidateHomePage() {
   const navigate = useNavigate();
   const interfaceLanguage = useInterfaceLanguage();
-  const [periodHours, setPeriodHours] = React.useState(24);
+  const [periodHours, setPeriodHours] = React.useState(168);
 
   const jobsQuery = useQuery({
     queryKey: ["candidate-home", "ready-jobs"],
@@ -168,14 +168,32 @@ export function CandidateHomePage() {
                   {translateUi(adaptiveMessage, interfaceLanguage)}
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/improve")}
-              >
-                {translateUi("Improve my profile", interfaceLanguage)}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/onboarding?review=resume")}
+                >
+                  {translateUi("Resume and profiles", interfaceLanguage)}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/onboarding?review=profile")}
+                >
+                  {translateUi("Review setup", interfaceLanguage)}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/improve")}
+                >
+                  {translateUi("Improve my profile", interfaceLanguage)}
+                </Button>
+              </div>
             </div>
             <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               {JOURNEY_STAGES.map((stage, index) => {
