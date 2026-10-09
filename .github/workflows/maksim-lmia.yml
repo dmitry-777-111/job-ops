@@ -62,11 +62,11 @@ jobs:
                       nc=find(['noc']);ec=find(['employer']);pc=find(['province','prov'])
                       if any(c is None for c in [nc,ec,pc]):raise ValueError('Missing employer/NOC/province: '+str(list(df.columns)))
                       target='2232' if q=='2024Q1' else '22301'
-                      subset=df[df[nc].astype(str).str.contains(r'(?<!\\d)'+target+r'(?!\\d)',regex=True,na=False) & df[pc].astype(str).str.contains(r'Ontario|\\bON\\b',case=False,regex=True,na=False)].copy()
+                      subset=df[df[nc].astype(str).str.contains(r'(?<!\d)'+target+r'(?!\d)',regex=True,na=False) & df[pc].astype(str).str.contains(r'Ontario|\bON\b',case=False,regex=True,na=False)].copy()
                       status['rows']=len(subset);status['status']='parsed'
                       for _,v in subset.iterrows():
                           name=str(v[ec]).strip()
-                          rows.append({'quarter':q,'noc_system':'NOC2011' if q=='2024Q1' else 'NOC2021','noc':target,'employer':name,'province':str(v[pc]),'source_url':r['url'],'excluded':bool(re.search(r'fiera\\s*foods|upper\\s*crust',name,re.I)),'raw_row':json.dumps({str(k):str(value) for k,value in v.items()},ensure_ascii=False)})
+                          rows.append({'quarter':q,'noc_system':'NOC2011' if q=='2024Q1' else 'NOC2021','noc':target,'employer':name,'province':str(v[pc]),'source_url':r['url'],'excluded':bool(re.search(r'fiera\s*foods|upper\s*crust',name,re.I)),'raw_row':json.dumps({str(k):str(value) for k,value in v.items()},ensure_ascii=False)})
                   except Exception as exc:status['status']='FAILED';status['error']=str(exc)
                   log['quarters'].append(status)
               if rows:
