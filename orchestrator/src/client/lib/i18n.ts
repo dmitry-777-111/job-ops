@@ -176,6 +176,18 @@ const translations: Record<
       ru: "The JobAgent собирает данные рынка и ищет более сильные совпадения.",
       de: "The JobAgent sammelt Marktsignale und sucht nach stärkeren Treffern.",
     },
+  "Resume and profiles": {
+    es: "Currículum y perfiles",
+    fr: "CV et profils",
+    ru: "Резюме и профили",
+    de: "Lebenslauf und Profile",
+  },
+  "Review setup": {
+    es: "Revisar configuración",
+    fr: "Revoir la configuration",
+    ru: "Проверить настройки",
+    de: "Einrichtung prüfen",
+  },
   "Improve my profile": {
     es: "Mejorar mi perfil",
     fr: "Améliorer mon profil",
