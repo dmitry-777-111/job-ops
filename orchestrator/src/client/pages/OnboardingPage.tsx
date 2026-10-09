@@ -26,7 +26,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import * as api from "@/client/api";
 import { JobAgentMark } from "@/client/components/JobAgentMark";
@@ -358,8 +358,14 @@ function LaunchSetup({
     ),
     retry: false,
   });
+  const reviewStep = useMemo(() => {
+    const value = new URLSearchParams(window.location.search).get("review");
+    return STEP_ORDER.includes(value as OnboardingRequirementId)
+      ? (value as OnboardingRequirementId)
+      : null;
+  }, []);
   const [selectedStep, setSelectedStep] =
-    useState<OnboardingRequirementId | null>(null);
+    useState<OnboardingRequirementId | null>(reviewStep);
   const [profileBusy, setProfileBusy] = useState(false);
   const [strategyBusy, setStrategyBusy] = useState(false);
   const [confirmBusy, setConfirmBusy] = useState(false);
@@ -472,10 +478,10 @@ function LaunchSetup({
       });
     }
     queryClient.setQueryData(queryKeys.onboarding.status(), next);
-    setSelectedStep(next.nextRequirementId);
+    setSelectedStep(next.nextRequirementId ?? reviewStep);
   };
 
-  if (flow.demoMode || status?.complete) {
+  if (flow.demoMode || (status?.complete && !reviewStep)) {
     return <Navigate to="/jobs/ready" replace />;
   }
   if (onboarding.checking) {
