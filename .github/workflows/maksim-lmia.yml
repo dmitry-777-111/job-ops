@@ -1,0 +1,96 @@
+name: Maksim LMIA Ontario audit
+on:
+  push:
+    branches: [research/maksim-lmia-22301-2026]
+    paths: ['.github/workflows/maksim-lmia.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/maksim-lmia-22301-2026
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pandas openpyxl requests
+      - name: Download and filter government LMIA records
+        shell: bash
+        run: |
+          mkdir -p research/maksim-lmia/data
+          python - <<'PY'
+          import io,re,os,json,requests,pandas as pd
+          from pathlib import Path
+          out=Path('research/maksim-lmia/data')
+          url='https://open.canada.ca/data/api/action/package_show?id=90fed587-1364-4f33-a9ee-208181dc0b97'
+          log={'dataset':url,'quarters':[]}
+          try:
+              req=requests.get(url,timeout=40);req.raise_for_status()
+              resources=req.json()['result']['resources']
+              selected={}
+              for r in resources:
+                  title=' '.join(str(r.get(k,'')) for k in ['name','description','url'])
+                  m=re.search(r'202[456][ -]?Q[1-4]',title,re.I)
+                  if not m:continue
+                  q=m.group().upper().replace(' ','').replace('-','')
+                  if not '2024Q1'<=q<='2026Q1':continue
+                  if r.get('format','').upper() not in ('XLSX','XLS'):continue
+                  if re.search(r'French|Français|francais',title,re.I):continue
+                  if 'English' not in title and '_en' not in r.get('url','').lower():continue
+                  selected[q]=r
+              rows=[]
+              for q,r in sorted(selected.items()):
+                  status={'quarter':q,'url':r.get('url'),'status':'started'}
+                  try:
+                      b=requests.get(r['url'],timeout=90);b.raise_for_status()
+                      if not b.content.startswith(b'PK'):raise ValueError('Not XLSX binary')
+                      book=pd.ExcelFile(io.BytesIO(b.content))
+                      df=None
+                      for sheet in book.sheet_names:
+                          for h in range(15):
+                              x=pd.read_excel(book,sheet_name=sheet,header=h,dtype=str)
+                              names=' '.join(map(str.lower,map(str,x.columns)))
+                              if 'employer' in names and 'noc' in names:df=x;break
+                          if df is not None:break
+                      if df is None:raise ValueError('Column headers not identified')
+                      cols={str(c).lower():c for c in df.columns}
+                      find=lambda words:next((c for c in df.columns if any(w in str(c).lower() for w in words)),None)
+                      nc=find(['noc']);ec=find(['employer']);pc=find(['province','prov'])
+                      if any(c is None for c in [nc,ec,pc]):raise ValueError('Missing employer/NOC/province: '+str(list(df.columns)))
+                      target='2232' if q=='2024Q1' else '22301'
+                      subset=df[df[nc].astype(str).str.contains(r'(?<!\\d)'+target+r'(?!\\d)',regex=True,na=False) & df[pc].astype(str).str.contains(r'Ontario|\\bON\\b',case=False,regex=True,na=False)].copy()
+                      status['rows']=len(subset);status['status']='parsed'
+                      for _,v in subset.iterrows():
+                          name=str(v[ec]).strip()
+                          rows.append({'quarter':q,'noc_system':'NOC2011' if q=='2024Q1' else 'NOC2021','noc':target,'employer':name,'province':str(v[pc]),'source_url':r['url'],'excluded':bool(re.search(r'fiera\\s*foods|upper\\s*crust',name,re.I)),'raw_row':json.dumps({str(k):str(value) for k,value in v.items()},ensure_ascii=False)})
+                  except Exception as exc:status['status']='FAILED';status['error']=str(exc)
+                  log['quarters'].append(status)
+              if rows:
+                  all=pd.DataFrame(rows)
+                  all.to_csv(out/'official_matched_rows.csv',index=False)
+                  current=all[(all.noc_system=='NOC2021')&(~all.excluded)].copy()
+                  legacy=all[all.noc_system=='NOC2011'].copy()
+                  current.to_csv(out/'noc22301_ontario.csv',index=False)
+                  legacy.to_csv(out/'legacy2232_separate.csv',index=False)
+                  current['key']=current.employer.str.lower().str.replace(r'[^a-z0-9]+',' ',regex=True).str.strip()
+                  summary=current.groupby('key').agg(employer=('employer','first'),records=('employer','size'),quarters=('quarter','nunique'),quarter_list=('quarter',lambda x:','.join(sorted(set(x))))).reset_index().sort_values(['quarters','records'],ascending=False)
+                  summary.to_csv(out/'employers_repeat_review.csv',index=False)
+                  log['current_rows']=len(current);log['legacy_rows']=len(legacy);log['employers']=len(summary)
+          except Exception as exc:log['fatal']=str(exc)
+          (out/'audit.json').write_text(json.dumps(log,indent=2,ensure_ascii=False))
+          print(json.dumps(log,ensure_ascii=False))
+          PY
+      - name: Commit audit in research branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/maksim-lmia/data
+          git diff --cached --quiet || (git commit -m "Research: LMIA official extract and audit" && git push origin HEAD:research/maksim-lmia-22301-2026)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maksim-lmia-official-audit
+          path: research/maksim-lmia/data/
