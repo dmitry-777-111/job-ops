@@ -18,7 +18,9 @@ describe("CandidateHomePage", () => {
     ["Resume and profiles", "/onboarding?review=resume"],
     ["Review setup", "/onboarding?review=profile"],
     ["Resume Studio", "/design-resume"],
-  ])("shows a three-day-old match by default and opens %s", async (label, target) => {
+  ])(
+    "shows a three-day-old match by default and opens %s",
+    async (label, target) => {
     vi.mocked(api.getJobs).mockImplementation(
       async (input) =>
         ({
@@ -55,18 +57,23 @@ describe("CandidateHomePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "24 hours" }));
     expect(screen.queryByText("Recent match")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: label }));
-    expect(await screen.findByText(target)).toBeInTheDocument();
-  });
+      expect(await screen.findByText(target)).toBeInTheDocument();
+    },
+  );
   it("offers older ready vacancies when there are no matches this week", async () => {
     vi.mocked(api.getJobs).mockImplementation(
       async (input) =>
         ({
           jobs: input?.statuses?.includes("ready")
-            ? [{
-                id: "historical",
-                title: "Previously ready position",
-                discoveredAt: new Date(Date.now() - 9 * 86400000).toISOString(),
-              }]
+            ? [
+                {
+                  id: "historical",
+                  title: "Previously ready position",
+                  discoveredAt: new Date(
+                    Date.now() - 9 * 86400000,
+                  ).toISOString(),
+                },
+              ]
             : [],
         }) as unknown as Awaited<ReturnType<typeof api.getJobs>>,
     );
@@ -77,9 +84,15 @@ describe("CandidateHomePage", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(await screen.findByText("No new matches in this period")).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: "All ready" })[1]);
-    expect(await screen.findByText("Previously ready position")).toBeInTheDocument();
+    expect(
+      await screen.findByText("No new matches in this period"),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "All ready" })[1],
+    );
+    expect(
+      await screen.findByText("Previously ready position"),
+    ).toBeInTheDocument();
   });
 
   it("filters matches correctly across 24 hours, 3 days and 7 days", async () => {
@@ -98,7 +111,11 @@ describe("CandidateHomePage", () => {
                 match("Two-day match", 48),
                 match("Six-day match", 144),
                 match("Expired match", 192),
-                { id: "Undated match", title: "Undated match", discoveredAt: "invalid-date" },
+                {
+                  id: "Undated match",
+                  title: "Undated match",
+                  discoveredAt: "invalid-date",
+                },
                 match("Future match", -24),
               ]
             : [],
