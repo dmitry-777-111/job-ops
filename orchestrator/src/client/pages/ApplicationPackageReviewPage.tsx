@@ -309,8 +309,7 @@ export function ApplicationPackageReviewPage() {
               !review.qa.pass ||
               unknownNeedsAcknowledgement ||
               approveMutation.isPending ||
-              exportMutation.isPending ||
-              approveMutation.isPending
+              exportMutation.isPending
             }
             onClick={() => approveMutation.mutate()}
           >
@@ -328,7 +327,8 @@ export function ApplicationPackageReviewPage() {
               !isApproved ||
               !review.qa.pass ||
               unknownNeedsAcknowledgement ||
-              exportMutation.isPending
+              exportMutation.isPending ||
+              approveMutation.isPending
             }
             onClick={() => exportMutation.mutate()}
           >
