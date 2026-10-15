@@ -106,5 +106,8 @@ describe("CandidateHomePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "7 days" }));
     expect(screen.getByText("Six-day match")).toBeInTheDocument();
     expect(screen.queryByText("Expired match")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "All ready" }));
+    expect(screen.getByText("Expired match")).toBeInTheDocument();
+    expect(screen.queryByText("Future match")).not.toBeInTheDocument();
   });
 });
