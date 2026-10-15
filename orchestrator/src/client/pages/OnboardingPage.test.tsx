@@ -703,7 +703,11 @@ describe("OnboardingPage", () => {
       } as ReturnType<typeof useOnboardingStatus>);
       vi.mocked(useDesignResume).mockReturnValue({
         document: { id: "doc-replacement" } as never,
-        status: { exists: true, documentId: "doc-replacement", updatedAt: "2026-10-15" },
+        status: {
+          exists: true,
+          documentId: "doc-replacement",
+          updatedAt: "2026-10-15",
+        },
         error: null,
         isLoading: false,
         refresh: vi.fn(),
