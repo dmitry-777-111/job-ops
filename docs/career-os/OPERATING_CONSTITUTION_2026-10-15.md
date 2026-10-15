@@ -1,6 +1,6 @@
 # TJAgent / CAREER OS — operating constitution and recovery plan
 Date: 2026-10-15
-Status: PROPOSED — awaiting user approval; no release authorized.
+Status: APPROVED by user on 2026-10-15 — execution authorized; no release authorized.
 
 ## Product north star
 Deliver one usable daily candidate loop: import/review resume → preserve profile and work/visa constraints → discover and rank current real jobs with provenance → select a plausible vacancy → generate and approve an application package → record employer response/outcome → learn only from confirmed evidence. Do not optimize for raw job counts, code volume, or features shipped.
@@ -30,7 +30,7 @@ Deliver one usable daily candidate loop: import/review resume → preserve profi
 7. No user-facing release until functionality and evidence have passed; distinguish `implemented`, `tested`, `deployed`, `accepted` for every gate.
 
 ## Recovery and completion roadmap
-- A. Evidence gate: inspect current head, recent diffs, CI workflow runs/logs, deploy revision, rollback state; settle access path without infrastructure reset.
+- A. Evidence gate: inspect current head, recent diffs, CI workflow runs/logs, deploy revision, rollback state; settle access path without infrastructure reset. **Important discovery:** CI and freeze3 deploy workflows trigger independently on push, so deployment may succeed while lint/types/tests fail. Successful deployment must not imply accepted release; require separate passing CI for exact SHA before any release/cutover.
 - B. Functional gate: sign-in/onboarding-review, PDF/DOCX/replacement/LinkedIn hydration, saved strategy and profile persistence; repair confirmed blockers.
 - C. Market gate: Ready jobs from API with 24h/3d/7d/all-history filters; compare 20-30 real postings for current state, source links, duplicate and ranking quality, Canadian work authorization and salary constraints.
 - D. Application gate: create/review/export package for real eligible vacancy, verify QA evidence, explicit user approval; record/reload outcome and preserve feedback.
@@ -41,4 +41,4 @@ Deliver one usable daily candidate loop: import/review resume → preserve profi
 A: 2-4 hours; B: 6-10 hours; C: 6-12 hours; D: 4-8 hours; E: 3-6 hours; reserve 20-30% for regressions and connector access. Total approximately 25-50 working hours (not elapsed time); greater if live environment or upstream adapters fail.
 
 ## Acceptance evidence
-Use `FREEZE3_RELEASE_ACCEPTANCE.md` for concrete gates. No new PASS flag or release tag until the corresponding runtime and user evidence are attached. This proposal becomes active only after user approval.
+Use `FREEZE3_RELEASE_ACCEPTANCE.md` for concrete gates. No new PASS flag or release tag until the corresponding runtime and user evidence are attached. Approved by user 2026-10-15. Execution is active; release remains gated on evidence.
