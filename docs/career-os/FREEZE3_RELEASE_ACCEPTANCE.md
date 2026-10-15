@@ -65,6 +65,14 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - Inspected `OnboardingPage.tsx`: completed review retains step after saving, profile settings hydrate once, active strategy is fetched for review, resume confirmation has import-busy guard, and profile-link save persists through API. These are code-level observations, not E2E proof. Risks remain around asynchronous data hydration and exact resume confirmation source.
 - Next gate: obtain CI run identifier/evidence through a capable existing tool; verify exact-SHA lint/type/tests and currently running revision, then test saved data across reload and sign-in. Do not tag while either is unknown.
 
+## UX stabilization checkpoint — 2026-10-15
+
+- Reviewed Ready-job home code and tests after verified historical deploy `4a339894`.
+- Corrected misleading `0 matches` display during initial API loading and during API errors; loading now displays an ellipsis and failure a dash instead of zero.
+- Added a narrowly scoped pending-request regression test; cleaned up existing navigation/period test formatting.
+- GitHub records these changes, but **test pass, exact-current-revision CI and deployment are unverified**. Do not mark acceptance checked.
+- This checkpoint records code changes only, not a new runtime release. Next step: obtain actual latest CI run ID and deploy result; follow with onboarding and application package E2E checks.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
