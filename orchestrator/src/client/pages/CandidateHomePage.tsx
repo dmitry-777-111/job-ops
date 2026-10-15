@@ -181,6 +181,14 @@ export function CandidateHomePage() {
                   type="button"
                   variant="outline"
                   size="sm"
+                  onClick={() => navigate("/design-resume")}
+                >
+                  {translateUi("Resume Studio", interfaceLanguage)}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => navigate("/onboarding?review=profile")}
                 >
                   {translateUi("Review setup", interfaceLanguage)}
