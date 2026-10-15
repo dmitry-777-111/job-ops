@@ -639,6 +639,32 @@ describe("OnboardingPage", () => {
     );
   });
 
+  it("does not confirm the previous resume while a replacement is importing", async () => {
+    vi.mocked(useOnboardingStatus).mockReturnValue({
+      status: resumeStatus,
+      complete: false,
+      nextRequirementId: "resume",
+      requirements: resumeStatus.requirements,
+      checking: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useOnboardingStatus>);
+    vi.mocked(useDesignResume).mockReturnValue({
+      document: { id: "doc-1" } as never,
+      status: { exists: true, documentId: "doc-1", updatedAt: "2026-10-14" },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    });
+    mockFlow({ isBusy: true, isImportingResume: true });
+    await renderPage();
+    const confirm = screen.getByRole("button", { name: /use this resume/i });
+    expect(confirm).toBeDisabled();
+    expect(screen.getByRole("button", { name: /upload another resume/i })).toBeDisabled();
+    fireEvent.click(confirm);
+    expect(api.confirmOnboardingResume).not.toHaveBeenCalled();
+  });
+
   it("reconciles onboarding when the shared Codex control disconnects", async () => {
     const refetch = vi.fn();
     vi.mocked(useOnboardingStatus).mockReturnValue({
