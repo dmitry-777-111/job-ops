@@ -28,6 +28,15 @@ No new feature domains until acceptance is complete.
 - [ ] Confirm recoverable rollback snapshot and data preservation assumptions.
 - [ ] Only after all gates pass: tag an immutable candidate release commit and record acceptance evidence.
 
+## Source audit: jobs list (2026-10-14)
+
+Verified by inspecting the current branch (code inspection, not live runtime):
+- Client `getJobs({ statuses: ["ready"], view: "list" })` sends `GET /api/jobs?status=ready&view=list` with no pagination parameter.
+- `orchestrator/src/server/api/routes/jobs/read.ts` uses `jobsRepo.getJobListItems(statuses)`; response `total` equals returned array length.
+- `orchestrator/src/server/repositories/jobs.ts` selects all rows matching tenant scope and requested statuses, ordered by `discoveredAt`; it does not apply `limit` or `offset`.
+- Consequently, the 24h/7d empty-list issue was a client-side time-window/visibility problem, not an API pagination problem. Avoid modifying server search/scoring without fresh evidence.
+- The `All ready` option now provides access to older Ready jobs even when the 7-day window is empty. Client regression test committed; execution not yet proven.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
