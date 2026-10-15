@@ -309,6 +309,12 @@ const translations: Record<
   },
   "3 days": { es: "3 días", fr: "3 jours", ru: "3 дня", de: "3 Tage" },
   "7 days": { es: "7 días", fr: "7 jours", ru: "7 дней", de: "7 Tage" },
+  "All ready": {
+    es: "Todas las listas",
+    fr: "Toutes les offres prêtes",
+    ru: "Все подходящие",
+    de: "Alle bereiten Stellen",
+  },
   "Sign in": {
     es: "Iniciar sesión",
     fr: "Se connecter",
