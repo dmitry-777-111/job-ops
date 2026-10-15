@@ -245,13 +245,15 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
           updatedAt: document.updatedAt,
         });
 
-        if (settings?.pdfRenderer?.value !== "typst") {
+        let rendererUpdated = settings?.pdfRenderer?.value === "typst";
+        if (!rendererUpdated) {
           try {
             const nextSettings = await api.updateSettings({
               pdfRenderer: "typst",
             });
             syncSettingsCache(nextSettings);
             setValue("pdfRenderer", "typst");
+            rendererUpdated = true;
           } catch {
             // The resume import already succeeded; renderer settings must not
             // prevent the candidate from reviewing the imported document.
@@ -273,9 +275,9 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         });
         toast.success("Resume uploaded", {
           description:
-            settings?.pdfRenderer?.value === "typst"
-              ? "Your local Resume Studio document is ready."
-              : "Your local Resume Studio document is ready and PDF rendering was switched to Typst.",
+            rendererUpdated
+              ? "Your local Resume Studio document is ready with Typst rendering."
+              : "Your local Resume Studio document is ready. PDF rendering settings still need attention.",
         });
       } catch (error) {
         trackProductEvent("onboarding_resume_upload_completed", {
