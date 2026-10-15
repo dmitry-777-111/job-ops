@@ -88,6 +88,16 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - These are durable GitHub changes, **not yet a verified CI pass or an accepted runtime release**.
 - Next required gate is exact-commit CI/deploy evidence and actual end-to-end candidate flow (profile, PDF/DOCX, matching, approved package, outcome persistence). Release remains blocked until verified.
 
+## Extended execution and source-selection checkpoint — 2026-10-15
+
+- Beginning HEAD was `38262f5905db125b55f7a835424c0db38020771c`; verified no unexpected branch movement before changes.
+- Resolved an import-mode blocker: a newly imported local file now explicitly selects the `upload` resume mode, so an earlier Reactive Resume connection does not silently override the new document ID.
+- The confirmation code now honors `resumeSetupMode`: choosing Reactive Resume retains the connected `rxresume:` source; choosing local file uses the current `local:` document where present.
+- Added parameterized regression cases for both source types. These tests are committed but **not executed/CI-verified in this chat**.
+- Deduplicated the combined saved-and-imported job-platform URLs **before** applying the six-link display cap, to avoid losing unique profiles to repeated URLs.
+- No change to scoring, immigration eligibility, external applications, VPS infrastructure, or production.
+- Next: verify exact-SHA CI, deploy and runtime, then perform the user-facing onboarding→Ready→package→outcome acceptance gate. Do not tag a release without evidence.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
