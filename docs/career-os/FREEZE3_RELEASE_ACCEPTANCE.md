@@ -107,6 +107,15 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - Implementation and tests were committed; **tests not executed, CI and current VPS revision remain unverified**. Do not confuse reviewed source with release acceptance.
 - Next gate: obtain CI and runtime proof for a candidate SHA, then manual E2E verification of resume, strategy, Ready list, application package and outcome.
 
+## Safety and runner checkpoint — 2026-10-15
+
+- Validated starting HEAD `9a944498` was unchanged before the batch.
+- Tightened `OnboardingPage` confirmation: the selected upload mode cannot fall back to a saved Reactive Resume source and Reactive Resume mode cannot silently confirm an old local file. No matching source means the importer UI remains visible.
+- Added a focused regression for upload mode with a stale `rxresume:` confirmation and no local document; cleaned formatting in the source-switch regression.
+- Read the ResumeStep render branch to verify `hasResume=false` leads to importer UI rather than a confirm control. All observations are from source code, not test execution.
+- Investigated optional Remote Desktop Commander to obtain independent test command execution: registered Windows device is **offline**, last seen about 40 hours previously. Desktop is not a release prerequisite; do not request a reinstall.
+- No CI run or current runtime revision has been independently verified for this commit. Do not mark release accepted until CI and deploy evidence is collected from GitHub Actions.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
