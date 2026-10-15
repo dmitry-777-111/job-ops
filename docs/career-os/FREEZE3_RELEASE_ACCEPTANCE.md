@@ -58,6 +58,13 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - Corrected tool assessment: `fetch_workflow_run_jobs` and `fetch_workflow_job_logs` DO retrieve push-run evidence when the run/job ID is known. Do not request screenshots of YAML. CI run ID for exact candidate revision and runtime-current state remain unverified.
 - Release still gated on exact candidate SHA's CI results and current runtime verification.
 
+## Evidence retrieval and B-stage source review — 2026-10-15
+
+- Verified Actions run `38666210262` via `fetch_workflow_run_jobs` and `fetch_workflow_job_logs`: build and deploy success; `DEPLOY_OK` for revision `4a339894` (historical). Run and job IDs enable direct audit without screenshots or YAML.
+- The GitHub connector cannot list CI push workflow runs from commit alone. `get_commit_combined_status` contains no statuses and `fetch_commit_workflow_runs` filters pull-request runs; neither is evidence of CI outcome. CI outcome for the current candidate revision is **unknown**.
+- Inspected `OnboardingPage.tsx`: completed review retains step after saving, profile settings hydrate once, active strategy is fetched for review, resume confirmation has import-busy guard, and profile-link save persists through API. These are code-level observations, not E2E proof. Risks remain around asynchronous data hydration and exact resume confirmation source.
+- Next gate: obtain CI run identifier/evidence through a capable existing tool; verify exact-SHA lint/type/tests and currently running revision, then test saved data across reload and sign-in. Do not tag while either is unknown.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
