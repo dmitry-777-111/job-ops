@@ -246,11 +246,17 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         });
 
         if (settings?.pdfRenderer?.value !== "typst") {
-          const nextSettings = await api.updateSettings({
-            pdfRenderer: "typst",
-          });
-          syncSettingsCache(nextSettings);
-          setValue("pdfRenderer", "typst");
+          try {
+            const nextSettings = await api.updateSettings({
+              pdfRenderer: "typst",
+            });
+            syncSettingsCache(nextSettings);
+            setValue("pdfRenderer", "typst");
+          } catch {
+            // The resume import already succeeded; renderer settings must not
+            // prevent the candidate from reviewing the imported document.
+            toast.warning("Resume imported, but PDF rendering settings could not be updated.");
+          }
         }
 
         await refreshOnboardingState();
