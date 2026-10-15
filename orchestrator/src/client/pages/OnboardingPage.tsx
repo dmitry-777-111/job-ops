@@ -883,28 +883,19 @@ function LaunchSetup({
               ) : activeStep === "job_profiles" ? (
                 <JobProfilesStep
                   reviewMode={Boolean(reviewStep)}
-                  initialUrls={[
-                    ...(Array.isArray(jobProfilesRequirement?.details?.urls)
-                      ? (jobProfilesRequirement.details.urls as string[])
-                      : []),
-                    ...(
-                      designResume.document?.resumeJson.sections.profiles
-                        .items ?? []
-                    )
-                      .map((item) => item.website?.url?.trim())
-                      .filter(
-                        (url): url is string =>
-                          Boolean(url) &&
-                          !(
-                            Array.isArray(
-                              jobProfilesRequirement?.details?.urls,
-                            ) &&
-                            (
-                              jobProfilesRequirement.details.urls as string[]
-                            ).includes(url)
-                          ),
-                      ),
-                  ].slice(0, 6)}
+                  initialUrls={Array.from(
+                    new Set([
+                      ...(Array.isArray(jobProfilesRequirement?.details?.urls)
+                        ? (jobProfilesRequirement.details.urls as string[])
+                        : []),
+                      ...(
+                        designResume.document?.resumeJson.sections.profiles
+                          .items ?? []
+                      )
+                        .map((item) => item.website?.url?.trim())
+                        .filter((url): url is string => Boolean(url)),
+                    ]),
+                  ).slice(0, 6)}
                   busy={jobProfilesBusy}
                   onBack={() => setSelectedStep("resume")}
                   onSave={saveJobProfiles}
