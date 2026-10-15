@@ -20,6 +20,8 @@ vi.mock("@/client/api", () => ({
   getAuthBootstrapStatus: vi.fn(),
   hasAuthenticatedSession: vi.fn(() => true),
   getProfile: vi.fn(),
+  getActiveCandidateStrategy: vi.fn(),
+  saveOnboardingJobProfiles: vi.fn(),
   getOnboardingStrategyQuestions: vi.fn(),
   saveOnboardingProfile: vi.fn(),
   saveOnboardingStrategyDraft: vi.fn(),
@@ -217,9 +219,9 @@ function mockFlow(
   return flow;
 }
 
-async function renderPage() {
+async function renderPage(entry = "/onboarding") {
   renderWithQueryClient(
-    <MemoryRouter initialEntries={["/onboarding"]}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/jobs/ready" element={<div>Ready page</div>} />
@@ -259,6 +261,97 @@ describe("OnboardingPage", () => {
       refresh: vi.fn(),
     });
     mockFlow();
+  });
+
+  it("reviews all five completed steps, preserves saved preferences, and stays on the saved step", async () => {
+    const status: OnboardingStatusResponse = {
+      complete: true,
+      nextRequirementId: null,
+      requirements: [
+        "profile",
+        "strategy",
+        "model",
+        "resume",
+        "job_profiles",
+      ].map((id) => ({
+        id,
+        status: "ready",
+        title: "Saved",
+        message: "Saved",
+        primaryAction: "none",
+        details:
+          id === "job_profiles" ? { urls: ["https://example.com/me"] } : {},
+      })),
+    } as OnboardingStatusResponse;
+    vi.mocked(useOnboardingStatus).mockReturnValue({
+      status,
+      checking: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useOnboardingStatus>);
+    mockFlow({
+      settings: {
+        model: { value: "test", default: "test" },
+        llmBaseUrl: { value: "" },
+        llmProvider: { value: "openrouter" },
+        jobspyCountryIndeed: { value: "canada" },
+        searchCities: { value: "Toronto|Ottawa" },
+        workplaceTypes: { value: ["onsite"] },
+        showSponsorInfo: { value: false },
+      } as unknown as NonNullable<
+        ReturnType<typeof useOnboardingFlow>["settings"]
+      >,
+    });
+    vi.mocked(api.getActiveCandidateStrategy).mockResolvedValue({
+      targetRoleFamilies: ["Field service"],
+      excludedRoleFamilies: ["Sales"],
+      constraints: [],
+      freeformNotes: "Stability",
+    } as unknown as NonNullable<
+      Awaited<ReturnType<typeof api.getActiveCandidateStrategy>>
+    >);
+    vi.mocked(api.saveOnboardingProfile).mockResolvedValue(status);
+    await renderPage("/onboarding?review=profile");
+    expect(
+      await screen.findByDisplayValue("Toronto, Ottawa"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Save and continue/i }));
+    await waitFor(() =>
+      expect(api.saveOnboardingProfile).toHaveBeenCalledWith({
+        country: "canada",
+        cities: ["Toronto", "Ottawa"],
+        workplaceTypes: ["onsite"],
+        requiresVisaSponsorship: false,
+      }),
+    );
+    const nav = screen.getByRole("navigation", { name: "Setup progress" });
+    const buttons = nav.querySelectorAll("button");
+    expect(buttons).toHaveLength(5);
+    fireEvent.click(buttons[1]);
+    expect(
+      await screen.findByDisplayValue("Field service"),
+    ).toBeInTheDocument();
+    fireEvent.click(buttons[2]);
+    expect(screen.getByText("LLM configuration")).toBeInTheDocument();
+    fireEvent.click(buttons[3]);
+    expect(screen.getByText("Resume importer")).toBeInTheDocument();
+    fireEvent.click(buttons[4]);
+    expect(
+      screen.getByDisplayValue("https://example.com/me"),
+    ).toBeInTheDocument();
+    vi.mocked(api.saveOnboardingJobProfiles).mockResolvedValue(status);
+    fireEvent.click(screen.getByRole("button", { name: /Save and finish/i }));
+    await waitFor(() =>
+      expect(api.saveOnboardingJobProfiles).toHaveBeenCalled(),
+    );
+    expect(
+      screen.getByDisplayValue("https://example.com/me"),
+    ).toBeInTheDocument();
+    expect(analyticsMocks.trackProductEvent).not.toHaveBeenCalledWith(
+      "onboarding_completed",
+      expect.anything(),
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Back to home" }));
+    expect(await screen.findByText("Ready page")).toBeInTheDocument();
   });
 
   it("creates the workspace account with only username and password", async () => {

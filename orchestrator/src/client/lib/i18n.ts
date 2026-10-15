@@ -182,6 +182,18 @@ const translations: Record<
     ru: "Резюме и профили",
     de: "Lebenslauf und Profile",
   },
+  "Retry loading saved settings": {
+    es: "Volver a cargar ajustes guardados",
+    fr: "Recharger les paramètres enregistrés",
+    ru: "Повторить загрузку сохранённых настроек",
+    de: "Gespeicherte Einstellungen erneut laden",
+  },
+  "Back to home": {
+    es: "Volver al inicio",
+    fr: "Retour à l’accueil",
+    ru: "На главный экран",
+    de: "Zur Startseite",
+  },
   "Review setup": {
     es: "Revisar configuración",
     fr: "Revoir la configuration",

@@ -736,10 +736,9 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
   const jobProfilesRequirement = isSystemAdmin()
     ? null
     : await buildJobProfilesRequirement();
-  const pendingJobProfilesRequirement =
-    !jobProfilesRequirement || jobProfilesRequirement.status === "ready"
-      ? []
-      : [jobProfilesRequirement];
+  const reviewableJobProfilesRequirement = jobProfilesRequirement
+    ? [jobProfilesRequirement]
+    : [];
   const requirements = showLlmRequirement
     ? [
         profileRequirement,
@@ -748,7 +747,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
         hostedMode
           ? await buildHostedResumeRequirement()
           : await buildResumeRequirement(),
-        ...pendingJobProfilesRequirement,
+        ...reviewableJobProfilesRequirement,
       ]
     : [
         profileRequirement,
@@ -756,7 +755,7 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResponse> {
         hostedMode
           ? await buildHostedResumeRequirement()
           : await buildResumeRequirement(),
-        ...pendingJobProfilesRequirement,
+        ...reviewableJobProfilesRequirement,
       ];
   const nextRequirement = requirements.find(
     (requirement) => requirement.status !== "ready",

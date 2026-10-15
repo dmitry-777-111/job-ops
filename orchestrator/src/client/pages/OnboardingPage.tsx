@@ -26,8 +26,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import * as api from "@/client/api";
 import { JobAgentMark } from "@/client/components/JobAgentMark";
 import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
@@ -358,12 +358,11 @@ function LaunchSetup({
     ),
     retry: false,
   });
-  const reviewStep = useMemo(() => {
-    const value = new URLSearchParams(window.location.search).get("review");
-    return STEP_ORDER.includes(value as OnboardingRequirementId)
-      ? (value as OnboardingRequirementId)
-      : null;
-  }, []);
+  const [searchParams] = useSearchParams();
+  const reviewValue = searchParams.get("review");
+  const reviewStep = STEP_ORDER.includes(reviewValue as OnboardingRequirementId)
+    ? (reviewValue as OnboardingRequirementId)
+    : null;
   const [selectedStep, setSelectedStep] =
     useState<OnboardingRequirementId | null>(reviewStep);
   const [profileBusy, setProfileBusy] = useState(false);
@@ -385,6 +384,55 @@ function LaunchSetup({
     Array<"remote" | "hybrid" | "onsite">
   >(["remote", "hybrid"]);
   const [requiresVisaSponsorship, setRequiresVisaSponsorship] = useState(true);
+  const profileHydrated = useRef(false);
+  const strategyHydrated = useRef(false);
+  const activeStrategyQuery = useQuery({
+    queryKey: ["onboarding", "active-strategy"],
+    queryFn: api.getActiveCandidateStrategy,
+    enabled: Boolean(
+      reviewStep &&
+        getRequirement(onboarding.status, "strategy")?.status === "ready",
+    ),
+    retry: false,
+  });
+  useEffect(() => {
+    if (!flow.settings || profileHydrated.current) return;
+    profileHydrated.current = true;
+    setCountry(flow.settings.jobspyCountryIndeed?.value ?? "");
+    setCities((flow.settings.searchCities?.value ?? "").split("|").join(", "));
+    setWorkplaceTypes(
+      flow.settings.workplaceTypes?.value ?? ["remote", "hybrid"],
+    );
+    setRequiresVisaSponsorship(flow.settings.showSponsorInfo?.value ?? true);
+  }, [flow.settings]);
+  useEffect(() => {
+    const strategy = activeStrategyQuery.data;
+    if (!strategy || activeStrategyQuery.isFetching || strategyHydrated.current)
+      return;
+    strategyHydrated.current = true;
+    setTargetRoles(strategy.targetRoleFamilies.join(", "));
+    setExcludedRoles(strategy.excludedRoleFamilies.join(", "));
+    const floor = strategy.constraints.find(
+      (item) => item.key === "minimum_compensation_cad_annual",
+    );
+    setCompensationFloor(
+      typeof floor?.value === "number" ? String(floor.value) : "",
+    );
+    const travel = strategy.constraints.find(
+      (item) => item.key === "us_travel",
+    );
+    setUsTravel(
+      travel?.value === false
+        ? "avoid"
+        : travel?.value === "limited"
+          ? "limited"
+          : "",
+    );
+    setCareerPriority(strategy.freeformNotes ?? "");
+  }, [activeStrategyQuery.data, activeStrategyQuery.isFetching]);
+  useEffect(() => {
+    setSelectedStep(reviewStep);
+  }, [reviewStep]);
   const completionTrackedRef = useRef(false);
   const lastStepViewRef = useRef<string | null>(null);
   const lastStatusCheckRef = useRef<string | null>(null);
@@ -468,7 +516,7 @@ function LaunchSetup({
   ]);
 
   const applyStatus = (next: OnboardingStatusResponse) => {
-    if (next.complete && !completionTrackedRef.current) {
+    if (!reviewStep && next.complete && !completionTrackedRef.current) {
       completionTrackedRef.current = true;
       trackProductEvent("onboarding_completed", {
         duration_bucket: bucketDurationMs(Date.now() - analyticsStartedAt),
@@ -478,13 +526,18 @@ function LaunchSetup({
       });
     }
     queryClient.setQueryData(queryKeys.onboarding.status(), next);
-    setSelectedStep(next.nextRequirementId ?? reviewStep);
+    void queryClient.invalidateQueries({ queryKey: queryKeys.settings.all });
+    if (!reviewStep) setSelectedStep(next.nextRequirementId);
   };
 
   if (flow.demoMode || (status?.complete && !reviewStep)) {
     return <Navigate to="/jobs/ready" replace />;
   }
-  if (onboarding.checking) {
+  if (
+    onboarding.checking ||
+    flow.settingsLoading ||
+    (activeStep === "strategy" && activeStrategyQuery.isFetching)
+  ) {
     return <LoadingState message="Loading your setup..." />;
   }
 
@@ -635,10 +688,23 @@ function LaunchSetup({
     <>
       <PageHeader
         icon={JobAgentMark}
-        title={`Set up ${PRODUCT_BRAND.name}`}
+        title={
+          reviewStep
+            ? translateUi("Review setup", interfaceLanguage)
+            : `Set up ${PRODUCT_BRAND.name}`
+        }
         subtitle="A few focused choices, then you're in. You can review the strategy before it becomes active."
       />
       <PageMain>
+        {reviewStep ? (
+          <div className="mx-auto mb-4 max-w-6xl">
+            <Button variant="outline" asChild>
+              <Link to="/jobs/ready">
+                {translateUi("Back to home", interfaceLanguage)}
+              </Link>
+            </Button>
+          </div>
+        ) : null}
         {activeStep === "profile" ? (
           <div className="mx-auto mb-4 max-w-6xl rounded-lg border border-border/50 bg-muted/10 px-4 py-3 text-xs leading-5 text-muted-foreground">
             {translateUi(
@@ -707,7 +773,20 @@ function LaunchSetup({
 
           <Card className="min-w-0 border-border/60 shadow-none">
             <CardContent className="p-6 sm:p-8">
-              {activeStep === "profile" ? (
+              {activeStep === "profile" && reviewStep && !flow.settings ? (
+                <Button
+                  onClick={() =>
+                    void queryClient.invalidateQueries({
+                      queryKey: queryKeys.settings.all,
+                    })
+                  }
+                >
+                  {translateUi(
+                    "Retry loading saved settings",
+                    interfaceLanguage,
+                  )}
+                </Button>
+              ) : activeStep === "profile" ? (
                 <ProfileStep
                   country={country}
                   cities={cities}
@@ -720,6 +799,13 @@ function LaunchSetup({
                   onVisaChange={setRequiresVisaSponsorship}
                   onContinue={saveProfile}
                 />
+              ) : activeStep === "strategy" && activeStrategyQuery.isError ? (
+                <Button onClick={() => void activeStrategyQuery.refetch()}>
+                  {translateUi(
+                    "Retry loading saved settings",
+                    interfaceLanguage,
+                  )}
+                </Button>
               ) : activeStep === "strategy" ? (
                 <StrategyStep
                   targetRoles={targetRoles}

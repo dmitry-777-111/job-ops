@@ -425,6 +425,20 @@ describe("onboarding status engine", () => {
     });
   });
 
+  it("keeps completed candidate profile links reviewable without leaking them to admin setup", async () => {
+    mocks.isSystemAdmin.mockReturnValue(false);
+    const candidate = await getOnboardingStatus();
+    expect(candidate.complete).toBe(true);
+    expect(
+      candidate.requirements.find((item) => item.id === "job_profiles"),
+    ).toMatchObject({ status: "ready" });
+    mocks.isSystemAdmin.mockReturnValue(true);
+    const admin = await getOnboardingStatus();
+    expect(admin.requirements.some((item) => item.id === "job_profiles")).toBe(
+      false,
+    );
+  });
+
   it("persists up to six job-platform profile links and completes the step", async () => {
     await saveOnboardingJobProfilesAction({
       urls: [
