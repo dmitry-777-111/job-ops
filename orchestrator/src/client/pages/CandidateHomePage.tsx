@@ -23,6 +23,7 @@ const PERIOD_OPTIONS = [
   { hours: 24, label: "24 hours" },
   { hours: 72, label: "3 days" },
   { hours: 168, label: "7 days" },
+  { hours: 0, label: "All ready" },
 ] as const;
 
 const JOURNEY_STAGES = [
@@ -37,7 +38,7 @@ function isWithinPeriod(job: JobListItem, hours: number): boolean {
   const discoveredAt = Date.parse(job.discoveredAt);
   if (!Number.isFinite(discoveredAt)) return false;
   const now = Date.now();
-  return discoveredAt <= now && discoveredAt >= now - hours * 60 * 60 * 1000;
+  return discoveredAt <= now && (hours === 0 || discoveredAt >= now - hours * 60 * 60 * 1000);
 }
 
 function salaryLabel(job: JobListItem): string | null {
@@ -284,13 +285,16 @@ export function CandidateHomePage() {
                   interfaceLanguage,
                 )}
               </p>
-              <Button
-                className="mt-4"
-                variant="outline"
-                onClick={() => navigate("/settings")}
-              >
-                {translateUi("Adjust my search", interfaceLanguage)}
-              </Button>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {periodHours !== 0 ? (
+                  <Button variant="outline" onClick={() => setPeriodHours(0)}>
+                    {translateUi("All ready", interfaceLanguage)}
+                  </Button>
+                ) : null}
+                <Button variant="outline" onClick={() => navigate("/settings")}>
+                  {translateUi("Adjust my search", interfaceLanguage)}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
