@@ -261,7 +261,13 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
           }
         }
 
-        await refreshOnboardingState();
+        try {
+          await refreshOnboardingState();
+        } catch {
+          // The imported document is already saved. A failed refresh should not
+          // incorrectly report an import failure or invite duplicate uploads.
+          toast.warning("Resume imported, but some setup details could not refresh.");
+        }
         trackProductEvent("onboarding_resume_upload_completed", {
           result: "success",
           file_type: fileType,
