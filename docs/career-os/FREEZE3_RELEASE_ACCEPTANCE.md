@@ -98,6 +98,15 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - No change to scoring, immigration eligibility, external applications, VPS infrastructure, or production.
 - Next: verify exact-SHA CI, deploy and runtime, then perform the user-facing onboarding→Ready→package→outcome acceptance gate. Do not tag a release without evidence.
 
+## Current long-block checkpoint — 2026-10-15
+
+- Base HEAD `9a944498e8e1f3caa02eefb6e48002f710c4fcac` matched current branch at start. No unexpected changes.
+- Found a genuine source-selection gap: a stale `rxresume:` confirmation string could be used even when the candidate selected local upload but no local document existed. Confirmation now accepts only a source matching the selected mode, and gives the upload UI until a suitable source is present.
+- Added a regression case for local upload mode with a stale Reactive Resume source and no imported local document. Also formatted the recent source-switch test fixture.
+- Inspected the resume review branch to confirm that `hasResume=false` displays the importer instead of the confirmation button.
+- Implementation and tests were committed; **tests not executed, CI and current VPS revision remain unverified**. Do not confuse reviewed source with release acceptance.
+- Next gate: obtain CI and runtime proof for a candidate SHA, then manual E2E verification of resume, strategy, Ready list, application package and outcome.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
