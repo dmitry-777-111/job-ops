@@ -37,6 +37,17 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - Consequently, the 24h/7d empty-list issue was a client-side time-window/visibility problem, not an API pagination problem. Avoid modifying server search/scoring without fresh evidence.
 - The `All ready` option now provides access to older Ready jobs even when the 7-day window is empty. Client regression test committed; execution not yet proven.
 
+## A-stage checkpoint — 2026-10-15
+
+- User approved the operating constitution and authorized recovery execution. Approval recorded in `OPERATING_CONSTITUTION_2026-10-15.md`.
+- Verified starting HEAD was `93dbcc3fc309cd39021264e78372a45aa85c40ea`; only approved documentation changes have followed.
+- Verified `.github/workflows/ci.yml` has push/dispatch triggers and lint, test, typecheck, docs jobs.
+- Verified `.github/workflows/freeze3-deploy.yml` has push/dispatch triggers, GHCR image build and restricted SSH deployment with immutable digest, serial concurrency and rollback command.
+- **Acceptance risk:** the CI and deploy workflows are independent on push. A healthy deployed container does not prove tests passed. Require both separately for the exact candidate SHA.
+- Read `scripts/deploy/freeze3-deploy.py`: it labels containers with `career-os.revision` and prints `DEPLOY_OK` after health checks. This is source inspection, **not** runtime proof.
+- Combined commit-status and PR-only workflow-run queries do not establish push-triggered CI/deploy results. Public workflow URL was not retrievable through the available browser path. Runtime SHA and backup state remain unverified.
+- Immediate next evidence: CI outcome, Freeze3 workflow outcome/log `DEPLOY_OK`, and active test-container revision; do not tag/release without these. Avoid repeating any infrastructure setup.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
