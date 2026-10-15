@@ -123,7 +123,7 @@ export function CandidateHomePage() {
       <PageHeader
         icon={JobAgentMark}
         title={PRODUCT_BRAND.name}
-        badge={translateUi("Today", interfaceLanguage)}
+        badge={translateUi(periodHours === 0 ? "All ready" : "Today", interfaceLanguage)}
         subtitle={translateUi(
           "Your best new opportunities, ready to act on",
           interfaceLanguage,
