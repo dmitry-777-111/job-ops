@@ -57,4 +57,51 @@ describe("CandidateHomePage", () => {
     fireEvent.click(screen.getByRole("button", { name: label }));
     expect(await screen.findByText(target)).toBeInTheDocument();
   });
+  it("filters matches correctly across 24 hours, 3 days and 7 days", async () => {
+    const now = Date.now();
+    const match = (id: string, ageHours: number) => ({
+      id,
+      title: id,
+      discoveredAt: new Date(now - ageHours * 3600000).toISOString(),
+    });
+    vi.mocked(api.getJobs).mockImplementation(
+      async (input) =>
+        ({
+          jobs: input?.statuses?.includes("ready")
+            ? [
+                match("Today match", 12),
+                match("Two-day match", 48),
+                match("Six-day match", 144),
+                match("Expired match", 192),
+              ]
+            : [],
+        }) as unknown as Awaited<ReturnType<typeof api.getJobs>>,
+    );
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<CandidateHomePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Today match")).toBeInTheDocument();
+    expect(screen.getByText("Two-day match")).toBeInTheDocument();
+    expect(screen.getByText("Six-day match")).toBeInTheDocument();
+    expect(screen.queryByText("Expired match")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "3 days" }));
+    expect(screen.getByText("Today match")).toBeInTheDocument();
+    expect(screen.getByText("Two-day match")).toBeInTheDocument();
+    expect(screen.queryByText("Six-day match")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "24 hours" }));
+    expect(screen.getByText("Today match")).toBeInTheDocument();
+    expect(screen.queryByText("Two-day match")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "7 days" }));
+    expect(screen.getByText("Six-day match")).toBeInTheDocument();
+    expect(screen.queryByText("Expired match")).not.toBeInTheDocument();
+  });
+
 });
