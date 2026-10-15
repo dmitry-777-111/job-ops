@@ -718,6 +718,36 @@ describe("OnboardingPage", () => {
     },
   );
 
+  it("does not allow an old Reactive Resume confirmation while local mode has no file", async () => {
+    const status = {
+      ...resumeStatus,
+      requirements: resumeStatus.requirements.map((requirement) =>
+        requirement.id === "resume"
+          ? {
+              ...requirement,
+              details: {
+                source: "rxresume",
+                confirmationSource: "rxresume:old-id",
+              },
+            }
+          : requirement,
+      ),
+    } as OnboardingStatusResponse;
+    vi.mocked(useOnboardingStatus).mockReturnValue({
+      status,
+      complete: false,
+      nextRequirementId: "resume",
+      requirements: status.requirements,
+      checking: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useOnboardingStatus>);
+    mockFlow({ resumeSetupMode: "upload" });
+    await renderPage();
+    expect(api.confirmOnboardingResume).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /use this resume/i })).not.toBeInTheDocument();
+  });
+
   it("does not confirm the previous resume while a replacement is importing", async () => {
     vi.mocked(useOnboardingStatus).mockReturnValue({
       status: resumeStatus,
