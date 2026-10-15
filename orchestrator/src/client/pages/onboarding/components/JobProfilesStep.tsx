@@ -10,6 +10,7 @@ const MAX_PROFILE_URLS = 6;
 export function JobProfilesStep(props: {
   initialUrls: string[];
   busy: boolean;
+  reviewMode?: boolean;
   onBack: () => void;
   onSave: (urls: string[]) => void | Promise<void>;
 }) {
@@ -133,14 +134,16 @@ export function JobProfilesStep(props: {
               {translateUi("Add another link", interfaceLanguage)}
             </Button>
           ) : null}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={props.busy}
-            onClick={() => props.onSave([])}
-          >
-            {translateUi("Skip for now", interfaceLanguage)}
-          </Button>
+          {!props.reviewMode ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={props.busy}
+              onClick={() => props.onSave([])}
+            >
+              {translateUi("Skip for now", interfaceLanguage)}
+            </Button>
+          ) : null}
           <Button
             type="button"
             disabled={props.busy || invalid}
