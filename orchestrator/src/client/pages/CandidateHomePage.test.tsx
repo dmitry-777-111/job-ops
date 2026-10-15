@@ -78,7 +78,7 @@ describe("CandidateHomePage", () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText("No new matches in this period")).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: "All ready" }).at(-1)!);
+    fireEvent.click(screen.getAllByRole("button", { name: "All ready" })[1]);
     expect(await screen.findByText("Previously ready position")).toBeInTheDocument();
   });
 
