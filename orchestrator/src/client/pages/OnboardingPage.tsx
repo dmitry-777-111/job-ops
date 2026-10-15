@@ -549,6 +549,7 @@ function LaunchSetup({
     ? `local:${designResume.document.id}`
     : null;
   const resumeSource =
+    flow.resumeSetupMode === "rxresume" &&
     storedResumeSource?.startsWith("rxresume:")
       ? storedResumeSource
       : currentLocalSource ?? storedResumeSource;
