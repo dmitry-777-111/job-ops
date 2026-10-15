@@ -1,5 +1,5 @@
 import { Link2, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useInterfaceLanguage } from "@/client/components/LanguagePreferencesMenu";
 import { translateUi } from "@/client/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,15 @@ export function JobProfilesStep(props: {
       : [""],
   );
 
+  const [edited, setEdited] = useState(false);
+  const incomingUrlsKey = JSON.stringify(props.initialUrls.slice(0, MAX_PROFILE_URLS));
+
+  useEffect(() => {
+    if (edited) return;
+    const incoming: string[] = JSON.parse(incomingUrlsKey);
+    setUrls(incoming.length > 0 ? incoming : [""]);
+  }, [incomingUrlsKey, edited]);
+
   const normalizedUrls = useMemo(
     () => urls.map((url) => url.trim()).filter(Boolean),
     [urls],
@@ -36,6 +45,7 @@ export function JobProfilesStep(props: {
   });
 
   const updateUrl = (index: number, value: string) => {
+    setEdited(true);
     setUrls((current) =>
       current.map((url, currentIndex) =>
         currentIndex === index ? value : url,
@@ -44,6 +54,7 @@ export function JobProfilesStep(props: {
   };
 
   const removeUrl = (index: number) => {
+    setEdited(true);
     setUrls((current) => {
       const next = current.filter((_, currentIndex) => currentIndex !== index);
       return next.length > 0 ? next : [""];
@@ -127,7 +138,10 @@ export function JobProfilesStep(props: {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setUrls((current) => [...current, ""])}
+              onClick={() => {
+                setEdited(true);
+                setUrls((current) => [...current, ""]);
+              }}
               disabled={props.busy}
             >
               <Plus className="h-4 w-4" />
