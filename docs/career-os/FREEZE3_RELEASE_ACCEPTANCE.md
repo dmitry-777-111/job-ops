@@ -80,6 +80,14 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - Cross-checked import hook: a successful file import updates React Query designResume document/status caches before renderer settings update.
 - New changes are **committed, not CI-verified nor deployed**. Do not release until target tests/types/lint pass; exact current runtime still unknown.
 
+## Extended stabilization pass — 2026-10-15
+
+- Successful Resume Studio import is no longer reported as failed if subsequent cache invalidation/refresh throws; a specific warning is shown and the saved document remains accessible.
+- Application review now prevents overlapping approval/export mutations while either request is pending.
+- Source-inspected completed onboarding and application actions; no search/scoring or production changes.
+- These are durable GitHub changes, **not yet a verified CI pass or an accepted runtime release**.
+- Next required gate is exact-commit CI/deploy evidence and actual end-to-end candidate flow (profile, PDF/DOCX, matching, approved package, outcome persistence). Release remains blocked until verified.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
