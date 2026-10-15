@@ -541,12 +541,17 @@ function LaunchSetup({
     return <LoadingState message="Loading your setup..." />;
   }
 
-  const resumeSource =
+  const storedResumeSource =
     typeof resumeRequirement?.details?.confirmationSource === "string"
       ? resumeRequirement.details.confirmationSource
-      : designResume.document?.id
-        ? `local:${designResume.document.id}`
-        : null;
+      : null;
+  const currentLocalSource = designResume.document?.id
+    ? `local:${designResume.document.id}`
+    : null;
+  const resumeSource =
+    storedResumeSource?.startsWith("rxresume:")
+      ? storedResumeSource
+      : currentLocalSource ?? storedResumeSource;
 
   const saveProfile = async () => {
     const parsedCities = cities
