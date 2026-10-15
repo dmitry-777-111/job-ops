@@ -48,6 +48,16 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - Combined commit-status and PR-only workflow-run queries do not establish push-triggered CI/deploy results. Public workflow URL was not retrievable through the available browser path. Runtime SHA and backup state remain unverified.
 - Immediate next evidence: CI outcome, Freeze3 workflow outcome/log `DEPLOY_OK`, and active test-container revision; do not tag/release without these. Avoid repeating any infrastructure setup.
 
+## Verified deployment evidence — 2026-10-15
+
+- Directly inspected GitHub Actions run [38666210262](https://github.com/dmitry-777-111/job-ops/actions/runs/38666210262) via GitHub connector (job list and full deploy log), rather than viewing workflow YAML.
+- Build job `116198660362`: completed/success.
+- Deploy job `116199817202`: completed/success.
+- Deploy log confirms `IMAGE_READY 4a339894aed7b5dfc261a7842b8b9cebecbc93f9` and `DEPLOY_OK 4a339894aed7b5dfc261a7842b8b9cebecbc93f9 health=healthy rollback=career-os-ci-20261015t013112z-81e8dbcd` at 2026-10-15 01:38:15 UTC.
+- This establishes a successfully deployed **historical revision 4a339894**, NOT that the current branch HEAD or latest documentation commits were deployed. It is deploy-time health, not a later runtime health check or full E2E pass.
+- Corrected tool assessment: `fetch_workflow_run_jobs` and `fetch_workflow_job_logs` DO retrieve push-run evidence when the run/job ID is known. Do not request screenshots of YAML. CI run ID for exact candidate revision and runtime-current state remain unverified.
+- Release still gated on exact candidate SHA's CI results and current runtime verification.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
