@@ -47,6 +47,37 @@ describe("JobProfilesStep", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("loads late profile links but preserves a user's subsequent edits", () => {
+    const onSave = vi.fn();
+    const onBack = vi.fn();
+    const { rerender } = render(
+      <JobProfilesStep initialUrls={[]} busy={false} onBack={onBack} onSave={onSave} />,
+    );
+    rerender(
+      <JobProfilesStep
+        initialUrls={["https://linkedin.com/in/example"]}
+        busy={false}
+        onBack={onBack}
+        onSave={onSave}
+      />,
+    );
+    expect(screen.getByRole("textbox")).toHaveValue("https://linkedin.com/in/example");
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "https://linkedin.com/in/edited" },
+    });
+    rerender(
+      <JobProfilesStep
+        initialUrls={["https://linkedin.com/in/server-update"]}
+        busy={false}
+        onBack={onBack}
+        onSave={onSave}
+      />,
+    );
+    expect(screen.getByRole("textbox")).toHaveValue("https://linkedin.com/in/edited");
+    fireEvent.click(screen.getByRole("button", { name: "Save and finish" }));
+    expect(onSave).toHaveBeenCalledWith(["https://linkedin.com/in/edited"]);
+  });
+
   it("allows the optional step to be skipped", () => {
     const onSave = vi.fn();
     render(
