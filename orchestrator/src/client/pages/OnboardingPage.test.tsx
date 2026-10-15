@@ -640,6 +640,38 @@ describe("OnboardingPage", () => {
     );
   });
 
+  it("confirms the replacement document rather than the previously saved source", async () => {
+    vi.mocked(useOnboardingStatus).mockReturnValue({
+      status: resumeStatus,
+      complete: false,
+      nextRequirementId: "resume",
+      requirements: resumeStatus.requirements,
+      checking: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useOnboardingStatus>);
+    vi.mocked(useDesignResume).mockReturnValue({
+      document: { id: "doc-replacement" } as never,
+      status: {
+        exists: true,
+        documentId: "doc-replacement",
+        updatedAt: "2026-10-15",
+      },
+      error: null,
+      isLoading: false,
+      refresh: vi.fn(),
+    });
+    vi.mocked(api.confirmOnboardingResume).mockResolvedValue(completeStatus);
+    await renderPage();
+    fireEvent.click(screen.getByRole("button", { name: /use this resume/i }));
+    await waitFor(() =>
+      expect(api.confirmOnboardingResume).toHaveBeenCalledWith(
+        "local:doc-replacement",
+      ),
+    );
+    expect(api.confirmOnboardingResume).not.toHaveBeenCalledWith("local:doc-1");
+  });
+
   it("does not confirm the previous resume while a replacement is importing", async () => {
     vi.mocked(useOnboardingStatus).mockReturnValue({
       status: resumeStatus,
