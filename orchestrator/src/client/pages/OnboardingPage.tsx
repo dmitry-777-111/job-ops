@@ -876,6 +876,7 @@ function LaunchSetup({
                 </StepShell>
               ) : activeStep === "job_profiles" ? (
                 <JobProfilesStep
+                  reviewMode={Boolean(reviewStep)}
                   initialUrls={[
                     ...(Array.isArray(jobProfilesRequirement?.details?.urls)
                       ? (jobProfilesRequirement.details.urls as string[])
