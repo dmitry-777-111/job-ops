@@ -60,6 +60,21 @@ describe("CandidateHomePage", () => {
         expect(await screen.findByText(target)).toBeInTheDocument();
     },
   );
+  it("does not report zero matches before Ready jobs finish loading", () => {
+    vi.mocked(api.getJobs).mockImplementation(
+      () => new Promise(() => undefined),
+    );
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<CandidateHomePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Loading your latest matches…")).toBeInTheDocument();
+    expect(screen.queryByText("0 matches")).not.toBeInTheDocument();
+  });
+
   it("offers older ready vacancies when there are no matches this week", async () => {
     vi.mocked(api.getJobs).mockImplementation(
       async (input) =>
