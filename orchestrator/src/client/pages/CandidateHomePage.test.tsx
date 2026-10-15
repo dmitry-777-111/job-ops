@@ -57,6 +57,31 @@ describe("CandidateHomePage", () => {
     fireEvent.click(screen.getByRole("button", { name: label }));
     expect(await screen.findByText(target)).toBeInTheDocument();
   });
+  it("offers older ready vacancies when there are no matches this week", async () => {
+    vi.mocked(api.getJobs).mockImplementation(
+      async (input) =>
+        ({
+          jobs: input?.statuses?.includes("ready")
+            ? [{
+                id: "historical",
+                title: "Previously ready position",
+                discoveredAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+              }]
+            : [],
+        }) as unknown as Awaited<ReturnType<typeof api.getJobs>>,
+    );
+    renderWithQueryClient(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<CandidateHomePage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("No new matches in this period")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "All ready" }).at(-1)!);
+    expect(await screen.findByText("Previously ready position")).toBeInTheDocument();
+  });
+
   it("filters matches correctly across 24 hours, 3 days and 7 days", async () => {
     const now = Date.now();
     const match = (id: string, ageHours: number) => ({
