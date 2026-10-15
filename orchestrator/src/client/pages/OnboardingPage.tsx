@@ -661,7 +661,7 @@ function LaunchSetup({
   };
 
   const confirmResume = async () => {
-    if (!resumeSource) return;
+    if (!resumeSource || flow.isBusy || flow.isImportingResume) return;
     const source = resumeSource.startsWith("rxresume:") ? "rxresume" : "local";
     trackProductEvent("onboarding_resume_confirm_submitted", { source });
     try {
@@ -909,7 +909,7 @@ function LaunchSetup({
                   profile={profileQuery.data ?? null}
                   document={designResume.document}
                   hasResume={Boolean(resumeSource)}
-                  busy={confirmBusy}
+                  busy={confirmBusy || flow.isBusy || flow.isImportingResume}
                   onBack={() =>
                     setSelectedStep(
                       showModel
@@ -1543,7 +1543,7 @@ function ResumeStep({
             type="button"
             variant="outline"
             className="w-full"
-            disabled={flow.isBusy}
+            disabled={flow.isBusy || flow.isImportingResume}
             onClick={() => replacementFileInputRef.current?.click()}
           >
             <Upload className="h-4 w-4" />
