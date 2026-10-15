@@ -73,6 +73,13 @@ Verified by inspecting the current branch (code inspection, not live runtime):
 - GitHub records these changes, but **test pass, exact-current-revision CI and deployment are unverified**. Do not mark acceptance checked.
 - This checkpoint records code changes only, not a new runtime release. Next step: obtain actual latest CI run ID and deploy result; follow with onboarding and application package E2E checks.
 
+## Resume flow blocker fixes — 2026-10-15
+
+- Detected stale confirmation-source precedence: onboarding could choose the saved `local:old-document` over the newly imported Resume Studio document. Fixed source selection to prioritize current local document, preserving explicit Reactive Resume sources. Added regression test using different saved/current document IDs.
+- Detected coupling between successful resume import and subsequent `pdfRenderer` preference update: if the optional settings update failed, UI previously reported the completed import as a failure. The settings update is now nonfatal and displays a specific warning. Success notification accurately distinguishes renderer-update outcome.
+- Cross-checked import hook: a successful file import updates React Query designResume document/status caches before renderer settings update.
+- New changes are **committed, not CI-verified nor deployed**. Do not release until target tests/types/lint pass; exact current runtime still unknown.
+
 ## Current constraint
 Connector endpoints in this chat allow GitHub file and commit writes, but do not list push-triggered workflow runs or operate an authenticated browser. `fetch_commit_workflow_runs` only reports pull-request-triggered runs, so an empty result is not proof of failure or success. Public unauthenticated browsing cannot substitute for private deployment logs.
 
