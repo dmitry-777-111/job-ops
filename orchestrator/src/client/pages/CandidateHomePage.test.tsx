@@ -73,6 +73,8 @@ describe("CandidateHomePage", () => {
                 match("Two-day match", 48),
                 match("Six-day match", 144),
                 match("Expired match", 192),
+                { id: "Undated match", title: "Undated match", discoveredAt: "invalid-date" },
+                match("Future match", -24),
               ]
             : [],
         }) as unknown as Awaited<ReturnType<typeof api.getJobs>>,
@@ -89,6 +91,8 @@ describe("CandidateHomePage", () => {
     expect(screen.getByText("Two-day match")).toBeInTheDocument();
     expect(screen.getByText("Six-day match")).toBeInTheDocument();
     expect(screen.queryByText("Expired match")).not.toBeInTheDocument();
+    expect(screen.queryByText("Undated match")).not.toBeInTheDocument();
+    expect(screen.queryByText("Future match")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "3 days" }));
     expect(screen.getByText("Today match")).toBeInTheDocument();
@@ -103,5 +107,4 @@ describe("CandidateHomePage", () => {
     expect(screen.getByText("Six-day match")).toBeInTheDocument();
     expect(screen.queryByText("Expired match")).not.toBeInTheDocument();
   });
-
 });
