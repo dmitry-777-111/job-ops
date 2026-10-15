@@ -246,11 +246,18 @@ export function CandidateHomePage() {
               {translateUi("The JobAgent found", interfaceLanguage)}
             </div>
             <div className="mt-1 text-3xl font-semibold tracking-tight">
-              {jobs.length}{" "}
-              {translateUi(
-                jobs.length === 1 ? "match" : "matches",
-                interfaceLanguage,
-              )}
+              {jobsQuery.isLoading
+                ? "…"
+                : jobsQuery.error
+                  ? "—"
+                  : jobs.length}
+              {!jobsQuery.isLoading && !jobsQuery.error
+                ? " " +
+                  translateUi(
+                    jobs.length === 1 ? "match" : "matches",
+                    interfaceLanguage,
+                  )
+                : null}
             </div>
             <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               {translateUi(
