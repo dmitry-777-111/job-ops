@@ -35,8 +35,9 @@ const JOURNEY_STAGES = [
 
 function isWithinPeriod(job: JobListItem, hours: number): boolean {
   const discoveredAt = Date.parse(job.discoveredAt);
-  if (!Number.isFinite(discoveredAt)) return true;
-  return discoveredAt >= Date.now() - hours * 60 * 60 * 1000;
+  if (!Number.isFinite(discoveredAt)) return false;
+  const now = Date.now();
+  return discoveredAt <= now && discoveredAt >= now - hours * 60 * 60 * 1000;
 }
 
 function salaryLabel(job: JobListItem): string | null {
