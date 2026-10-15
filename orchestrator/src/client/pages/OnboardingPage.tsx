@@ -549,10 +549,12 @@ function LaunchSetup({
     ? `local:${designResume.document.id}`
     : null;
   const resumeSource =
-    flow.resumeSetupMode === "rxresume" &&
-    storedResumeSource?.startsWith("rxresume:")
-      ? storedResumeSource
-      : currentLocalSource ?? storedResumeSource;
+    flow.resumeSetupMode === "rxresume"
+      ? storedResumeSource?.startsWith("rxresume:")
+        ? storedResumeSource
+        : null
+      : currentLocalSource ??
+        (storedResumeSource?.startsWith("local:") ? storedResumeSource : null);
 
   const saveProfile = async () => {
     const parsedCities = cities
