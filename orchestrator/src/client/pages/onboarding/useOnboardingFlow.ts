@@ -238,6 +238,10 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
           dataBase64: match[2],
         });
 
+        // A successful file import explicitly selects the local resume source.
+        // Otherwise a previously connected Reactive Resume can remain active.
+        resumeSetupModeTouchedRef.current = true;
+        setResumeSetupMode("upload");
         queryClient.setQueryData(queryKeys.designResume.current(), document);
         queryClient.setQueryData(queryKeys.designResume.status(), {
           exists: true,
