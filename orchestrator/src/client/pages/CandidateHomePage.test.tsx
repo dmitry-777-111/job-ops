@@ -55,7 +55,7 @@ describe("CandidateHomePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "24 hours" }));
     expect(screen.queryByText("Recent match")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: label }));
-      expect(await screen.findByText(target)).toBeInTheDocument();
+    expect(await screen.findByText(target)).toBeInTheDocument();
   });
   it("does not report zero matches before Ready jobs finish loading", () => {
     vi.mocked(api.getJobs).mockImplementation(
@@ -68,7 +68,9 @@ describe("CandidateHomePage", () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByText("Loading your latest matches…")).toBeInTheDocument();
+    expect(
+      screen.getByText("Loading your latest matches…"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("0 matches")).not.toBeInTheDocument();
   });
 
@@ -99,9 +101,7 @@ describe("CandidateHomePage", () => {
     expect(
       await screen.findByText("No new matches in this period"),
     ).toBeInTheDocument();
-    fireEvent.click(
-      screen.getAllByRole("button", { name: "All ready" })[1],
-    );
+    fireEvent.click(screen.getAllByRole("button", { name: "All ready" })[1]);
     expect(
       await screen.findByText("Previously ready position"),
     ).toBeInTheDocument();

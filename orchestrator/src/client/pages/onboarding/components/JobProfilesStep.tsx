@@ -22,7 +22,9 @@ export function JobProfilesStep(props: {
   );
 
   const [edited, setEdited] = useState(false);
-  const incomingUrlsKey = JSON.stringify(props.initialUrls.slice(0, MAX_PROFILE_URLS));
+  const incomingUrlsKey = JSON.stringify(
+    props.initialUrls.slice(0, MAX_PROFILE_URLS),
+  );
 
   useEffect(() => {
     if (edited) return;

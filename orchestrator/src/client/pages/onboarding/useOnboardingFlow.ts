@@ -261,7 +261,9 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
           } catch {
             // The resume import already succeeded; renderer settings must not
             // prevent the candidate from reviewing the imported document.
-            toast.warning("Resume imported, but PDF rendering settings could not be updated.");
+            toast.warning(
+              "Resume imported, but PDF rendering settings could not be updated.",
+            );
           }
         }
 
@@ -270,7 +272,9 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
         } catch {
           // The imported document is already saved. A failed refresh should not
           // incorrectly report an import failure or invite duplicate uploads.
-          toast.warning("Resume imported, but some setup details could not refresh.");
+          toast.warning(
+            "Resume imported, but some setup details could not refresh.",
+          );
         }
         trackProductEvent("onboarding_resume_upload_completed", {
           result: "success",
@@ -284,10 +288,9 @@ export function useOnboardingFlow({ allowSelfHosted = true } = {}) {
           ),
         });
         toast.success("Resume uploaded", {
-          description:
-            rendererUpdated
-              ? "Your local Resume Studio document is ready with Typst rendering."
-              : "Your local Resume Studio document is ready. PDF rendering settings still need attention.",
+          description: rendererUpdated
+            ? "Your local Resume Studio document is ready with Typst rendering."
+            : "Your local Resume Studio document is ready. PDF rendering settings still need attention.",
         });
       } catch (error) {
         trackProductEvent("onboarding_resume_upload_completed", {
