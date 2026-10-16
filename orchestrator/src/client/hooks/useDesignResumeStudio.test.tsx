@@ -162,6 +162,22 @@ describe("useDesignResumeStudio autosave conflict handling", () => {
     );
   });
 
+  it("does not generate a PDF when saving the latest resume fails", async () => {
+    vi.mocked(api.updateDesignResume).mockRejectedValue(
+      new Error("Save failed"),
+    );
+    const { result } = renderStudioHook();
+    act(() => {
+      result.current.updateResumeJson(() => makeResumeJson("unsaved-edit"));
+    });
+    await act(async () => {
+      await result.current.handleDownloadPdf();
+    });
+    expect(api.updateDesignResume).toHaveBeenCalledOnce();
+    expect(api.generateDesignResumePdf).not.toHaveBeenCalled();
+    expect(showErrorToast).toHaveBeenCalled();
+  });
+
   it("recovers from a revision conflict by rebasing onto the server revision and retrying", async () => {
     vi.mocked(api.updateDesignResume)
       .mockRejectedValueOnce(conflictError())
