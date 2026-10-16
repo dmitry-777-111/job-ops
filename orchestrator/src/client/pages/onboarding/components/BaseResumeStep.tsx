@@ -251,59 +251,59 @@ export const BaseResumeStep: React.FC<{
       />
 
       {allowReactiveResume ? (
-          <div className="rounded-lg border border-border/60 bg-muted/5">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium"
-              onClick={() => setShowOtherImportMethods((visible) => !visible)}
-              aria-expanded={showOtherImportMethods}
-            >
-              <span>
-                {translateUi("Other import methods", interfaceLanguage)}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  showOtherImportMethods && "rotate-180",
-                )}
-                aria-hidden="true"
-              />
-            </button>
+        <div className="rounded-lg border border-border/60 bg-muted/5">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium"
+            onClick={() => setShowOtherImportMethods((visible) => !visible)}
+            aria-expanded={showOtherImportMethods}
+          >
+            <span>
+              {translateUi("Other import methods", interfaceLanguage)}
+            </span>
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform",
+                showOtherImportMethods && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
+          </button>
 
-            {showOtherImportMethods ? (
-              <div className="space-y-4 border-t border-border/60 p-4">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isBusy}
-                    onClick={() => onResumeSetupModeChange("rxresume")}
-                  >
-                    {translateUi("Connect Reactive Resume", interfaceLanguage)}
-                  </Button>
-                </div>
-
-                {resumeSetupMode === "rxresume" ? (
-                  <RxResumeStep
-                    allowSelfHosted={allowSelfHostedReactiveResume}
-                    baseResumeValue={baseResumeValue}
-                    hasRxResumeAccess={hasRxResumeAccess}
-                    isBusy={isBusy}
-                    isResumeReady={isResumeReady}
-                    isSelfHosted={isRxResumeSelfHosted}
-                    rxresumeApiKey={rxresumeApiKey}
-                    rxresumeApiKeyHint={rxresumeApiKeyHint}
-                    rxresumeUrl={rxresumeUrl}
-                    rxresumeValidation={rxresumeValidation}
-                    onRxresumeApiKeyChange={onRxresumeApiKeyChange}
-                    onRxresumeUrlChange={onRxresumeUrlChange}
-                    onSelfHostedChange={onRxresumeSelfHostedChange}
-                    onTemplateResumeChange={onTemplateResumeChange}
-                  />
-                ) : null}
+          {showOtherImportMethods ? (
+            <div className="space-y-4 border-t border-border/60 p-4">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isBusy}
+                  onClick={() => onResumeSetupModeChange("rxresume")}
+                >
+                  {translateUi("Connect Reactive Resume", interfaceLanguage)}
+                </Button>
               </div>
-            ) : null}
-          </div>
+
+              {resumeSetupMode === "rxresume" ? (
+                <RxResumeStep
+                  allowSelfHosted={allowSelfHostedReactiveResume}
+                  baseResumeValue={baseResumeValue}
+                  hasRxResumeAccess={hasRxResumeAccess}
+                  isBusy={isBusy}
+                  isResumeReady={isResumeReady}
+                  isSelfHosted={isRxResumeSelfHosted}
+                  rxresumeApiKey={rxresumeApiKey}
+                  rxresumeApiKeyHint={rxresumeApiKeyHint}
+                  rxresumeUrl={rxresumeUrl}
+                  rxresumeValidation={rxresumeValidation}
+                  onRxresumeApiKeyChange={onRxresumeApiKeyChange}
+                  onRxresumeUrlChange={onRxresumeUrlChange}
+                  onSelfHostedChange={onRxresumeSelfHostedChange}
+                  onTemplateResumeChange={onTemplateResumeChange}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
