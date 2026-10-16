@@ -771,10 +771,9 @@ describe("OnboardingPage", () => {
     });
     mockFlow({ isBusy: true, isImportingResume: true });
     await renderPage();
-    const confirm = screen.getByRole("button", { name: /use this resume/i });
-    expect(confirm).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /use this resume/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /upload another resume/i })).toBeDisabled();
-    fireEvent.click(confirm);
     expect(api.confirmOnboardingResume).not.toHaveBeenCalled();
   });
 
