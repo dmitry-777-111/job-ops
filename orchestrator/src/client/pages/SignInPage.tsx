@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRODUCT_BRAND } from "../lib/product-brand";
 import {
   loadRememberedAuthUsers,
   rememberAuthUser,
