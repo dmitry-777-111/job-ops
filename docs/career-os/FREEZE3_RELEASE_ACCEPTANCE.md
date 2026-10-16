@@ -3,6 +3,17 @@
 Date: 2026-10-14
 State: **NOT RELEASED / ACCEPTANCE PENDING**
 
+## Final Work verification reported — 2026-10-16
+
+Work-mode completion report (cross-checked with user-provided screenshot; full underlying run IDs and logs not included in this document):
+- Candidate `freeze3-dev` commit `3cc29e6b` is the current branch HEAD, verified independently through the GitHub connector.
+- Work reported CI green: **2,371 tests passed, 3 skipped**. The previous seven Biome issues and lone onboarding test failure were fixed. Do not conflate these reports with logs for an earlier commit.
+- Work reported test deployment of the **same full commit SHA**, healthy service and HTTP 200.
+- Work reported isolated API acceptance: onboarding → resume → Ready → package → outcome, including candidate isolation and persistence on synthetic data. This is **API-level E2E**, not browser UX acceptance.
+- Work explicitly **did not** exercise browser UX or actual PDF rendering, and did not submit any real applications. Production remains unchanged.
+- Gates still open: browser sign-in/reopen and resume upload/replacement UX, actual PDF render/download, 20–30 real posting quality review, and release decision. No release tag based on API-only acceptance.
+- Preserve previously observed `DEPLOY_OK` and rollback separately from post-deploy runtime or browser acceptance. Further evidence should refer to the same candidate SHA.
+
 ## Release objective
 Ship the smallest usable daily workflow:
 candidate profile → resume import/review → saved strategy and profiles → relevant ready jobs → application package → outcome feedback.
