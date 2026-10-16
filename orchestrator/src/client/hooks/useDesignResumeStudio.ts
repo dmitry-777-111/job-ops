@@ -435,6 +435,12 @@ export function useDesignResumeStudio() {
     const downloadedAfterEdit = dirty || saveState === "saving";
     try {
       setPdfDownloading(true);
+      const editVersionAtStart = editVersionRef.current;
+      const persisted = await ensureLatestPersistedDraft();
+      if (!persisted) throw new Error("No resume is available to export.");
+      if (editVersionRef.current !== editVersionAtStart) {
+        throw new Error("Resume changed while saving. Save the latest edits and try again.");
+      }
       const generated = await api.generateDesignResumePdf();
       await downloadDesignResumePdf(generated.fileName, generated.pdfUrl);
       trackProductEvent("resume_studio_pdf_downloaded", {
