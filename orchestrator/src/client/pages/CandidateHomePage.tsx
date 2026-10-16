@@ -38,7 +38,10 @@ function isWithinPeriod(job: JobListItem, hours: number): boolean {
   const discoveredAt = Date.parse(job.discoveredAt);
   if (!Number.isFinite(discoveredAt)) return false;
   const now = Date.now();
-  return discoveredAt <= now && (hours === 0 || discoveredAt >= now - hours * 60 * 60 * 1000);
+  return (
+    discoveredAt <= now &&
+    (hours === 0 || discoveredAt >= now - hours * 60 * 60 * 1000)
+  );
 }
 
 function salaryLabel(job: JobListItem): string | null {
@@ -123,7 +126,10 @@ export function CandidateHomePage() {
       <PageHeader
         icon={JobAgentMark}
         title={PRODUCT_BRAND.name}
-        badge={translateUi(periodHours === 0 ? "All ready" : "Today", interfaceLanguage)}
+        badge={translateUi(
+          periodHours === 0 ? "All ready" : "Today",
+          interfaceLanguage,
+        )}
         subtitle={translateUi(
           "Your best new opportunities, ready to act on",
           interfaceLanguage,
@@ -246,11 +252,7 @@ export function CandidateHomePage() {
               {translateUi("The JobAgent found", interfaceLanguage)}
             </div>
             <div className="mt-1 text-3xl font-semibold tracking-tight">
-              {jobsQuery.isLoading
-                ? "…"
-                : jobsQuery.error
-                  ? "—"
-                  : jobs.length}
+              {jobsQuery.isLoading ? "…" : jobsQuery.error ? "—" : jobs.length}
               {!jobsQuery.isLoading && !jobsQuery.error
                 ? " " +
                   translateUi(
