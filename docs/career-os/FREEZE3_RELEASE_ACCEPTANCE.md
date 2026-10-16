@@ -14,6 +14,13 @@ Work-mode completion report (cross-checked with user-provided screenshot; full u
 - Gates still open: browser sign-in/reopen and resume upload/replacement UX, actual PDF render/download, 20–30 real posting quality review, and release decision. No release tag based on API-only acceptance.
 - Preserve previously observed `DEPLOY_OK` and rollback separately from post-deploy runtime or browser acceptance. Further evidence should refer to the same candidate SHA.
 
+## PDF export stale-content blocker — 2026-10-16
+
+- Source inspection found Resume Studio PDF export calling `generateDesignResumePdf()` without first persisting a dirty draft. A candidate could receive a PDF of the preceding saved revision even though the editor showed newer content.
+- Fixed `useDesignResumeStudio.handleDownloadPdf` to call the existing `ensureLatestPersistedDraft()` before generating. It now aborts if no document exists, saving is busy, saving fails, or the edit version changes during the save.
+- Added regression test in `useDesignResumeStudio.test.tsx` checking unsaved edit persistence precedes PDF API invocation.
+- **Implementation only**: the new test has not been executed, actual PDF bytes have not been rendered/inspected, and no current-SHA CI/deploy evidence has been collected after the code change. Browser/PDF gate remains pending. No production changes.
+
 ## Release objective
 Ship the smallest usable daily workflow:
 candidate profile → resume import/review → saved strategy and profiles → relevant ready jobs → application package → outcome feedback.
