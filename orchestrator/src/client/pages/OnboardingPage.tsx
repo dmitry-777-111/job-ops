@@ -553,8 +553,8 @@ function LaunchSetup({
       ? storedResumeSource?.startsWith("rxresume:")
         ? storedResumeSource
         : null
-      : currentLocalSource ??
-        (storedResumeSource?.startsWith("local:") ? storedResumeSource : null);
+      : (currentLocalSource ??
+        (storedResumeSource?.startsWith("local:") ? storedResumeSource : null));
 
   const saveProfile = async () => {
     const parsedCities = cities
