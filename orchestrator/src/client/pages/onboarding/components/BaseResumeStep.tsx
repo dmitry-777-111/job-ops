@@ -251,7 +251,6 @@ export const BaseResumeStep: React.FC<{
       />
 
       {allowReactiveResume ? (
-        <>
           <div className="rounded-lg border border-border/60 bg-muted/5">
             <button
               type="button"
@@ -305,7 +304,6 @@ export const BaseResumeStep: React.FC<{
               </div>
             ) : null}
           </div>
-        </>
       ) : null}
     </div>
   );
