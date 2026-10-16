@@ -164,7 +164,7 @@ export function ApplicationPackageReviewPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {review.posting.employer}
-            {review.posting.location ? " - " + review.posting.location : ""}
+            {review.posting.location ? ` - ${review.posting.location}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
