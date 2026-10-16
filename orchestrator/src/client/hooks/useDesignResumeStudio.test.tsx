@@ -17,6 +17,7 @@ const designResumeState = vi.hoisted(() => ({
 vi.mock("@client/api", () => ({
   updateDesignResume: vi.fn(),
   getDesignResume: vi.fn(),
+  generateDesignResumePdf: vi.fn(),
   importDesignResumeFromRxResume: vi.fn(),
   importDesignResumeFromFile: vi.fn(),
   uploadDesignResumePictureFile: vi.fn(),
@@ -130,6 +131,35 @@ describe("useDesignResumeStudio autosave conflict handling", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("persists unsaved resume edits before requesting PDF generation", async () => {
+    vi.mocked(api.updateDesignResume).mockResolvedValue(
+      makeDocument(10, "latest-edit"),
+    );
+    vi.mocked(api.generateDesignResumePdf).mockResolvedValue({
+      fileName: "resume.pdf",
+      pdfUrl: "/api/design-resume/pdf",
+    } as Awaited<ReturnType<typeof api.generateDesignResumePdf>>);
+    const { result } = renderStudioHook();
+    act(() => {
+      result.current.updateResumeJson(() => makeResumeJson("latest-edit"));
+    });
+    await act(async () => {
+      await result.current.handleDownloadPdf();
+    });
+    expect(api.updateDesignResume).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseRevision: 9,
+        document: expect.objectContaining({
+          basics: { name: "latest-edit" },
+        }),
+      }),
+    );
+    expect(api.generateDesignResumePdf).toHaveBeenCalledOnce();
+    expect(vi.mocked(api.updateDesignResume).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(api.generateDesignResumePdf).mock.invocationCallOrder[0],
+    );
   });
 
   it("recovers from a revision conflict by rebasing onto the server revision and retrying", async () => {
