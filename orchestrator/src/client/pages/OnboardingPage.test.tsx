@@ -338,7 +338,9 @@ describe("OnboardingPage", () => {
     expect(
       screen.getByDisplayValue("https://example.com/me"),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Skip for now/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Skip for now/i }),
+    ).not.toBeInTheDocument();
     vi.mocked(api.saveOnboardingJobProfiles).mockResolvedValue(status);
     fireEvent.click(screen.getByRole("button", { name: /Save and finish/i }));
     await waitFor(() =>
