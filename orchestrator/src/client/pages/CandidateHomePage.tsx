@@ -72,7 +72,7 @@ export function CandidateHomePage() {
   const prepareMutation = useMutation({
     mutationFn: (jobId: string) => api.prepareApplicationPackageForJob(jobId),
     onSuccess: (result) => {
-      navigate("/applications/package/" + result.applicationPackage.id);
+      navigate(`/applications/package/${result.applicationPackage.id}`);
     },
     onError: (error, jobId) => {
       toast.error(
@@ -82,7 +82,7 @@ export function CandidateHomePage() {
         {
           action: {
             label: "Review vacancy",
-            onClick: () => navigate("/job/" + jobId),
+            onClick: () => navigate(`/job/${jobId}`),
           },
         },
       );
@@ -317,7 +317,7 @@ export function CandidateHomePage() {
                       <button
                         type="button"
                         className="min-w-0 flex-1 text-left"
-                        onClick={() => navigate("/job/" + job.id)}
+                        onClick={() => navigate(`/job/${job.id}`)}
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <h2 className="text-base font-semibold">
@@ -331,7 +331,7 @@ export function CandidateHomePage() {
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground">
                           {job.employer}
-                          {job.location ? " · " + job.location : ""}
+                          {job.location ? ` · ${job.location}` : ""}
                         </div>
                         {salary ? (
                           <div className="mt-2 text-sm font-medium">
