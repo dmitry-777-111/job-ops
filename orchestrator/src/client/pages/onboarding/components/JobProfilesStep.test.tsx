@@ -51,7 +51,12 @@ describe("JobProfilesStep", () => {
     const onSave = vi.fn();
     const onBack = vi.fn();
     const { rerender } = render(
-      <JobProfilesStep initialUrls={[]} busy={false} onBack={onBack} onSave={onSave} />,
+      <JobProfilesStep
+        initialUrls={[]}
+        busy={false}
+        onBack={onBack}
+        onSave={onSave}
+      />,
     );
     rerender(
       <JobProfilesStep
@@ -61,7 +66,9 @@ describe("JobProfilesStep", () => {
         onSave={onSave}
       />,
     );
-    expect(screen.getByRole("textbox")).toHaveValue("https://linkedin.com/in/example");
+    expect(screen.getByRole("textbox")).toHaveValue(
+      "https://linkedin.com/in/example",
+    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "https://linkedin.com/in/edited" },
     });
@@ -73,7 +80,9 @@ describe("JobProfilesStep", () => {
         onSave={onSave}
       />,
     );
-    expect(screen.getByRole("textbox")).toHaveValue("https://linkedin.com/in/edited");
+    expect(screen.getByRole("textbox")).toHaveValue(
+      "https://linkedin.com/in/edited",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Save and finish" }));
     expect(onSave).toHaveBeenCalledWith(["https://linkedin.com/in/edited"]);
   });
