@@ -157,7 +157,9 @@ describe("useDesignResumeStudio autosave conflict handling", () => {
       }),
     );
     expect(api.generateDesignResumePdf).toHaveBeenCalledOnce();
-    expect(vi.mocked(api.updateDesignResume).mock.invocationCallOrder[0]).toBeLessThan(
+    expect(
+      vi.mocked(api.updateDesignResume).mock.invocationCallOrder[0],
+    ).toBeLessThan(
       vi.mocked(api.generateDesignResumePdf).mock.invocationCallOrder[0],
     );
   });
