@@ -130,6 +130,20 @@ describe("generateTailoring", () => {
     expect(prompt).toContain("Technical College");
   });
 
+  it("rejects incomplete AI tailoring instead of marking it successful", async () => {
+    callJsonMock.mockResolvedValue({
+      success: true,
+      data: { headline: "", summary: "Some text", skills: [] },
+    });
+    const result = await generateTailoring("Industrial maintenance technician", {
+      basics: { name: "Sample Candidate" },
+    });
+    expect(result).toMatchObject({
+      success: false,
+      error: "AI returned incomplete tailoring content.",
+    });
+  });
+
   it("omits globally excluded projects from the tailoring prompt", async () => {
     vi.mocked(getSetting).mockImplementation(async (key) =>
       key === "resumeProjects"
