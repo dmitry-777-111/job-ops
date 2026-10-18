@@ -21,6 +21,16 @@ Work-mode completion report (cross-checked with user-provided screenshot; full u
 - Added regression test in `useDesignResumeStudio.test.tsx` checking unsaved edit persistence precedes PDF API invocation.
 - **Implementation only**: the new test has not been executed, actual PDF bytes have not been rendered/inspected, and no current-SHA CI/deploy evidence has been collected after the code change. Browser/PDF gate remains pending. No production changes.
 
+## Real AI adaptation and PDF visual acceptance — 2026-10-18
+
+- User supplied Work result of one real TJAgent AI adaptation based on the anonymized master resume and a description of a relevant ATS role. The exact revision of job posting 17454 was **not** verified.
+- Work visually inspected the generated **three-page PDF**: no element overlaps; jobs, employment dates and education preserved. No invented PLC programming skills; Ontario 309A accurately described as examination stage.
+- **PDF layout gate: PASS for this sample only.** This is stronger than the earlier synthetic PDF-header/EOF proof, but does not establish rendering of every template or every user input.
+- **AI content acceptance: OPEN**. Reported defects: mostly empty third page; historical commercial experience too detailed; languages and aerial lift training omitted. Treat the first two as tailoring/pagination optimization and the latter as potentially material omissions requiring comparison against source resume and extraction stages before a code change.
+- Vacancy-fit gate is also OPEN: a relevant ATS description was used, but the original ATS requisition #17454 posting/revision was not verified. Do not treat the match score as externally validated.
+- GitHub branch HEAD independently checked as `3aa910ef3afc59374c9adc91d4abc49808e18884` on 2026-10-18: no newer code commits, so prior exact-SHA green CI still applies.
+- Next: retrieve candidate-approved anonymized source and adapted output; compare field-by-field for omissions and assertions, inspect source-to-structured-resume and tailored-CV transformation, then verify on original real vacancy data. No production, applicant submissions, or release without acceptance.
+
 ## Release objective
 Ship the smallest usable daily workflow:
 candidate profile → resume import/review → saved strategy and profiles → relevant ready jobs → application package → outcome feedback.
