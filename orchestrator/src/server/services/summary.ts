@@ -113,7 +113,7 @@ export async function generateTailoring(
     };
   }
 
-  const { summary, headline, skills } = result.data;
+  const { summary, headline, skills } = result.data ?? {};
 
   // Basic validation
   if (
