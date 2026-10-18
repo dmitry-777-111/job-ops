@@ -116,8 +116,22 @@ export async function generateTailoring(
   const { summary, headline, skills } = result.data;
 
   // Basic validation
-  if (!summary || !headline || !Array.isArray(skills)) {
+  if (
+    typeof summary !== "string" ||
+    !summary.trim() ||
+    typeof headline !== "string" ||
+    !headline.trim() ||
+    !Array.isArray(skills) ||
+    skills.some(
+      (skill) =>
+        !skill ||
+        typeof skill.name !== "string" ||
+        !Array.isArray(skill.keywords) ||
+        skill.keywords.some((keyword) => typeof keyword !== "string"),
+    )
+  ) {
     logger.warn("AI response missing required tailoring fields", result.data);
+    return { success: false, error: "AI returned incomplete tailoring content." };
   }
 
   return {
