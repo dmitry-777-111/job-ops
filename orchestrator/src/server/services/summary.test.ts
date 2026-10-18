@@ -110,6 +110,26 @@ describe("generateTailoring", () => {
     );
   });
 
+  it("includes verified languages, education and certifications in AI tailoring evidence", async () => {
+    const profile = {
+      basics: { name: "Sample Candidate" },
+      sections: {
+        languages: { items: [{ id: "lang-1", name: "Russian", level: "Native" }] },
+        certifications: {
+          items: [{ id: "cert-1", name: "Scissor lift training" }],
+        },
+        education: { items: [{ id: "edu-1", institution: "Technical College" }] },
+      },
+    } as ResumeProfile;
+
+    await generateTailoring("Industrial maintenance technician", profile);
+
+    const prompt = callJsonMock.mock.calls.at(-1)?.[0]?.messages?.[0]?.content;
+    expect(prompt).toContain("Russian");
+    expect(prompt).toContain("Scissor lift training");
+    expect(prompt).toContain("Technical College");
+  });
+
   it("omits globally excluded projects from the tailoring prompt", async () => {
     vi.mocked(getSetting).mockImplementation(async (key) =>
       key === "resumeProjects"
