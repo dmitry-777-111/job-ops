@@ -177,6 +177,9 @@ async function buildTailoringPrompt(
       summary: profile.basics?.summary,
     },
     skills: profile.sections?.skills,
+    education: profile.sections?.education,
+    certifications: profile.sections?.certifications,
+    languages: profile.sections?.languages,
     projects: profile.sections?.projects?.items?.map((p) => ({
       name: p.name,
       description: p.description,
