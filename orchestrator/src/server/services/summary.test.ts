@@ -130,6 +130,46 @@ describe("generateTailoring", () => {
     expect(prompt).toContain("Technical College");
   });
 
+  it("rejects missing qualifications explicitly required by the posting", async () => {
+    callJsonMock.mockResolvedValue({
+      success: true,
+      data: {
+        headline: "Maintenance Technician",
+        summary: "Industrial troubleshooting experience.",
+        skills: [{ name: "Electrical", keywords: ["Motors"] }],
+      },
+    });
+    const profile = {
+      basics: { name: "Sample Candidate" },
+      sections: {
+        certifications: { items: [{ id: "lift", title: "Scissor lift training" }] },
+        languages: { items: [{ id: "lang", language: "French" }] },
+      },
+    } as ResumeProfile;
+    const missing = await generateTailoring(
+      "Requires Scissor lift training and French.",
+      profile,
+    );
+    expect(missing).toMatchObject({
+      success: false,
+      error: "AI omitted qualifications explicitly mentioned in the vacancy.",
+    });
+
+    callJsonMock.mockResolvedValue({
+      success: true,
+      data: {
+        headline: "Maintenance Technician",
+        summary: "Scissor lift training and French.",
+        skills: [],
+      },
+    });
+    const included = await generateTailoring(
+      "Requires Scissor lift training and French.",
+      profile,
+    );
+    expect(included.success).toBe(true);
+  });
+
   it("rejects skill categories that normalize to empty output", async () => {
     callJsonMock.mockResolvedValue({
       success: true,
