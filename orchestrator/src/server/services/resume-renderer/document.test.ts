@@ -2,6 +2,28 @@ import { describe, expect, it } from "vitest";
 import { normalizeResumeJsonToLatexDocument } from "./document";
 
 describe("normalizeResumeJsonToLatexDocument", () => {
+  it("does not display serialized empty arrays in education fields", () => {
+    const document = normalizeResumeJsonToLatexDocument({
+      sections: {
+        education: {
+          title: "Education",
+          items: [{
+            id: "edu-empty-array",
+            school: "Technical College",
+            degree: "[]",
+            area: "Electrical Engineering",
+            period: "2020",
+            description: "[]",
+          }],
+        },
+      },
+    });
+    expect(document.education).toHaveLength(1);
+    expect(document.education[0]?.title).toBe("Technical College");
+    expect(document.education[0]?.subtitle).toBe("Electrical Engineering");
+    expect(JSON.stringify(document.education)).not.toContain('"[]"');
+  });
+
   it("keeps every editable Resume Studio section in the renderer model", () => {
     const document = normalizeResumeJsonToLatexDocument({
       picture: {
