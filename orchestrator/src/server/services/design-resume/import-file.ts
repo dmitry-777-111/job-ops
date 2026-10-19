@@ -1204,6 +1204,29 @@ function filterRequiredItems(items: unknown, requiredField: string): unknown[] {
   );
 }
 
+function sanitizeImportedEducationItems(items: unknown): unknown[] {
+  return asArray(items).map((rawItem) => {
+    const item = asRecord(rawItem);
+    if (!item) return rawItem;
+    const clean = { ...item };
+    for (const key of [
+      "school",
+      "degree",
+      "area",
+      "grade",
+      "location",
+      "period",
+      "description",
+    ]) {
+      const value = clean[key];
+      if (typeof value === "string" && /^\\s*\\[\\s*\\]\\s*$/.test(value)) {
+        clean[key] = "";
+      }
+    }
+    return clean;
+  });
+}
+
 function sanitizeNormalizedResume(input: unknown): DesignResumeJson {
   const normalized = normalizeReactiveResumeV5Document(input) as RecordLike;
   const sections = asRecord(normalized.sections) ?? {};
@@ -1223,7 +1246,10 @@ function sanitizeNormalizedResume(input: unknown): DesignResumeJson {
     },
     education: {
       ...asRecord(sections.education),
-      items: filterRequiredItems(asRecord(sections.education)?.items, "school"),
+      items: filterRequiredItems(
+        sanitizeImportedEducationItems(asRecord(sections.education)?.items),
+        "school",
+      ),
     },
     projects: {
       ...asRecord(sections.projects),
