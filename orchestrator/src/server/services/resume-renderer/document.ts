@@ -131,7 +131,9 @@ function asArray(value: unknown): unknown[] {
 }
 
 function toText(value: unknown, fallback = ""): string {
-  return typeof value === "string" ? value : fallback;
+  if (typeof value !== "string") return fallback;
+  // An empty array serialized by an upstream extractor is not resume content.
+  return /^\s*\[\s*\]\s*$/.test(value) ? fallback : value;
 }
 
 function toNumber(value: unknown, fallback = 0): number {
