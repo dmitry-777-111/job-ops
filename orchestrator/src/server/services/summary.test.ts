@@ -130,6 +130,28 @@ describe("generateTailoring", () => {
     expect(prompt).toContain("Technical College");
   });
 
+  it("deduplicates repeated AI skill categories and keywords", async () => {
+    callJsonMock.mockResolvedValue({
+      success: true,
+      data: {
+        headline: "Maintenance Technician",
+        summary: "Verified technical experience.",
+        skills: [
+          { name: "Electrical", keywords: ["Sensors", "Motors", "sensors"] },
+          { name: "electrical", keywords: ["motors", "VFD"] },
+          { name: "Mechanical", keywords: ["Bearings", "VFD"] },
+        ],
+      },
+    });
+    const result = await generateTailoring("Maintenance Technician", {
+      basics: { name: "Test Candidate" },
+    });
+    expect(result.data?.skills).toEqual([
+      { name: "Electrical", keywords: ["Sensors", "Motors", "VFD"] },
+      { name: "Mechanical", keywords: ["Bearings"] },
+    ]);
+  });
+
   it("rejects an empty AI payload without throwing", async () => {
     callJsonMock.mockResolvedValue({ success: true, data: undefined });
     const result = await generateTailoring("Industrial maintenance technician", {
