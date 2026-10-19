@@ -208,7 +208,7 @@ async function buildTailoringPrompt(
 
   const template = await getEffectivePromptTemplate("tailoringPromptTemplate");
 
-  return renderPromptTemplate(template, {
+  const renderedPrompt = renderPromptTemplate(template, {
     jobDescription,
     profileJson: JSON.stringify(relevantProfile),
     outputLanguage,
@@ -229,6 +229,7 @@ async function buildTailoringPrompt(
       ? `- Avoid these words or phrases: ${writingStyle.doNotUse}`
       : "",
   });
+  return `${renderedPrompt}\n\nFACTUAL COVERAGE REQUIREMENTS:\n- Prioritize recent experience relevant to the vacancy; avoid repeating the same skill or achievement in multiple categories.\n- When education, certifications, licences in progress, training or languages in PROFILE are relevant to the job, preserve their exact verified status in the summary or skill keywords. Do not omit a material requirement match.\n- Do not upgrade examination eligibility, training, HMI/PLC diagnostics or resets into completed licences or PLC programming experience. Never invent qualifications.\n- Include only facts supported by PROFILE. Do not print raw JSON arrays such as [] in the resume text.`;
 }
 
 function sanitizeText(text: string): string {
