@@ -159,12 +159,20 @@ export async function generateTailoring(
     return { success: false, error: "AI returned incomplete tailoring content." };
   }
 
+  const normalizedSkills = deduplicateTailoredSkills(skills);
+  if (skills.length > 0 && normalizedSkills.length === 0) {
+    return {
+      success: false,
+      error: "AI returned no usable skill categories.",
+    };
+  }
+
   return {
     success: true,
     data: {
-      summary: sanitizeText(summary || ""),
-      headline: sanitizeText(headline || ""),
-      skills: deduplicateTailoredSkills(skills),
+      summary: sanitizeText(summary),
+      headline: sanitizeText(headline),
+      skills: normalizedSkills,
     },
   };
 }
