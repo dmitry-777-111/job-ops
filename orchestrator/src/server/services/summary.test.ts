@@ -130,6 +130,24 @@ describe("generateTailoring", () => {
     expect(prompt).toContain("Technical College");
   });
 
+  it("rejects skill categories that normalize to empty output", async () => {
+    callJsonMock.mockResolvedValue({
+      success: true,
+      data: {
+        headline: "Maintenance Technician",
+        summary: "Verified maintenance experience.",
+        skills: [{ name: "  ", keywords: ["Sensors"] }],
+      },
+    });
+    const result = await generateTailoring("Maintenance Technician", {
+      basics: { name: "Test Candidate" },
+    });
+    expect(result).toMatchObject({
+      success: false,
+      error: "AI returned no usable skill categories.",
+    });
+  });
+
   it("deduplicates repeated AI skill categories and keywords", async () => {
     callJsonMock.mockResolvedValue({
       success: true,
