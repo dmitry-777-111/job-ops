@@ -75,6 +75,31 @@ const TAILORING_SCHEMA: JsonSchemaDefinition = {
   },
 };
 
+function deduplicateTailoredSkills(
+  skills: TailoredData["skills"],
+): TailoredData["skills"] {
+  const categories = new Map<string, { name: string; keywords: string[] }>();
+  const seenKeywords = new Set<string>();
+  for (const skill of skills) {
+    const name = skill.name.trim();
+    if (!name) continue;
+    const categoryKey = name.toLocaleLowerCase();
+    let category = categories.get(categoryKey);
+    if (!category) {
+      category = { name, keywords: [] };
+      categories.set(categoryKey, category);
+    }
+    for (const keyword of skill.keywords) {
+      const value = keyword.trim();
+      const key = value.toLocaleLowerCase();
+      if (!value || seenKeywords.has(key)) continue;
+      seenKeywords.add(key);
+      category.keywords.push(value);
+    }
+  }
+  return [...categories.values()].filter((category) => category.keywords.length > 0);
+}
+
 /**
  * Generate tailored resume content (summary, headline, skills) for a job.
  */
@@ -139,7 +164,7 @@ export async function generateTailoring(
     data: {
       summary: sanitizeText(summary || ""),
       headline: sanitizeText(headline || ""),
-      skills: skills || [],
+      skills: deduplicateTailoredSkills(skills),
     },
   };
 }
