@@ -429,6 +429,41 @@ describe("importDesignResumeFromFile", () => {
     expect(result.title).toBe("Taylor Resume");
   });
 
+  it("removes malformed empty-array education placeholders during import", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          output_text: JSON.stringify({
+            basics: { name: "Test Candidate" },
+            sections: {
+              education: {
+                items: [{
+                  school: "Technical College",
+                  degree: "[]",
+                  area: "Electrical Engineering",
+                  description: "[]",
+                }],
+              },
+            },
+          }),
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    await importDesignResumeFromFile({
+      fileName: "resume.pdf",
+      mediaType: "application/pdf",
+      dataBase64: Buffer.from("pdf-data").toString("base64"),
+    });
+    const saved = designResumeService.replaceCurrentDesignResumeDocument.mock.calls[0]?.[0];
+    expect(saved?.resumeJson?.sections?.education?.items?.[0]).toMatchObject({
+      school: "Technical College",
+      degree: "",
+      area: "Electrical Engineering",
+      description: "",
+    });
+  });
+
   it("generates missing project ids when importing AI-extracted resume files", async () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response(
