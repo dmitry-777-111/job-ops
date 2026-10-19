@@ -155,6 +155,22 @@ describe("generateTailoring", () => {
     });
   });
 
+  it("instructs AI to retain verified qualifications without inventing PLC programming", async () => {
+    await generateTailoring("Industrial maintenance technician", {
+      basics: { name: "Sample Candidate" },
+      sections: {
+        languages: { items: [{ id: "lang", name: "English" }] },
+        certifications: { items: [{ id: "cert", name: "Aerial lift training" }] },
+      },
+    } as ResumeProfile);
+
+    const prompt = callJsonMock.mock.calls.at(-1)?.[0]?.messages?.[0]?.content;
+    expect(prompt).toContain("Aerial lift training");
+    expect(prompt).toContain("preserve their exact verified status");
+    expect(prompt).toContain("Never invent qualifications");
+    expect(prompt).toContain("avoid repeating the same skill");
+  });
+
   it("omits globally excluded projects from the tailoring prompt", async () => {
     vi.mocked(getSetting).mockImplementation(async (key) =>
       key === "resumeProjects"
