@@ -100,6 +100,35 @@ function deduplicateTailoredSkills(
   return [...categories.values()].filter((category) => category.keywords.length > 0);
 }
 
+function missingExplicitQualificationMatches(
+  jobDescription: string,
+  profile: ResumeProfile,
+  summary: string,
+  skills: TailoredData["skills"],
+): string[] {
+  const normalize = (value: string) =>
+    value.toLocaleLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+  const jobText = ` ${normalize(stripHtmlTags(jobDescription))} `;
+  const outputText = ` ${normalize(
+    [summary, ...skills.flatMap((skill) => [skill.name, ...skill.keywords])].join(" "),
+  )} `;
+  const sections = profile.sections;
+  const candidates = [
+    ...(sections?.certifications?.items ?? []).map((item) => item.title),
+    ...(sections?.languages?.items ?? []).map((item) => item.language),
+  ];
+  const missing = new Set<string>();
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") continue;
+    const phrase = normalize(candidate);
+    if (phrase.length < 4) continue;
+    if (jobText.includes(` ${phrase} `) && !outputText.includes(` ${phrase} `)) {
+      missing.add(candidate.trim());
+    }
+  }
+  return [...missing];
+}
+
 /**
  * Generate tailored resume content (summary, headline, skills) for a job.
  */
@@ -164,6 +193,19 @@ export async function generateTailoring(
     return {
       success: false,
       error: "AI returned no usable skill categories.",
+    };
+  }
+
+  const missingQualifications = missingExplicitQualificationMatches(
+    jobDescription,
+    aiProfile,
+    summary,
+    normalizedSkills,
+  );
+  if (missingQualifications.length > 0) {
+    return {
+      success: false,
+      error: "AI omitted qualifications explicitly mentioned in the vacancy.",
     };
   }
 
