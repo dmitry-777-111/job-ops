@@ -107,7 +107,7 @@ function missingExplicitQualificationMatches(
   skills: TailoredData["skills"],
 ): string[] {
   const normalize = (value: string) =>
-    value.toLocaleLowerCase().replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+    value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   const jobText = ` ${normalize(stripHtmlTags(jobDescription))} `;
   const outputText = ` ${normalize(
     [summary, ...skills.flatMap((skill) => [skill.name, ...skill.keywords])].join(" "),
