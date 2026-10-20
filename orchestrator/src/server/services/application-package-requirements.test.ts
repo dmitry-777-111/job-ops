@@ -81,6 +81,26 @@ describe("F3-6B application requirements and evidence mapping", () => {
     expect(result.gaps[0]?.severity).toBe("warning");
   });
 
+  it("extracts Unicode bulleted requirements separately", () => {
+    const requirements = extractApplicationRequirements(
+      "• PLC knowledge is required.\n● 309A licence is preferred.\n▪ English is mandatory.",
+    );
+    expect(requirements).toHaveLength(3);
+    expect(requirements.map((item) => item.mandatory)).toEqual([
+      true,
+      false,
+      true,
+    ]);
+  });
+
+  it("does not erase a mandatory clause when another qualification is optional", () => {
+    const requirements = extractApplicationRequirements(
+      "Must know PLC systems; 309A licence is preferred but not required.",
+    );
+    expect(requirements).toHaveLength(1);
+    expect(requirements[0]?.mandatory).toBe(true);
+  });
+
   it("builds profile evidence with stable source references", () => {
     const atoms = buildProfileEvidenceAtoms(profile);
     expect(atoms).toContainEqual({
