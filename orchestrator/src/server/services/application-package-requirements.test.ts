@@ -97,8 +97,11 @@ describe("F3-6B application requirements and evidence mapping", () => {
     const requirements = extractApplicationRequirements(
       "Must know PLC systems; 309A licence is preferred but not required.",
     );
-    expect(requirements).toHaveLength(1);
-    expect(requirements[0]?.mandatory).toBe(true);
+    expect(requirements).toHaveLength(2);
+    expect(requirements.map((item) => item.mandatory)).toEqual([true, false]);
+    expect(requirements.map((item) => item.category)).toEqual(["skill", "licence"]);
+    const mapped = mapApplicationRequirementsToEvidence({ requirements, profile });
+    expect(mapped.gaps.find((gap) => gap.requirementText.includes("309A"))?.severity).toBe("warning");
   });
 
   it("builds profile evidence with stable source references", () => {
