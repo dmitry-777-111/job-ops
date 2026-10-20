@@ -276,6 +276,111 @@ describe.sequential("Hosted current-user isolation", () => {
     await stopServer({ server, closeDb, tempDir });
   });
 
+  it("isolates application outcomes and event mutations between hosted users", async () => {
+    const users = [];
+    for (const name of ["alice", "bob"]) {
+      const token = await signup(baseUrl, name, `${name}-secret`);
+      const job = await importManualJob(baseUrl, token, `${name} outcome role`);
+      const evidence = {
+        kind: "rejection",
+        sourceType: "manual_verified",
+        note: `${name} private outcome evidence`,
+        verifiedBy: "user",
+      };
+      const saved = await fetch(`${baseUrl}/api/jobs/${job.id}/outcome`, {
+        method: "PATCH",
+        headers: authHeaders(token),
+        body: JSON.stringify({ outcome: "rejected", evidence }),
+      });
+      expect(saved.status).toBe(200);
+      const snapshot = (await saved.json()).data;
+      const history = await fetch(`${baseUrl}/api/jobs/${job.id}/events`, {
+        headers: authHeaders(token),
+      });
+      expect(history.status).toBe(200);
+      const events = (await history.json()).data;
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({
+        outcome: "rejected",
+        metadata: { evidence },
+      });
+      users.push({ token, job, snapshot, events });
+    }
+    expect(users[0].job.id).not.toBe(users[1].job.id);
+
+    for (const [index, actor] of users.entries()) {
+      const owner = users[1 - index];
+      const requests = [
+        { method: "GET", path: `${owner.job.id}` },
+        { method: "GET", path: `${owner.job.id}/events` },
+        {
+          method: "PATCH",
+          path: `${owner.job.id}/outcome`,
+          body: { outcome: null },
+        },
+        {
+          method: "POST",
+          path: `${owner.job.id}/stages`,
+          body: {
+            toStage: "no_change",
+            metadata: { note: "foreign mutation" },
+          },
+        },
+        ...[owner.job.id, actor.job.id].flatMap((id) => [
+          {
+            method: "PATCH",
+            path: `${id}/events/${owner.events[0].id}`,
+            body: { metadata: { note: "foreign mutation" } },
+          },
+          { method: "DELETE", path: `${id}/events/${owner.events[0].id}` },
+        ]),
+      ];
+      for (const request of requests) {
+        const response = await fetch(`${baseUrl}/api/jobs/${request.path}`, {
+          method: request.method,
+          headers: authHeaders(actor.token),
+          body: "body" in request ? JSON.stringify(request.body) : undefined,
+        });
+        const body = await response.json();
+        // Collection reads hide inaccessible events; deletes are idempotent.
+        if (request.method === "GET" && request.path.endsWith("/events")) {
+          expect(response.status).toBe(200);
+          expect(body).toMatchObject({ ok: true, data: [] });
+        } else if (request.method === "DELETE") {
+          expect(response.status).toBe(200);
+          expect(body).toMatchObject({ ok: true, data: null });
+        } else {
+          const expectedStatus =
+            request.method === "POST" || request.path.includes("/events/")
+              ? 500
+              : 404;
+          expect(response.status, `${request.method} ${request.path}`).toBe(
+            expectedStatus,
+          );
+          expect(body.ok).toBe(false);
+          expect(body.data).toBeUndefined();
+        }
+      }
+    }
+
+    for (const owner of users) {
+      const jobResponse = await fetch(`${baseUrl}/api/jobs/${owner.job.id}`, {
+        headers: authHeaders(owner.token),
+      });
+      expect(jobResponse.status).toBe(200);
+      expect((await jobResponse.json()).data).toMatchObject({
+        outcome: "rejected",
+        closedAt: owner.snapshot.closedAt,
+      });
+      const eventsResponse = await fetch(
+        `${baseUrl}/api/jobs/${owner.job.id}/events`,
+        { headers: authHeaders(owner.token) },
+      );
+      expect(eventsResponse.status).toBe(200);
+      expect((await eventsResponse.json()).data).toEqual(owner.events);
+    }
+  });
+
   it("isolates private data between two hosted users in the same tenant", async () => {
     const aliceToken = await signup(baseUrl, "alice", "alice-secret");
     const bobToken = await signup(baseUrl, "bob", "bob-secret");

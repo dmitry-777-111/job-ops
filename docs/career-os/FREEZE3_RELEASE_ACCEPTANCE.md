@@ -167,3 +167,20 @@ Test command, from `orchestrator` (using the existing local Node 22 executable):
 ```
 
 Tests use temporary synthetic databases; no external applications or personal data. Dependencies were reused, not freshly installed. This proves local persistence across database reopening, not a process crash, hosted tenant isolation, deployed API behavior or the full candidate E2E flow. Those release gates remain open. No production, PDF, infrastructure changes or deploy validation were performed. The commit uses `[skip ci]` to prevent push-triggered deployment.
+
+## Bounded outcome isolation check — 2026-10-20
+
+Base: `700359a0f00a2dabdfdbf38904b0075287a116d3`. One focused hosted API regression uses two synthetic users in the same tenant, separate private jobs for the same vacancy URL, distinct verified rejection evidence, and temporary databases.
+
+Both directions are checked: foreign job/result reads, event-history reads, outcome changes, stage creation, event editing and deletion. Event mutations use both the foreign job ID and the attacker's own job ID with the foreign event ID. Owner outcomes, closure timestamps and complete histories remain unchanged.
+
+Node 22.22.1 / Vitest 4.1.6: one targeted test PASS, six unrelated tests deliberately skipped. Command from orchestrator:
+
+```powershell
+../../qualification-tools/node.exe ../node_modules/vitest/vitest.mjs run src/server/api/routes/tenant-isolation.test.ts -t 'isolates application outcomes and event mutations between hosted users'
+```
+
+The first run exposed an overly strict test assumption that every foreign request returns 404. Existing contract: foreign event collections return `200 []`; inaccessible event deletion returns `200 null` without mutation; foreign job/outcome access returns 404; unavailable stage/event mutations return 500 without data. Owner-state preservation passes. The 500 mapping remains a separate API-quality limitation, not a successful mutation; no application behavior was changed.
+
+No complete E2E, PDF, production, real accounts or correspondence connectors. This is local hosted outcome-isolation evidence only, not release acceptance. The commit uses `[skip ci]` to prevent push-triggered deployment.
+`npm --workspace orchestrator run check:types`, targeted `biome ci` on `tenant-isolation.test.ts`, and `git diff --check`: PASS.
