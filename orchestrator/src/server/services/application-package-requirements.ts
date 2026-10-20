@@ -75,6 +75,14 @@ function classifyRequirement(text: string): ApplicationRequirementCategory {
 function splitRequirementCandidates(description: string): string[] {
   return description
     .split(/\r?\n|[•●▪◦]|(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .flatMap((item) => {
+      const clauses = item.split(";").map((part) => part.trim()).filter(Boolean);
+      // Split only when both sides independently express requirement strength.
+      return clauses.length > 1 &&
+        clauses.every((part) => REQUIRED_SIGNAL.test(part) || PREFERRED_SIGNAL.test(part))
+        ? clauses
+        : [item];
+    })
     .map((item) => normalizeText(item.replace(/^[-*•●▪◦]\s*/, "")))
     .filter((item) => item.length >= 8 && item.length <= 500);
 }
