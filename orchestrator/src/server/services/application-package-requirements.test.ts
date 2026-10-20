@@ -70,6 +70,17 @@ describe("F3-6B application requirements and evidence mapping", () => {
     );
   });
 
+  it("does not treat preferred but explicitly non-required qualifications as hard gaps", () => {
+    const requirements = extractApplicationRequirements(
+      "A 309A licence is preferred but not required.",
+    );
+    expect(requirements).toHaveLength(1);
+    expect(requirements[0]?.mandatory).toBe(false);
+    const result = mapApplicationRequirementsToEvidence({ requirements, profile });
+    expect(result.gaps).toHaveLength(1);
+    expect(result.gaps[0]?.severity).toBe("warning");
+  });
+
   it("builds profile evidence with stable source references", () => {
     const atoms = buildProfileEvidenceAtoms(profile);
     expect(atoms).toContainEqual({
