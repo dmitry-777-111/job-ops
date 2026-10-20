@@ -149,3 +149,21 @@ Connector endpoints in this chat allow GitHub file and commit writes, but do not
 
 ## Recovery
 Source of truth: GitHub branch and specific commit, then CI/deploy logs, then this checkpoint. Do not repeat already-completed infrastructure setup. Never call a revision released solely because it was committed.
+
+## Bounded outcome persistence check — 2026-10-20
+
+Base: `8f686ad35789d6623b9e8c72a7d2fdff6fc18a23`. This cycle addresses only the local outcome-persistence portion of the outstanding candidate-flow acceptance gate.
+
+- Existing confirmation UI, timeout logic and tracking service: 19/19 tests PASS.
+- Added one regression proving a user-confirmed rejection, closure timestamp, stage-event identity and verification evidence survive closing and reopening a synthetic SQLite database.
+- Final focused run: 3 files, 20/20 tests PASS on Node 22.22.1 / Vitest 4.1.6. No application behavior changed.
+- `npm --workspace orchestrator run check:types`: exit 0.
+- `./orchestrator/node_modules/.bin/biome ci orchestrator/src/server/services/applicationTracking.test.ts`: exit 0. `git diff --check`: PASS.
+
+Test command, from `orchestrator` (using the existing local Node 22 executable):
+
+```powershell
+../../qualification-tools/node.exe ../node_modules/vitest/vitest.mjs run src/client/lib/outcome-confirmation.test.ts src/client/pages/improve/OutcomeConfirmationCard.test.tsx src/server/services/applicationTracking.test.ts
+```
+
+Tests use temporary synthetic databases; no external applications or personal data. Dependencies were reused, not freshly installed. This proves local persistence across database reopening, not a process crash, hosted tenant isolation, deployed API behavior or the full candidate E2E flow. Those release gates remain open. No production, PDF, infrastructure changes or deploy validation were performed. The commit uses `[skip ci]` to prevent push-triggered deployment.

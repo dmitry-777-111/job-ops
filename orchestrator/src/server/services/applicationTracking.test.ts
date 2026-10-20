@@ -91,6 +91,49 @@ describe.sequential("Application Tracking Service", () => {
     expect(jobAfter2?.status).toBe("in_progress");
   });
 
+  it("preserves a confirmed outcome and its evidence after reopening the database", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic outcome persistence test",
+      employer: "Example",
+      jobUrl: "https://example.com/outcome-persistence",
+    });
+    const occurredAt = 1_790_000_000;
+    const event = applicationTracking.transitionStage(
+      job.id,
+      "closed",
+      occurredAt,
+      { evidence: evidence("rejection") },
+      "rejected",
+    );
+
+    const { closeDb } = await import("../db/index");
+    closeDb();
+    vi.resetModules();
+    const reopened = await import("../db/index");
+    db = reopened.db;
+    schema = reopened.schema;
+    applicationTracking = await import("./applicationTracking");
+
+    const persisted = await db
+      .select()
+      .from(schema.jobs)
+      .where(eq(schema.jobs.id, job.id))
+      .get();
+    expect(persisted).toMatchObject({
+      outcome: "rejected",
+      closedAt: occurredAt,
+    });
+    const events = await applicationTracking.getStageEvents(job.id);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      id: event.id,
+      outcome: "rejected",
+      occurredAt,
+      metadata: { evidence: evidence("rejection") },
+    });
+  });
+
   it("sets readyAt the first time a job moves to ready and does not overwrite it", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",
