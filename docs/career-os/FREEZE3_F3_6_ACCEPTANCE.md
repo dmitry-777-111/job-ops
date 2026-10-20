@@ -18,6 +18,9 @@ The package is version-pinned to vacancy/profile/strategy/generation-policy inpu
 - requirements are extracted from the pinned vacancy version;
 - requirement evidence is mapped only to verified candidate evidence;
 - unsupported requirements remain visible gaps;
+- explicit work authorization (including authorised/authorized, right to work and legally entitled to work) and USA travel requirements remain unverified gaps; a matching skill or prior work/travel location cannot establish eligibility;
+- travel visas are classified as travel, not permission to work; preferred travel remains a warning, and standalone "not required" / "not mandatory" statements are excluded;
+- a hard gap means missing verified evidence, not a finding that the candidate is ineligible; these requirements do not by themselves prevent draft preparation;
 - targeted CV is a derivative of the pinned Master Career Profile and only reorders verified skills;
 - cover-letter content is evidence-bounded;
 - unsupported application-form answers are not fabricated;

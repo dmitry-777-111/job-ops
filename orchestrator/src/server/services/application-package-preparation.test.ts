@@ -72,6 +72,26 @@ function observation(
 }
 
 describe("F3-6 application package preparation", () => {
+  it("keeps authorization and USA travel as unverified requirements during preparation", () => {
+    const result = buildApplicationPackagePreparation({
+      posting: {
+        ...posting,
+        description:
+          "Work authorization in Canada is required; travel to the USA for PLC training is required.",
+      },
+      observations: [observation(true)],
+      profile,
+    });
+    expect(result.requirements.map((item) => item.category)).toEqual([
+      "work_authorization",
+      "travel",
+    ]);
+    expect(result.evidenceMap).toEqual([]);
+    expect(result.gaps).toHaveLength(2);
+    expect(result.gaps.every((gap) => gap.severity === "hard_gap")).toBe(true);
+    expect(result.canCreateDraft).toBe(true);
+  });
+
   it("creates a preparation-ready evidence map only when live evidence is authoritative", () => {
     const result = buildApplicationPackagePreparation({
       posting,

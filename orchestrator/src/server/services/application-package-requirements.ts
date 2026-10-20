@@ -28,6 +28,18 @@ function requirementKey(text: string): string {
 
 function classifyRequirement(text: string): ApplicationRequirementCategory {
   const value = text.toLowerCase();
+  // Eligibility requirements must never be satisfied by a matching skill keyword.
+  if (
+    /\b(work authori[sz]ation|authori[sz]ed to work|eligible to work|right to work|legally (?:able|entitled) to work|citizen|citizenship|permanent resident|work permit|sponsorship)\b/.test(
+      value,
+    )
+  ) {
+    return "work_authorization";
+  }
+  // A visa/passport for a trip does not establish permission to work abroad.
+  if (/\b(travel|passport|overnight|relocation|relocate)\b/.test(value)) {
+    return "travel";
+  }
   if (
     /\b(licen[cs]e|certification|certificate|red seal|309a|442a|driver'?s licence|driver'?s license)\b/.test(
       value,
@@ -76,10 +88,15 @@ function splitRequirementCandidates(description: string): string[] {
   return description
     .split(/\r?\n|[•●▪◦]|(?<=[.!?])\s+(?=[A-Z0-9])/)
     .flatMap((item) => {
-      const clauses = item.split(";").map((part) => part.trim()).filter(Boolean);
+      const clauses = item
+        .split(";")
+        .map((part) => part.trim())
+        .filter(Boolean);
       // Split only when both sides independently express requirement strength.
       return clauses.length > 1 &&
-        clauses.every((part) => REQUIRED_SIGNAL.test(part) || PREFERRED_SIGNAL.test(part))
+        clauses.every(
+          (part) => REQUIRED_SIGNAL.test(part) || PREFERRED_SIGNAL.test(part),
+        )
         ? clauses
         : [item];
     })
@@ -97,12 +114,20 @@ export function extractApplicationRequirements(
 
   for (const candidate of splitRequirementCandidates(description)) {
     const explicitlyNotRequired =
-      /\b(?:not required|not mandatory|no (?:licen[cs]e|certification|experience) required)\b/i.test(candidate);
+      /\b(?:not required|not mandatory|no (?:licen[cs]e|certification|experience) required)\b/i.test(
+        candidate,
+      );
     const preferred = PREFERRED_SIGNAL.test(candidate);
     // A positive mandatory clause must not be erased by an unrelated optional clause.
     // Mixed requirements remain mandatory until they are split into distinct facts.
-    const required = REQUIRED_SIGNAL.test(candidate) &&
-      (!explicitlyNotRequired || /\b(?:must|mandatory|shall|minimum|at least)\b/i.test(candidate));
+    const positiveSignals = candidate.replace(
+      /\b(?:not required|not mandatory|no (?:licen[cs]e|certification|experience) required)\b/gi,
+      "",
+    );
+    const required =
+      REQUIRED_SIGNAL.test(positiveSignals) &&
+      (!explicitlyNotRequired ||
+        /\b(?:must|mandatory|shall|minimum|at least)\b/i.test(positiveSignals));
 
     if (!required && !preferred) continue;
 
