@@ -114,11 +114,15 @@ describe("generateTailoring", () => {
     const profile = {
       basics: { name: "Sample Candidate" },
       sections: {
-        languages: { items: [{ id: "lang-1", name: "Russian", level: "Native" }] },
+        languages: {
+          items: [{ id: "lang-1", name: "Russian", level: "Native" }],
+        },
         certifications: {
           items: [{ id: "cert-1", name: "Scissor lift training" }],
         },
-        education: { items: [{ id: "edu-1", institution: "Technical College" }] },
+        education: {
+          items: [{ id: "edu-1", institution: "Technical College" }],
+        },
       },
     } as ResumeProfile;
 
@@ -142,7 +146,9 @@ describe("generateTailoring", () => {
     const profile = {
       basics: { name: "Sample Candidate" },
       sections: {
-        certifications: { items: [{ id: "lift", title: "Scissor lift training" }] },
+        certifications: {
+          items: [{ id: "lift", title: "Scissor lift training" }],
+        },
         languages: { items: [{ id: "lang", language: "French" }] },
       },
     } as ResumeProfile;
@@ -168,6 +174,21 @@ describe("generateTailoring", () => {
       profile,
     );
     expect(included.success).toBe(true);
+  });
+
+  it.each([
+    null,
+    "invalid section",
+    { items: "invalid items" },
+    { items: [null, 42, "French", {}, { title: 42, language: false }] },
+  ])("ignores malformed qualification sections without inventing evidence: %j", async (section) => {
+    const result = await generateTailoring(
+      "Requires French and lift training.",
+      {
+        sections: { certifications: section, languages: section },
+      },
+    );
+    expect(result.success).toBe(true);
   });
 
   it("rejects skill categories that normalize to empty output", async () => {
@@ -212,9 +233,12 @@ describe("generateTailoring", () => {
 
   it("rejects an empty AI payload without throwing", async () => {
     callJsonMock.mockResolvedValue({ success: true, data: undefined });
-    const result = await generateTailoring("Industrial maintenance technician", {
-      basics: { name: "Sample Candidate" },
-    });
+    const result = await generateTailoring(
+      "Industrial maintenance technician",
+      {
+        basics: { name: "Sample Candidate" },
+      },
+    );
     expect(result).toMatchObject({
       success: false,
       error: "AI returned incomplete tailoring content.",
@@ -226,9 +250,12 @@ describe("generateTailoring", () => {
       success: true,
       data: { headline: "", summary: "Some text", skills: [] },
     });
-    const result = await generateTailoring("Industrial maintenance technician", {
-      basics: { name: "Sample Candidate" },
-    });
+    const result = await generateTailoring(
+      "Industrial maintenance technician",
+      {
+        basics: { name: "Sample Candidate" },
+      },
+    );
     expect(result).toMatchObject({
       success: false,
       error: "AI returned incomplete tailoring content.",
@@ -240,7 +267,9 @@ describe("generateTailoring", () => {
       basics: { name: "Sample Candidate" },
       sections: {
         languages: { items: [{ id: "lang", name: "English" }] },
-        certifications: { items: [{ id: "cert", name: "Aerial lift training" }] },
+        certifications: {
+          items: [{ id: "cert", name: "Aerial lift training" }],
+        },
       },
     } as ResumeProfile);
 

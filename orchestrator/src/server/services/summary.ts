@@ -97,7 +97,20 @@ function deduplicateTailoredSkills(
       category.keywords.push(value);
     }
   }
-  return [...categories.values()].filter((category) => category.keywords.length > 0);
+  return [...categories.values()].filter(
+    (category) => category.keywords.length > 0,
+  );
+}
+
+function qualificationValues(section: unknown, field: string): unknown[] {
+  if (!section || typeof section !== "object" || !("items" in section))
+    return [];
+  if (!Array.isArray(section.items)) return [];
+  return section.items.map((item: unknown) =>
+    item && typeof item === "object" && field in item
+      ? (item as Record<string, unknown>)[field]
+      : undefined,
+  );
 }
 
 function missingExplicitQualificationMatches(
@@ -107,22 +120,31 @@ function missingExplicitQualificationMatches(
   skills: TailoredData["skills"],
 ): string[] {
   const normalize = (value: string) =>
-    value.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    value
+      .toLocaleLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
   const jobText = ` ${normalize(stripHtmlTags(jobDescription))} `;
   const outputText = ` ${normalize(
-    [summary, ...skills.flatMap((skill) => [skill.name, ...skill.keywords])].join(" "),
+    [
+      summary,
+      ...skills.flatMap((skill) => [skill.name, ...skill.keywords]),
+    ].join(" "),
   )} `;
   const sections = profile.sections;
   const candidates = [
-    ...(sections?.certifications?.items ?? []).map((item) => item.title),
-    ...(sections?.languages?.items ?? []).map((item) => item.language),
+    ...qualificationValues(sections?.certifications, "title"),
+    ...qualificationValues(sections?.languages, "language"),
   ];
   const missing = new Set<string>();
   for (const candidate of candidates) {
     if (typeof candidate !== "string") continue;
     const phrase = normalize(candidate);
     if (phrase.length < 4) continue;
-    if (jobText.includes(` ${phrase} `) && !outputText.includes(` ${phrase} `)) {
+    if (
+      jobText.includes(` ${phrase} `) &&
+      !outputText.includes(` ${phrase} `)
+    ) {
       missing.add(candidate.trim());
     }
   }
@@ -185,7 +207,10 @@ export async function generateTailoring(
     )
   ) {
     logger.warn("AI response missing required tailoring fields", result.data);
-    return { success: false, error: "AI returned incomplete tailoring content." };
+    return {
+      success: false,
+      error: "AI returned incomplete tailoring content.",
+    };
   }
 
   const normalizedSkills = deduplicateTailoredSkills(skills);
