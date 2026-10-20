@@ -74,8 +74,8 @@ function classifyRequirement(text: string): ApplicationRequirementCategory {
 
 function splitRequirementCandidates(description: string): string[] {
   return description
-    .split(/\r?\n|[????????????]|(?<=[.!?])\s+(?=[A-Z0-9])/)
-    .map((item) => normalizeText(item.replace(/^[-*??????]\s*/, "")))
+    .split(/\r?\n|[•●▪◦]|(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .map((item) => normalizeText(item.replace(/^[-*•●▪◦]\s*/, "")))
     .filter((item) => item.length >= 8 && item.length <= 500);
 }
 
@@ -88,9 +88,14 @@ export function extractApplicationRequirements(
   const result: ApplicationRequirementItem[] = [];
 
   for (const candidate of splitRequirementCandidates(description)) {
-    const explicitlyNotRequired = /\b(?:not required|not mandatory|no (?:licen[cs]e|certification|experience) required)\b/i.test(candidate);
-    const required = REQUIRED_SIGNAL.test(candidate) && !explicitlyNotRequired;
+    const explicitlyNotRequired =
+      /\b(?:not required|not mandatory|no (?:licen[cs]e|certification|experience) required)\b/i.test(candidate);
     const preferred = PREFERRED_SIGNAL.test(candidate);
+    // A positive mandatory clause must not be erased by an unrelated optional clause.
+    // Mixed requirements remain mandatory until they are split into distinct facts.
+    const required = REQUIRED_SIGNAL.test(candidate) &&
+      (!explicitlyNotRequired || /\b(?:must|mandatory|shall|minimum|at least)\b/i.test(candidate));
+
     if (!required && !preferred) continue;
 
     const key = requirementKey(candidate);
