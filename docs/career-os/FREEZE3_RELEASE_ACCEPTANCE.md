@@ -184,3 +184,13 @@ The first run exposed an overly strict test assumption that every foreign reques
 
 No complete E2E, PDF, production, real accounts or correspondence connectors. This is local hosted outcome-isolation evidence only, not release acceptance. The commit uses `[skip ci]` to prevent push-triggered deployment.
 `npm --workspace orchestrator run check:types`, targeted `biome ci` on `tenant-isolation.test.ts`, and `git diff --check`: PASS.
+
+## Bounded application reopening fix — 2026-10-21
+
+Base: `fa8e5a44c6abbf365c62a29628ca6f9f08e61532`, verified against remote freeze3-dev. Prior authorization/travel, summary, outcome persistence/isolation and NOT_FOUND fixes were already present.
+
+A real transition from closed/rejected to an active stage retained the stale outcome and closedAt. Clear those fields on a non-closing transition without a new outcome; keep notes/no_change and historical rejection events intact. Existing tenant/user-scoped reads and writes are unchanged.
+
+Regression executed before fix: 1 failed, 15 skipped, asserting stale rejected/closedAt values. After fix: applicationTracking.test.ts and tenant-isolation.test.ts, 23/23 PASS on Node 22 / Vitest 4.1.6. Orchestrator check:types, targeted Biome ci and git diff --check PASS. Initial sandbox attempt ran zero tests due to temporary-file EPERM; actual runs succeeded outside that restriction using synthetic local data.
+
+Full CI/E2E not run in this user-requested bounded cycle. GitHub connector returned no workflow runs for the base SHA, which does not prove green CI. Commit uses [skip ci] to avoid push-triggered deployment. No production or real applications touched. Next bounded lifecycle check: timeline date edits that move the latest event into the past and reconciliation of current application state.

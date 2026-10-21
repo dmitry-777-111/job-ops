@@ -348,6 +348,10 @@ export function transitionStage(
 
     if (toStage !== "no_change" && !isNoteEvent) {
       updates.status = STAGE_TO_STATUS[finalToStage];
+      if (!isClosingStage(finalToStage) && !outcome) {
+        updates.outcome = null;
+        updates.closedAt = null;
+      }
 
       if (finalToStage === "applied" && !job.appliedAt) {
         updates.appliedAt = new Date().toISOString();

@@ -60,6 +60,47 @@ describe.sequential("Application Tracking Service", () => {
     ).not.toThrow();
   });
 
+  it("clears stale closure when reopening while preserving notes and rejection history", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic reopened application",
+      employer: "Example",
+      jobUrl: "https://example.com/reopened-application",
+    });
+    const rejection = applicationTracking.transitionStage(
+      job.id,
+      "closed",
+      1_790_000_000,
+      { evidence: evidence("rejection") },
+      "rejected",
+    );
+    applicationTracking.transitionStage(job.id, "no_change", 1_790_000_001, {
+      eventType: "note",
+      note: "Synthetic follow-up note",
+    });
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      outcome: "rejected",
+      closedAt: 1_790_000_000,
+    });
+    applicationTracking.transitionStage(
+      job.id,
+      "recruiter_screen",
+      1_790_000_002,
+      {
+        evidence: evidence("interview"),
+      },
+    );
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: "in_progress",
+      outcome: null,
+      closedAt: null,
+    });
+    expect(await applicationTracking.getStageEvents(job.id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: rejection.id, outcome: "rejected" }),
+      ]),
+    );
+  });
   it("transitions stage and updates job status", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",
