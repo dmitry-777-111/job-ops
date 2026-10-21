@@ -45,6 +45,21 @@ describe.sequential("Application Tracking Service", () => {
     vi.clearAllMocks();
   });
 
+  it("returns NOT_FOUND for missing stage targets without creating history", async () => {
+    expect(() =>
+      applicationTracking.transitionStage("missing-job", "no_change"),
+    ).toThrowError(expect.objectContaining({ status: 404, code: "NOT_FOUND" }));
+    expect(() =>
+      applicationTracking.updateStageEvent("missing-event", {
+        metadata: { note: "Synthetic missing event test" },
+      }),
+    ).toThrowError(expect.objectContaining({ status: 404, code: "NOT_FOUND" }));
+    expect(await applicationTracking.getStageEvents("missing-job")).toEqual([]);
+    expect(() =>
+      applicationTracking.deleteStageEvent("missing-event"),
+    ).not.toThrow();
+  });
+
   it("transitions stage and updates job status", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",

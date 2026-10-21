@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { AppError } from "@infra/errors";
+import { AppError, notFound } from "@infra/errors";
 import { trackServerProductEvent } from "@infra/product-analytics";
 import { trackCanonicalActivationEvent } from "@server/services/activation-funnel";
 import type {
@@ -303,7 +303,7 @@ export function transitionStage(
       .where(and(jobsScopeFilter(), eq(jobs.id, applicationId)))
       .get();
     if (!job) {
-      throw new Error("Job not found");
+      throw notFound("Job not found");
     }
 
     const lastEvent = tx
@@ -408,7 +408,7 @@ export function updateStageEvent(
       .from(stageEvents)
       .where(and(stageEventsScopeFilter(), eq(stageEvents.id, eventId)))
       .get();
-    if (!event) throw new Error("Event not found");
+    if (!event) throw notFound("Event not found");
 
     const existingMetadata = parseMetadata(event.metadata);
     const hasEvidenceUpdate =
@@ -505,7 +505,7 @@ export function updateStageEvent(
         .from(jobs)
         .where(and(jobsScopeFilter(), eq(jobs.id, event.applicationId)))
         .get();
-      if (!job) throw new Error("Job not found");
+      if (!job) throw notFound("Job not found");
 
       const metadata = parseMetadata(lastEvent.metadata);
       const lastStage = lastEvent.toStage as ApplicationStage;
@@ -573,7 +573,7 @@ export function deleteStageEvent(eventId: string): void {
         .from(jobs)
         .where(and(jobsScopeFilter(), eq(jobs.id, event.applicationId)))
         .get();
-      if (!job) throw new Error("Job not found");
+      if (!job) throw notFound("Job not found");
 
       const metadata = parseMetadata(lastEvent.metadata);
       const lastStage = lastEvent.toStage as ApplicationStage;

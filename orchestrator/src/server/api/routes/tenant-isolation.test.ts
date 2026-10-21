@@ -350,14 +350,11 @@ describe.sequential("Hosted current-user isolation", () => {
           expect(response.status).toBe(200);
           expect(body).toMatchObject({ ok: true, data: null });
         } else {
-          const expectedStatus =
-            request.method === "POST" || request.path.includes("/events/")
-              ? 500
-              : 404;
           expect(response.status, `${request.method} ${request.path}`).toBe(
-            expectedStatus,
+            404,
           );
           expect(body.ok).toBe(false);
+          expect(body.error.code).toBe("NOT_FOUND");
           expect(body.data).toBeUndefined();
         }
       }
