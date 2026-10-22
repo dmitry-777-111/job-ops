@@ -194,3 +194,11 @@ A real transition from closed/rejected to an active stage retained the stale out
 Regression executed before fix: 1 failed, 15 skipped, asserting stale rejected/closedAt values. After fix: applicationTracking.test.ts and tenant-isolation.test.ts, 23/23 PASS on Node 22 / Vitest 4.1.6. Orchestrator check:types, targeted Biome ci and git diff --check PASS. Initial sandbox attempt ran zero tests due to temporary-file EPERM; actual runs succeeded outside that restriction using synthetic local data.
 
 Full CI/E2E not run in this user-requested bounded cycle. GitHub connector returned no workflow runs for the base SHA, which does not prove green CI. Commit uses [skip ci] to avoid push-triggered deployment. No production or real applications touched. Next bounded lifecycle check: timeline date edits that move the latest event into the past and reconciliation of current application state.
+
+## Bounded timeline date correction — 2026-10-21
+
+Base and remote HEAD verified: `df8a40e9ae95ea2589d2c91fac174d0bb820f367`. Previous reopening fix already present. Reproduced stale rejected/closedAt after moving the latest rejection before an interview: focused regression failed before the patch.
+
+Date edits now remember the previously latest event within the same transaction and private data scope, then reconcile from the new latest stage when that event is displaced. Regression covers moving backward, editing an older event without changing current outcome, moving forward again, and preserving history. Notes keep their existing behavior; reconciliation when a note is the newest remaining event is a separate follow-up.
+
+Final actual execution: applicationTracking.test.ts + tenant-isolation.test.ts, 24/24 PASS (Node 22 / Vitest 4.1.6). Orchestrator check:types, targeted Biome ci and git diff --check PASS. Full CI/E2E not run, per bounded scope. [skip ci] prevents automatic deployment. No production, PDF, real applications or PII. Next: inspect stage reconciliation when a later note masks the latest substantive stage.

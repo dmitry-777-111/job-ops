@@ -475,6 +475,22 @@ export function updateStageEvent(
       updates.outcome = null;
     }
 
+    // Remember whether a date correction displaces the current latest event.
+    const previousLatest =
+      occurredAt !== undefined
+        ? tx
+            .select({ id: stageEvents.id })
+            .from(stageEvents)
+            .where(
+              and(
+                stageEventsScopeFilter(),
+                eq(stageEvents.applicationId, event.applicationId),
+              ),
+            )
+            .orderBy(desc(stageEvents.occurredAt))
+            .limit(1)
+            .get()
+        : undefined;
     tx.update(stageEvents)
       .set(updates)
       .where(and(stageEventsScopeFilter(), eq(stageEvents.id, eventId)))
@@ -484,7 +500,7 @@ export function updateStageEvent(
     if (!toStage && occurredAt === undefined && !hasOutcome) return;
     if (effectiveMetadata?.eventType === "note" && !outcome) return;
 
-    // If this was the latest event, update the job status
+    // Reconcile if the edited event is latest or its date edit displaced it.
     const lastEvent = tx
       .select()
       .from(stageEvents)
@@ -498,7 +514,15 @@ export function updateStageEvent(
       .limit(1)
       .get();
 
-    if (lastEvent && lastEvent.id === eventId) {
+    if (
+      lastEvent &&
+      (lastEvent.id === eventId || previousLatest?.id === eventId)
+    ) {
+      if (
+        lastEvent.id !== eventId &&
+        parseMetadata(lastEvent.metadata)?.eventType === "note"
+      )
+        return;
       requireStageEvidence(
         lastEvent.toStage as ApplicationStage,
         lastEvent.outcome as JobOutcome | null,

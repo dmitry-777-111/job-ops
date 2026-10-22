@@ -7,7 +7,7 @@ sidebar_position: 3
 
 The Tracking Inbox monitors Gmail for job-application responses and updates timelines.
 
-Moving a closed application back to an active stage without a new outcome clears its current outcome and closure date. Previous outcomes remain in the timeline; adding a note does not reopen the application.
+Moving a closed application back to an active stage without a new outcome clears its current outcome and closure date. Previous outcomes remain in the timeline; adding a note does not reopen the application. Correcting the latest stage event date to precede another stage recalculates the current application state from the newly latest stage.
 
 Creating a stage or editing a timeline event for a missing or inaccessible record returns `404 NOT_FOUND`. Refresh the job and check that you are signed into its owning account. Deleting an already missing or inaccessible event remains an idempotent operation.
 

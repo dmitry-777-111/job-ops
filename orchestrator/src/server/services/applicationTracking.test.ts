@@ -101,6 +101,62 @@ describe.sequential("Application Tracking Service", () => {
       ]),
     );
   });
+  it("reconciles the current outcome when the latest event is moved into the past", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic timeline correction",
+      employer: "Example",
+      jobUrl: "https://example.com/timeline-correction",
+    });
+    const interview = applicationTracking.transitionStage(
+      job.id,
+      "recruiter_screen",
+      1_790_000_100,
+      { evidence: evidence("interview") },
+    );
+    const rejection = applicationTracking.transitionStage(
+      job.id,
+      "closed",
+      1_790_000_200,
+      { evidence: evidence("rejection") },
+      "rejected",
+    );
+    applicationTracking.updateStageEvent(rejection.id, {
+      occurredAt: 1_790_000_000,
+    });
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: "in_progress",
+      outcome: null,
+      closedAt: null,
+    });
+    expect(await applicationTracking.getStageEvents(job.id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: rejection.id,
+          occurredAt: 1_790_000_000,
+          outcome: "rejected",
+        }),
+        expect.objectContaining({
+          id: interview.id,
+          occurredAt: 1_790_000_100,
+        }),
+      ]),
+    );
+    applicationTracking.updateStageEvent(rejection.id, {
+      occurredAt: 1_790_000_050,
+    });
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      outcome: null,
+      closedAt: null,
+    });
+    applicationTracking.updateStageEvent(rejection.id, {
+      occurredAt: 1_790_000_300,
+    });
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      outcome: "rejected",
+      closedAt: 1_790_000_300,
+    });
+  });
   it("transitions stage and updates job status", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",
