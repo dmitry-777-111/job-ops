@@ -157,6 +157,97 @@ describe.sequential("Application Tracking Service", () => {
       closedAt: 1_790_000_300,
     });
   });
+  it.each([
+    "edit",
+    "redate",
+    "delete",
+  ])("ignores later notes when reconciling a stage %s", async (operation) => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic note reconciliation",
+      employer: "Example",
+      jobUrl: `https://example.com/note-reconciliation/${operation}`,
+    });
+    const interview = applicationTracking.transitionStage(
+      job.id,
+      "recruiter_screen",
+      1_790_000_100,
+      { evidence: evidence("interview") },
+    );
+    const rejection = applicationTracking.transitionStage(
+      job.id,
+      "closed",
+      1_790_000_200,
+      { evidence: evidence("rejection") },
+      "rejected",
+    );
+    const note = applicationTracking.transitionStage(
+      job.id,
+      "no_change",
+      1_790_000_300,
+      { eventType: "note", note: "Synthetic annotation" },
+    );
+    if (operation === "edit") {
+      applicationTracking.updateStageEvent(rejection.id, {
+        toStage: "recruiter_screen",
+        metadata: { evidence: evidence("interview") },
+      });
+    } else if (operation === "redate") {
+      applicationTracking.updateStageEvent(rejection.id, {
+        occurredAt: 1_790_000_000,
+      });
+    } else {
+      applicationTracking.deleteStageEvent(rejection.id);
+    }
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: "in_progress",
+      outcome: null,
+      closedAt: null,
+    });
+    expect(await applicationTracking.getStageEvents(job.id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: note.id,
+          metadata: { eventType: "note", note: "Synthetic annotation" },
+        }),
+      ]),
+    );
+    if (operation === "delete") {
+      applicationTracking.deleteStageEvent(interview.id);
+      expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+        status: "discovered",
+        outcome: null,
+        closedAt: null,
+      });
+      expect(await applicationTracking.getStageEvents(job.id)).toHaveLength(1);
+    }
+  });
+  it("still uses an explicit outcome attached to a note during reconciliation", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic explicit outcome",
+      employer: "Example",
+      jobUrl: "https://example.com/note-explicit-outcome",
+    });
+    const interview = applicationTracking.transitionStage(
+      job.id,
+      "recruiter_screen",
+      1_790_000_100,
+      { evidence: evidence("interview") },
+    );
+    applicationTracking.transitionStage(
+      job.id,
+      "no_change",
+      1_790_000_200,
+      { eventType: "note", evidence: evidence("rejection") },
+      "rejected",
+    );
+    applicationTracking.deleteStageEvent(interview.id);
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      outcome: "rejected",
+      closedAt: 1_790_000_200,
+    });
+  });
   it("transitions stage and updates job status", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",

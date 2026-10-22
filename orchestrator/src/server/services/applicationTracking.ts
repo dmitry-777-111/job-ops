@@ -11,7 +11,7 @@ import type {
   StageEvent,
   StageEventMetadata,
 } from "@shared/types";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema } from "../db/index";
 import {
@@ -27,6 +27,11 @@ function jobsScopeFilter() {
 
 function stageEventsScopeFilter() {
   return privateDataScopeFilter(stageEvents);
+}
+
+// Plain annotations do not determine application state. Explicit outcomes do.
+function stateBearingEventFilter() {
+  return sql<boolean>`(coalesce(json_extract(${stageEvents.metadata}, '$.eventType'), '') != 'note' or ${stageEvents.outcome} is not null)`;
 }
 
 function tasksScopeFilter() {
@@ -485,6 +490,7 @@ export function updateStageEvent(
               and(
                 stageEventsScopeFilter(),
                 eq(stageEvents.applicationId, event.applicationId),
+                stateBearingEventFilter(),
               ),
             )
             .orderBy(desc(stageEvents.occurredAt))
@@ -508,6 +514,7 @@ export function updateStageEvent(
         and(
           stageEventsScopeFilter(),
           eq(stageEvents.applicationId, event.applicationId),
+          stateBearingEventFilter(),
         ),
       )
       .orderBy(desc(stageEvents.occurredAt))
@@ -583,6 +590,7 @@ export function deleteStageEvent(eventId: string): void {
         and(
           stageEventsScopeFilter(),
           eq(stageEvents.applicationId, event.applicationId),
+          stateBearingEventFilter(),
         ),
       )
       .orderBy(desc(stageEvents.occurredAt))

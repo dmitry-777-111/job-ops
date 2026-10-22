@@ -202,3 +202,12 @@ Base and remote HEAD verified: `df8a40e9ae95ea2589d2c91fac174d0bb820f367`. Previ
 Date edits now remember the previously latest event within the same transaction and private data scope, then reconcile from the new latest stage when that event is displaced. Regression covers moving backward, editing an older event without changing current outcome, moving forward again, and preserving history. Notes keep their existing behavior; reconciliation when a note is the newest remaining event is a separate follow-up.
 
 Final actual execution: applicationTracking.test.ts + tenant-isolation.test.ts, 24/24 PASS (Node 22 / Vitest 4.1.6). Orchestrator check:types, targeted Biome ci and git diff --check PASS. Full CI/E2E not run, per bounded scope. [skip ci] prevents automatic deployment. No production, PDF, real applications or PII. Next: inspect stage reconciliation when a later note masks the latest substantive stage.
+
+## Bounded note masking fix — 2026-10-21
+
+Base/remote HEAD: `bfd210f389940388cfd00df621780ef1caf5f85a`. Previous reopening and date correction fixes already present. Three executed regressions failed before the patch: a later ordinary note masked stage edits, date corrections and deletion, retaining stale rejected/closedAt.
+
+The three reconciliation queries now exclude ordinary notes before selecting the latest event, retaining private tenant/user scope and existing handling of notes with explicit outcomes. Notes remain in history; deleting the last substantive stage resets current state even when annotations remain. Added coverage for all three operations and preservation of explicit note outcomes. An intermediate run had 27 pass / 1 fail and prompted restoration of the existing explicit-outcome note guard.
+
+Orchestrator check:types, targeted Biome ci and git diff --check passed. Full CI/E2E not run in this bounded cycle. [skip ci] prevents automatic deployment; no production, PDF, real applications or PII. Next bounded check: deterministic stage ordering when multiple events share the same second.
+`Final execution: applicationTracking.test.ts + tenant-isolation.test.ts, 28/28 PASS on Node 22 / Vitest 4.1.6, exit 0.`
