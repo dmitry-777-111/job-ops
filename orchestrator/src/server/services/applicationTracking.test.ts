@@ -248,6 +248,78 @@ describe.sequential("Application Tracking Service", () => {
       closedAt: 1_790_000_200,
     });
   });
+  it("orders same-second stages by insertion for transitions and reconciliation", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic tied timestamps",
+      employer: "Example",
+      jobUrl: "https://example.com/tied-timestamps",
+    });
+    const timestamp = 1_790_000_100;
+    const applied = applicationTracking.transitionStage(
+      job.id,
+      "applied",
+      timestamp,
+      {
+        evidence: evidence("submission"),
+      },
+    );
+    const interview = applicationTracking.transitionStage(
+      job.id,
+      "recruiter_screen",
+      timestamp,
+      {
+        evidence: evidence("interview"),
+      },
+    );
+    const rejection = applicationTracking.transitionStage(
+      job.id,
+      "closed",
+      timestamp,
+      {
+        evidence: evidence("rejection"),
+      },
+      "rejected",
+    );
+    expect(rejection.fromStage).toBe("recruiter_screen");
+    expect(
+      (await applicationTracking.getStageEvents(job.id)).map(
+        (event: any) => event.id,
+      ),
+    ).toEqual([applied.id, interview.id, rejection.id]);
+    applicationTracking.updateStageEvent(applied.id, { occurredAt: timestamp });
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      outcome: "rejected",
+      closedAt: timestamp,
+    });
+    applicationTracking.updateStageEvent(rejection.id, {
+      occurredAt: timestamp - 1,
+    });
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: "in_progress",
+      outcome: null,
+      closedAt: null,
+    });
+    applicationTracking.updateStageEvent(rejection.id, {
+      occurredAt: timestamp,
+    });
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      outcome: "rejected",
+      closedAt: timestamp,
+    });
+    applicationTracking.deleteStageEvent(rejection.id);
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: "in_progress",
+      outcome: null,
+      closedAt: null,
+    });
+    applicationTracking.deleteStageEvent(interview.id);
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: "applied",
+      outcome: null,
+      closedAt: null,
+    });
+  });
   it("transitions stage and updates job status", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",

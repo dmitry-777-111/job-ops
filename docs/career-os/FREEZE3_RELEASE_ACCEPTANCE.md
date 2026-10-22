@@ -211,3 +211,14 @@ The three reconciliation queries now exclude ordinary notes before selecting the
 
 Orchestrator check:types, targeted Biome ci and git diff --check passed. Full CI/E2E not run in this bounded cycle. [skip ci] prevents automatic deployment; no production, PDF, real applications or PII. Next bounded check: deterministic stage ordering when multiple events share the same second.
 `Final execution: applicationTracking.test.ts + tenant-isolation.test.ts, 28/28 PASS on Node 22 / Vitest 4.1.6, exit 0.`
+
+## Bounded same-second event ordering fix — 2026-10-21
+
+Base and remote HEAD verified: `6847274e3e30ae8e918e06a69377e121ebf2fcb4`. Existing reopening, date correction and note masking fixes retained. Executed regression failed before patch: the third same-second transition incorrectly reported applied rather than recruiter_screen as its previous stage.
+
+History reads and all four latest-event selections now break timestamp ties by SQLite rowid insertion order (ascending for history, descending for latest). This uses the existing SQLite rowid table without a migration; date edits do not change the tie-breaker. This is local database ordering, not a portable ordering guarantee across arbitrary export/reimport procedures.
+
+Actual focused execution: applicationTracking.test.ts + tenant-isolation.test.ts, 29/29 PASS on Node 22 / Vitest 4.1.6. Coverage includes transition ancestry, history order, historical edits, moving an event out of and back into a tie, and deleting tied events. Targeted Biome ci and git diff --check PASS after fixing one formatting issue. Full CI/E2E not run in this bounded cycle. [skip ci] prevents deployment; no production, PDF, real applications or PII.
+
+Next bounded lifecycle check: inserting a backdated stage must not overwrite the current state established by a newer event.
+Orchestrator check:types: PASS, exit 0.

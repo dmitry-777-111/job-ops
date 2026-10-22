@@ -21,6 +21,9 @@ import {
 
 const { jobs, stageEvents, tasks } = schema;
 
+// This SQLite rowid table records insertion order independently of second-level dates.
+const stageEventInsertionOrder = sql<number>`${stageEvents}.rowid`;
+
 function jobsScopeFilter() {
   return privateDataScopeFilter(jobs);
 }
@@ -239,7 +242,7 @@ export async function getStageEvents(
         eq(stageEvents.applicationId, applicationId),
       ),
     )
-    .orderBy(asc(stageEvents.occurredAt));
+    .orderBy(asc(stageEvents.occurredAt), asc(stageEventInsertionOrder));
 
   return rows.map((row) => ({
     id: row.id,
@@ -320,7 +323,7 @@ export function transitionStage(
           eq(stageEvents.applicationId, applicationId),
         ),
       )
-      .orderBy(desc(stageEvents.occurredAt))
+      .orderBy(desc(stageEvents.occurredAt), desc(stageEventInsertionOrder))
       .limit(1)
       .get();
 
@@ -493,7 +496,10 @@ export function updateStageEvent(
                 stateBearingEventFilter(),
               ),
             )
-            .orderBy(desc(stageEvents.occurredAt))
+            .orderBy(
+              desc(stageEvents.occurredAt),
+              desc(stageEventInsertionOrder),
+            )
             .limit(1)
             .get()
         : undefined;
@@ -517,7 +523,7 @@ export function updateStageEvent(
           stateBearingEventFilter(),
         ),
       )
-      .orderBy(desc(stageEvents.occurredAt))
+      .orderBy(desc(stageEvents.occurredAt), desc(stageEventInsertionOrder))
       .limit(1)
       .get();
 
@@ -593,7 +599,7 @@ export function deleteStageEvent(eventId: string): void {
           stateBearingEventFilter(),
         ),
       )
-      .orderBy(desc(stageEvents.occurredAt))
+      .orderBy(desc(stageEvents.occurredAt), desc(stageEventInsertionOrder))
       .limit(1)
       .get();
 
