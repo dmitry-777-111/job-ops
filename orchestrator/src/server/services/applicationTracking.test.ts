@@ -320,6 +320,74 @@ describe.sequential("Application Tracking Service", () => {
       closedAt: null,
     });
   });
+  it.each([
+    "active",
+    "closed",
+  ])("preserves a newer %s state when adding historical stages", async (current) => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic backdated stage",
+      employer: "Example",
+      jobUrl: `https://example.com/backdated/${current}`,
+    });
+    const closed = current === "closed";
+    applicationTracking.transitionStage(
+      job.id,
+      closed ? "closed" : "recruiter_screen",
+      1_790_000_200,
+      { evidence: evidence(closed ? "rejection" : "interview") },
+      closed ? "rejected" : undefined,
+    );
+    const before = await jobsRepo.getJobById(job.id);
+    const historical = applicationTracking.transitionStage(
+      job.id,
+      closed ? "applied" : "closed",
+      1_790_000_100,
+      { evidence: evidence(closed ? "submission" : "rejection") },
+      closed ? undefined : "rejected",
+    );
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: before.status,
+      outcome: before.outcome,
+      closedAt: before.closedAt,
+      appliedAt: before.appliedAt,
+    });
+    expect(await applicationTracking.getStageEvents(job.id)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: historical.id,
+          occurredAt: 1_790_000_100,
+        }),
+      ]),
+    );
+  });
+
+  it("allows a newer stage even when an ordinary note has a later date", async () => {
+    const job = await jobsRepo.createJob({
+      source: "manual",
+      title: "Synthetic note and stage dates",
+      employer: "Example",
+      jobUrl: "https://example.com/backdated-note",
+    });
+    applicationTracking.transitionStage(job.id, "applied", 1_790_000_100, {
+      evidence: evidence("submission"),
+    });
+    applicationTracking.transitionStage(job.id, "no_change", 1_790_000_300, {
+      eventType: "note",
+      note: "Synthetic annotation",
+    });
+    applicationTracking.transitionStage(
+      job.id,
+      "recruiter_screen",
+      1_790_000_200,
+      { evidence: evidence("interview") },
+    );
+    expect(await jobsRepo.getJobById(job.id)).toMatchObject({
+      status: "in_progress",
+      outcome: null,
+      closedAt: null,
+    });
+  });
   it("transitions stage and updates job status", async () => {
     const job = await jobsRepo.createJob({
       source: "manual",

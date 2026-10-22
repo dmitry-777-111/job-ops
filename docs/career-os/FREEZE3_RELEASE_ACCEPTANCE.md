@@ -222,3 +222,14 @@ Actual focused execution: applicationTracking.test.ts + tenant-isolation.test.ts
 
 Next bounded lifecycle check: inserting a backdated stage must not overwrite the current state established by a newer event.
 Orchestrator check:types: PASS, exit 0.
+
+## Bounded backdated stage insertion fix — 2026-10-22
+
+Base and remote HEAD verified: `1dd8c694a1e74b6c582dc81e9a085341522a1657`. Prior lifecycle fixes already present. Source inspection showed transitionStage unconditionally overwrote current status/outcome for historical inserts.
+
+Compare the inserted timestamp with the latest state-bearing event in the existing scoped transaction. Historical inserts retain their history without updating current status, outcome, closedAt or appliedAt; ties still use the newer insertion. Ordinary annotations do not block a newer substantive transition. Tests cover preserving both active and closed current states and a later annotation.
+
+The initial targeted run loaded the patched service after slow environment startup: 2 passed / 23 skipped. It is NOT pre-fix failure evidence. Targeted Biome ci and git diff --check passed. Full CI/E2E not run in this bounded cycle. [skip ci] prevents deployment. No production, PDF, real applications or PII.
+
+Next bounded check: historical stage ancestry (fromStage) should reflect the chronological predecessor rather than a future stage.
+Validation: first two-file run 30 passed / 2 failed after API setup timeout, mock error and temporary DB EBUSY. Unchanged code rerun with --no-file-parallelism: 32/32 PASS, exit 0 (Node 22 / Vitest 4.1.6). Orchestrator check:types PASS, exit 0.

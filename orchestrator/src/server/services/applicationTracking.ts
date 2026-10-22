@@ -321,12 +321,14 @@ export function transitionStage(
         and(
           stageEventsScopeFilter(),
           eq(stageEvents.applicationId, applicationId),
+          stateBearingEventFilter(),
         ),
       )
       .orderBy(desc(stageEvents.occurredAt), desc(stageEventInsertionOrder))
       .limit(1)
       .get();
 
+    const affectsCurrentState = !lastEvent || timestamp >= lastEvent.occurredAt;
     const fromStage =
       (lastEvent?.toStage as ApplicationStage | undefined) ?? null;
     const finalToStage =
@@ -354,7 +356,7 @@ export function transitionStage(
       updatedAt: new Date().toISOString(),
     };
 
-    if (toStage !== "no_change" && !isNoteEvent) {
+    if (affectsCurrentState && toStage !== "no_change" && !isNoteEvent) {
       updates.status = STAGE_TO_STATUS[finalToStage];
       if (!isClosingStage(finalToStage) && !outcome) {
         updates.outcome = null;
@@ -370,7 +372,7 @@ export function transitionStage(
       }
     }
 
-    if (outcome) {
+    if (affectsCurrentState && outcome) {
       updates.outcome = outcome;
       updates.closedAt = timestamp;
     }
