@@ -18,6 +18,12 @@ import { stripMarkdownCodeFences } from "./llm/utils/json";
 import { createConfiguredLlmService, resolveLlmModel } from "./modelSelection";
 import { renderPromptTemplate } from "./prompt-templates";
 import { filterProfileProjectsForAi } from "./resumeProjects";
+import {
+  REVIEW_INSTRUCTIONS,
+  reviewJsonSchema,
+  SCORING_REVIEW_VERSION,
+  validateScoringReview,
+} from "./scoring-review";
 import { getEffectiveSettings } from "./settings";
 
 export class LlmNotConfiguredError extends Error {
@@ -323,10 +329,10 @@ export async function scoreJobSuitability(
     throw new ScoringUnavailableError(`AI scoring failed: ${result.error}`);
   }
 
-  const { score, reason } = result.data;
+  const { score } = result.data;
 
   // Validate we got a reasonable response
-  if (typeof score !== "number" || Number.isNaN(score)) {
+  if (typeof score !== "number" || !Number.isFinite(score)) {
     logger.warn("Invalid score in AI response", {
       jobId: job.id,
     });
@@ -335,8 +341,6 @@ export async function scoreJobSuitability(
     );
   }
 
-  const clampedScore = Math.min(100, Math.max(0, Math.round(score)));
-  const clampedReason = reason || "No explanation provided";
   const patchResult = validateAndApplyJobPatches(
     job,
     result.data.jobPatches ?? [],
@@ -349,18 +353,51 @@ export async function scoreJobSuitability(
       rejected: patchResult.rejected,
     });
   }
-  if (result.data.jobWarnings?.length) {
-    logger.warn("AI job fact review warnings", {
-      jobId: job.id,
-      warnings: result.data.jobWarnings,
-    });
+  // A patch may have been rejected after the draft used it to score the job.
+  // Review the final, persistable facts before accepting any numeric ranking.
+  const reviewResult = await llm.callJson<unknown>({
+    model,
+    messages: [
+      { role: "system", content: REVIEW_INSTRUCTIONS },
+      {
+        role: "user",
+        content: `${prompt}\n\nDRAFT (untrusted):\n${JSON.stringify(result.data)}\n\nACCEPTED JOB UPDATES:\n${JSON.stringify(patchResult.updates)}\n\nREJECTED PATCHES:\n${JSON.stringify(patchResult.rejected)}`,
+      },
+    ],
+    jsonSchema: reviewJsonSchema(SCORING_SCHEMA),
+    maxRetries: 0,
+    jobId: job.id,
+  });
+  if (!reviewResult.success) {
+    if (isConfigurationFailure(reviewResult.error)) {
+      throw new LlmNotConfiguredError("Scoring fact review is not configured");
+    }
+    throw new ScoringUnavailableError(
+      "Scoring fact review unavailable; evaluation not accepted",
+    );
   }
+  let reviewed: ReturnType<typeof validateScoringReview>;
+  try {
+    reviewed = validateScoringReview(
+      reviewResult.data,
+      job.jobDescription ?? "",
+    );
+  } catch {
+    throw new ScoringUnavailableError(
+      "Scoring fact review failed; evaluation not accepted",
+    );
+  }
+  const warnings = [...new Set(reviewed.jobWarnings)];
+  const reviewedReason = [reviewed.reason, ...warnings].join(" ");
+  reviewed.jobBrief.missing_or_unclear = [
+    ...new Set([...reviewed.jobBrief.missing_or_unclear, ...warnings]),
+  ];
 
   // Apply salary penalty if enabled
   const penaltyResult = applySalaryPenalty(
     patchResult.patchedJob,
-    clampedScore,
-    clampedReason,
+    reviewed.score,
+    reviewedReason,
     {
       penalizeMissingSalary: settings.penalizeMissingSalary.value,
       missingSalaryPenalty: settings.missingSalaryPenalty.value,
@@ -369,11 +406,10 @@ export async function scoreJobSuitability(
 
   return {
     score: penaltyResult.score,
-    reason: penaltyResult.reason,
-    jobBrief:
-      job.jobDescription?.trim() && result.data.jobBrief
-        ? JSON.stringify(result.data.jobBrief)
-        : null,
+    reason: `[${SCORING_REVIEW_VERSION}] ${penaltyResult.reason}`,
+    jobBrief: job.jobDescription?.trim()
+      ? JSON.stringify(reviewed.jobBrief)
+      : null,
     jobUpdates: patchResult.updates,
   };
 }

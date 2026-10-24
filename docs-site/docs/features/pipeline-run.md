@@ -17,6 +17,14 @@ For manual import internals, read [Manual Import Extractor](/docs/next/extractor
 
 ## Why it exists
 
+New suitability evaluations use a second AI fact review before returning a score.
+The review can correct the score, explanation and job brief, and retains source
+warnings in the explanation and brief. Results carry `critical-facts-v1` in the
+explanation; existing saved evaluations are not migrated. This adds one model
+request per evaluation. If review fails, the evaluation is not accepted and can
+be retried. Evidence excerpts and required review domains are checked in code;
+semantic correctness still depends on the model and is not guaranteed by citations.
+
 The modal provides one place to describe a search, review the generated settings, and control run volume, source compatibility, and processing aggressiveness before consuming compute/time.
 
 It helps you:

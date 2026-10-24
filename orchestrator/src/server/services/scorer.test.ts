@@ -302,7 +302,48 @@ describe("salary penalty", () => {
       data: { score: 80, reason: "Good match" },
     });
     createConfiguredLlmServiceMock.mockResolvedValue({
-      callJson: callJsonMock,
+      callJson: async (request: any) => {
+        if (request.jsonSchema.name !== "reviewed_job_suitability")
+          return callJsonMock(request);
+        // Existing tests isolate draft scoring/penalty behavior. Review contract
+        // and failures are exercised without this adapter in scoring-review tests.
+        const content = request.messages[1].content as string;
+        const draft = JSON.parse(
+          content
+            .split("DRAFT (untrusted):\n")[1]
+            .split("\n\nACCEPTED JOB UPDATES:")[0],
+        );
+        const listing = JSON.parse(
+          content.match(/JOB DATA \(JSON\):\n([^\n]+)/)?.[1] ?? "{}",
+        ).jobDescription;
+        return {
+          success: true,
+          data: {
+            ...draft,
+            jobBrief: draft.jobBrief ?? {
+              role_summary: "",
+              they_want: [],
+              specifics: [],
+              company_offers: [],
+              practical_details: [],
+              missing_or_unclear: [],
+              repeated_signals: [],
+            },
+            jobWarnings: draft.jobWarnings ?? [],
+            checks: [
+              "requirements",
+              "compensation",
+              "authorization",
+              "score",
+            ].map((domain) => ({
+              domain,
+              supported: true,
+              explanation: "Test review",
+              evidence: listing ? [listing] : [],
+            })),
+          },
+        };
+      },
     });
   });
 
