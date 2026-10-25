@@ -1219,7 +1219,7 @@ function sanitizeImportedEducationItems(items: unknown): unknown[] {
       "description",
     ]) {
       const value = clean[key];
-      if (typeof value === "string" && /^\\s*\\[\\s*\\]\\s*$/.test(value)) {
+      if (typeof value === "string" && /^\s*\[\s*\]\s*$/.test(value)) {
         clean[key] = "";
       }
     }

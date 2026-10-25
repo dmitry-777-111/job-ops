@@ -190,7 +190,7 @@ function stripHtml(value: string): string {
 }
 
 function extractBullets(value: unknown): string[] {
-  if (typeof value !== "string" || !value.trim()) return [];
+  if (typeof value !== "string" || !toText(value).trim()) return [];
 
   const listItems = [...value.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
     .map((match) => stripHtml(match[1] ?? ""))

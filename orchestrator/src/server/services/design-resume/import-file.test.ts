@@ -437,12 +437,14 @@ describe("importDesignResumeFromFile", () => {
             basics: { name: "Test Candidate" },
             sections: {
               education: {
-                items: [{
-                  school: "Technical College",
-                  degree: "[]",
-                  area: "Electrical Engineering",
-                  description: "[]",
-                }],
+                items: [
+                  {
+                    school: "Technical College",
+                    degree: "[]",
+                    area: "Electrical Engineering",
+                    description: "[]",
+                  },
+                ],
               },
             },
           }),
@@ -455,7 +457,8 @@ describe("importDesignResumeFromFile", () => {
       mediaType: "application/pdf",
       dataBase64: Buffer.from("pdf-data").toString("base64"),
     });
-    const saved = designResumeService.replaceCurrentDesignResumeDocument.mock.calls[0]?.[0];
+    const saved =
+      designResumeService.replaceCurrentDesignResumeDocument.mock.calls[0]?.[0];
     expect(saved?.resumeJson?.sections?.education?.items?.[0]).toMatchObject({
       school: "Technical College",
       degree: "",

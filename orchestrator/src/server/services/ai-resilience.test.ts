@@ -1,6 +1,7 @@
 import { createJob } from "@shared/testing/factories";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as settingsRepo from "../repositories/settings";
+import { scoringResponse } from "./fixtures/scoring-response";
 import { pickProjectIdsForJob } from "./projectSelection";
 import { scoreJobSuitability } from "./scorer";
 
@@ -77,7 +78,7 @@ describe("AI Service Resilience", () => {
           choices: [
             {
               message: {
-                content: JSON.stringify({ score: 85, reason: "Great match" }),
+                content: JSON.stringify(scoringResponse(85, "Great match")),
               },
             },
           ],
@@ -88,7 +89,7 @@ describe("AI Service Resilience", () => {
       const result = await scoreJobSuitability(mockJob, mockProfile);
 
       expect(result.score).toBe(85);
-      expect(result.reason).toBe("Great match");
+      expect(result.reason).toBe("[critical-facts-v1] Great match");
     });
 
     it("should throw LlmNotConfiguredError if API Key is missing", async () => {
@@ -138,7 +139,9 @@ describe("AI Service Resilience", () => {
             {
               message: {
                 content:
-                  'Here is the score: ```json\n{ "score": 90, "reason": "Good" }\n```',
+                  "Here is the score: ```json\n" +
+                  JSON.stringify(scoringResponse(90, "Good")) +
+                  "\n```",
               },
             },
           ],

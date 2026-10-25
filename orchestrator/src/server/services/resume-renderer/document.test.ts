@@ -7,14 +7,16 @@ describe("normalizeResumeJsonToLatexDocument", () => {
       sections: {
         education: {
           title: "Education",
-          items: [{
-            id: "edu-empty-array",
-            school: "Technical College",
-            degree: "[]",
-            area: "Electrical Engineering",
-            period: "2020",
-            description: "[]",
-          }],
+          items: [
+            {
+              id: "edu-empty-array",
+              school: "Technical College",
+              degree: "[]",
+              area: "Electrical Engineering",
+              period: "2020",
+              description: "[]",
+            },
+          ],
         },
       },
     });

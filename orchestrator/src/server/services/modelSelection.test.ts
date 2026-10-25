@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as settingsRepo from "../repositories/settings";
 import { getCurrentAccountEntitlements } from "./account-entitlements";
+import { scoringResponse } from "./fixtures/scoring-response";
 import { resolveLlmModel, resolveLlmRuntimeSettings } from "./modelSelection";
 import { pickProjectIdsForJob } from "./projectSelection";
 import { scoreJobSuitability } from "./scorer";
@@ -73,7 +74,7 @@ describe("Model Selection Logic", () => {
       ok: true,
       json: async () => ({
         output_text: JSON.stringify({
-          score: 50,
+          ...scoringResponse(50, "ok"),
           explanation: "ok",
           summary: "sum",
           headline: "head",
@@ -84,7 +85,7 @@ describe("Model Selection Logic", () => {
           {
             message: {
               content: JSON.stringify({
-                score: 50,
+                ...scoringResponse(50, "ok"),
                 explanation: "ok",
                 summary: "sum",
                 headline: "head",
@@ -237,7 +238,10 @@ describe("Model Selection Logic", () => {
         missingSalaryPenalty: { value: 10, default: 10, override: null },
       } as any);
 
-      await scoreJobSuitability({ title: "Test Job" } as any, {});
+      await scoreJobSuitability(
+        { title: "Test Job", jobDescription: "desc" } as any,
+        {},
+      );
 
       const fetchCall = vi.mocked(fetch).mock.calls[0];
       const body = JSON.parse(fetchCall[1]?.body as string);
@@ -245,7 +249,10 @@ describe("Model Selection Logic", () => {
     });
 
     it("should fall back to env model for scoring when no settings set", async () => {
-      await scoreJobSuitability({ title: "Test Job" } as any, {});
+      await scoreJobSuitability(
+        { title: "Test Job", jobDescription: "desc" } as any,
+        {},
+      );
 
       const fetchCall = vi.mocked(fetch).mock.calls[0];
       const body = JSON.parse(fetchCall[1]?.body as string);
