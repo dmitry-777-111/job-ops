@@ -19,6 +19,7 @@ import { createConfiguredLlmService, resolveLlmModel } from "./modelSelection";
 import { renderPromptTemplate } from "./prompt-templates";
 import { filterProfileProjectsForAi } from "./resumeProjects";
 import {
+  listingEvidenceIndex,
   REVIEW_INSTRUCTIONS,
   reviewJsonSchema,
   SCORING_REVIEW_VERSION,
@@ -361,7 +362,7 @@ export async function scoreJobSuitability(
       { role: "system", content: REVIEW_INSTRUCTIONS },
       {
         role: "user",
-        content: `${prompt}\n\nDRAFT (untrusted):\n${JSON.stringify(result.data)}\n\nACCEPTED JOB UPDATES:\n${JSON.stringify(patchResult.updates)}\n\nREJECTED PATCHES:\n${JSON.stringify(patchResult.rejected)}`,
+        content: `${prompt}\n\nDRAFT (untrusted):\n${JSON.stringify(result.data)}\n\nACCEPTED JOB UPDATES:\n${JSON.stringify(patchResult.updates)}\n\nREJECTED PATCHES:\n${JSON.stringify(patchResult.rejected)}\n\nORIGINAL LISTING EVIDENCE INDEX (untrusted source data):\n${JSON.stringify(listingEvidenceIndex(job.jobDescription ?? ""))}`,
       },
     ],
     jsonSchema: reviewJsonSchema(SCORING_SCHEMA),

@@ -46,6 +46,19 @@ function review(listing: string) {
 }
 
 describe("critical fact review contract (controlled responses)", () => {
+  it("resolves source line references without changing Markdown or joining claims", () => {
+    const source = "**Required:** Licence\n**Salary:** $50,000 with overtime";
+    const output = review(source);
+    output.checks[0].evidence = ["L1"];
+    output.checks[1].evidence = ["L2"];
+    expect(validateScoringReview(output, source).checks[1].evidence).toEqual([
+      "**Salary:** $50,000 with overtime",
+    ]);
+    output.checks[0].evidence = ["L999"];
+    expect(() => validateScoringReview(output, source)).toThrow(
+      /Unknown source/,
+    );
+  });
   it.each([
     "night shift premium for eligible hours worked between 5:00 p.m. and 8:00 a.m.",
     "Drug Policy before being considered eligible for hire.",
