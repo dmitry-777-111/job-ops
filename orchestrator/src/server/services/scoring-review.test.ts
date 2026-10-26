@@ -62,6 +62,7 @@ describe("critical fact review contract (controlled responses)", () => {
   it.each([
     "night shift premium for eligible hours worked between 5:00 p.m. and 8:00 a.m.",
     "Drug Policy before being considered eligible for hire.",
+    "The University of Toronto has implemented a process to substantiate Indigenous Membership/Citizenship/Enrolment for candidates who identify as Indigenous.",
   ])("does not treat non-immigration eligibility as work authorization: %s", (text) => {
     const output = review(text);
     output.checks[2].evidence = [];
@@ -71,6 +72,8 @@ describe("critical fact review contract (controlled responses)", () => {
     "Authorized to work in Canada, without the need for current or future visa sponsorship",
     "Must be eligible to work in Canada",
     "A work permit is required",
+    "Canadian citizenship is required",
+    "Indigenous Membership/Citizenship/Enrolment is verified. Must be eligible to work in Canada.",
   ])("requires evidence for actual authorization: %s", (text) => {
     const output = review(text);
     output.checks[2].evidence = [];

@@ -122,7 +122,19 @@ export function validateScoringReview(value: unknown, listing: string) {
         /\bsponsor\w*\b|\bvisas?\b|\bwork permits?\b|\bwork authori[sz]ation\b|\b(?:authori[sz]ed|eligible|eligibility|entitled|right)\s+to\s+work\b|\bcitizen\w*\b|\bpermanent residen\w*\b/i,
       score: /$^/,
     };
-    if (signals[check.domain].test(source) && check.evidence.length === 0) {
+    // Indigenous community citizenship is identity evidence, not immigration status.
+    // Keep any separate work-authorization language in the same listing.
+    const domainSource =
+      check.domain === "authorization"
+        ? source.replace(
+            /\bIndigenous\s+(?:Membership\s*\/\s*)?Citizenship(?:\s*\/\s*Enrolment)?\b/gi,
+            "",
+          )
+        : source;
+    if (
+      signals[check.domain].test(domainSource) &&
+      check.evidence.length === 0
+    ) {
       throw new Error("Critical fact review omitted source evidence");
     }
     if (
