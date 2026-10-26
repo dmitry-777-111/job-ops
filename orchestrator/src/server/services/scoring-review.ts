@@ -99,7 +99,8 @@ export function validateScoringReview(value: unknown, listing: string) {
     const signals = {
       requirements: /required|preferred|licen[cs]e|certificat|qualification/i,
       compensation: /salary|pay\b|compensation|overtime|\$|£|€/i,
-      authorization: /sponsor|visa|authori[sz]|eligible|eligibility|permit/i,
+      authorization:
+        /\bsponsor\w*\b|\bvisas?\b|\bwork permits?\b|\bwork authori[sz]ation\b|\b(?:authori[sz]ed|eligible|eligibility|entitled|right)\s+to\s+work\b|\bcitizen\w*\b|\bpermanent residen\w*\b/i,
       score: /$^/,
     };
     if (signals[check.domain].test(source) && check.evidence.length === 0) {

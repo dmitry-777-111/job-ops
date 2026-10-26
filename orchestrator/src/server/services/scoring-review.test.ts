@@ -46,6 +46,23 @@ function review(listing: string) {
 }
 
 describe("critical fact review contract (controlled responses)", () => {
+  it.each([
+    "night shift premium for eligible hours worked between 5:00 p.m. and 8:00 a.m.",
+    "Drug Policy before being considered eligible for hire.",
+  ])("does not treat non-immigration eligibility as work authorization: %s", (text) => {
+    const output = review(text);
+    output.checks[2].evidence = [];
+    expect(() => validateScoringReview(output, text)).not.toThrow();
+  });
+  it.each([
+    "Authorized to work in Canada, without the need for current or future visa sponsorship",
+    "Must be eligible to work in Canada",
+    "A work permit is required",
+  ])("requires evidence for actual authorization: %s", (text) => {
+    const output = review(text);
+    output.checks[2].evidence = [];
+    expect(() => validateScoringReview(output, text)).toThrow(/omitted/);
+  });
   beforeEach(() => {
     callJson.mockReset();
   });
