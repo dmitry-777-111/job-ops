@@ -1128,6 +1128,8 @@ export async function designResumeToProfile(
   const skills = asRecord(sections.skills) ?? {};
   const projects = asRecord(sections.projects) ?? {};
   const experience = asRecord(sections.experience) ?? {};
+  const education = asRecord(sections.education) ?? {};
+  const certifications = asRecord(sections.certifications) ?? {};
 
   return {
     basics: {
@@ -1151,6 +1153,42 @@ export async function designResumeToProfile(
       }),
     },
     sections: {
+      ...structuredClone(sections),
+      education: {
+        id: "education",
+        visible: !toBoolean(education.hidden, false),
+        name: toText(education.title, "Education"),
+        items: asArray(education.items).map((item) => {
+          const record = asRecord(item) ?? {};
+          return {
+            ...structuredClone(record),
+            id: toText(record.id, createId()),
+            institution: toText(record.school),
+            studyType: toText(record.degree),
+            area: toText(record.area),
+            date: toText(record.period),
+            summary: toText(record.description),
+            visible: !toBoolean(record.hidden, false),
+          };
+        }),
+      },
+      certifications: {
+        id: "certifications",
+        visible: !toBoolean(certifications.hidden, false),
+        name: toText(certifications.title, "Certifications"),
+        items: asArray(certifications.items).map((item) => {
+          const record = asRecord(item) ?? {};
+          return {
+            ...structuredClone(record),
+            id: toText(record.id, createId()),
+            name: toText(record.title),
+            issuer: toText(record.issuer),
+            date: toText(record.date),
+            summary: toText(record.description),
+            visible: !toBoolean(record.hidden, false),
+          };
+        }),
+      },
       summary: {
         id: "summary",
         visible: !toBoolean(summary.hidden, false),

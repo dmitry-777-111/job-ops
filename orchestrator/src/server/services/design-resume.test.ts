@@ -74,6 +74,7 @@ import { getConfiguredRxResumeBaseResumeId } from "@server/services/rxresume/bas
 import { getPrivateDataScope } from "@server/tenancy/private-scope";
 import {
   deleteDesignResumePicture,
+  designResumeToProfile,
   getCurrentDesignResume,
   getCurrentDesignResumeOrNullOnLegacy,
   importDesignResumeFromReactiveResume,
@@ -83,6 +84,70 @@ import {
   uploadDesignResumePicture,
   uploadDesignResumePictureFile,
 } from "./design-resume";
+
+it("preserves education, certificates and employment periods in the application profile", async () => {
+  const document =
+    buildDefaultReactiveResumeDocument() as unknown as DesignResumeJson;
+  document.sections.education.items = [
+    {
+      id: "school",
+      hidden: false,
+      school: "Technical College",
+      degree: "Diploma",
+      area: "Electrical",
+      grade: "",
+      location: "",
+      period: "2010–2014",
+      website: { url: "", label: "" },
+      description: "Completed training",
+    },
+  ];
+  document.sections.certifications.items = [
+    {
+      id: "cert",
+      hidden: false,
+      title: "309A TEA approved — exam pending",
+      issuer: "Authority",
+      date: "2026",
+      website: { url: "", label: "" },
+      description: "Not a completed licence",
+    },
+  ];
+  document.sections.experience.items = [
+    {
+      id: "work",
+      hidden: false,
+      company: "Factory",
+      position: "Mechanic",
+      location: "",
+      period: "Aug 2020 - May 2023",
+      website: { url: "", label: "" },
+      description: "Installed equipment",
+      roles: [],
+    },
+  ];
+  const profile = await designResumeToProfile(document);
+  expect(profile?.sections?.education).toMatchObject({
+    items: [
+      {
+        institution: "Technical College",
+        studyType: "Diploma",
+        date: "2010–2014",
+      },
+    ],
+  });
+  expect(profile?.sections?.certifications).toMatchObject({
+    items: [
+      {
+        name: "309A TEA approved — exam pending",
+        summary: "Not a completed licence",
+      },
+    ],
+  });
+  expect(profile?.sections?.experience?.items?.[0]?.date).toBe(
+    "Aug 2020 - May 2023",
+  );
+});
 
 function makeDocumentRow(overrides?: Partial<Record<string, unknown>>) {
   const defaultResume = buildDefaultReactiveResumeDocument();

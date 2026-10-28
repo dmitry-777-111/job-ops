@@ -4,6 +4,13 @@ import type {
   MarketPosting,
   ResumeProfile,
 } from "@shared/types";
+import { retargetExplicitSummary } from "./application-package-editorial";
+
+export function applicationTarget(posting: MarketPosting): string {
+  const escapeHtml = (value: string) =>
+    value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `${escapeHtml(posting.title)} | ${escapeHtml(posting.employer)}${posting.officialRequisitionId ? ` | Requisition ${escapeHtml(posting.officialRequisitionId)}` : ""}`;
+}
 
 export interface TruthConstrainedApplicationDraft {
   targetedCvJson: Record<string, unknown>;
@@ -114,9 +121,18 @@ export function describeTargetedCvChangesFromMaster(input: {
     originalSkillIds.length === targetedSkillIds.length &&
     originalSkillIds.some((id, index) => id !== targetedSkillIds[index]);
 
-  return skillsReordered
+  const changes = skillsReordered
     ? ["sections.skills.items: reordered by verified vacancy relevance"]
     : [];
+  if (
+    targetedProfile.basics?.summary !== input.profile.basics?.summary ||
+    targetedProfile.sections?.summary?.content !==
+      input.profile.sections?.summary?.content
+  )
+    changes.push(
+      "summary: explicit application target or presentation changed; candidate facts checked by QA",
+    );
+  return changes;
 }
 
 export function buildTruthConstrainedApplicationDraft(input: {
@@ -129,6 +145,17 @@ export function buildTruthConstrainedApplicationDraft(input: {
     input.profile,
     input.evidenceMap,
   );
+  const target = applicationTarget(input.posting);
+  if (targetedProfile.basics?.summary)
+    targetedProfile.basics.summary = retargetExplicitSummary(
+      targetedProfile.basics.summary,
+      target,
+    );
+  if (targetedProfile.sections?.summary?.content)
+    targetedProfile.sections.summary.content = retargetExplicitSummary(
+      targetedProfile.sections.summary.content,
+      target,
+    );
 
   return {
     targetedCvJson: targetedProfile as Record<string, unknown>,

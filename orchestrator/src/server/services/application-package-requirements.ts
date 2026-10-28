@@ -111,8 +111,31 @@ export function extractApplicationRequirements(
 
   const seen = new Set<string>();
   const result: ApplicationRequirementItem[] = [];
+  const sectionRequired = new Set<string>();
+  const headings = new Set<string>();
+  let inRequiredSection = false;
+  for (const line of description.split(/\r?\n/)) {
+    const heading = line.trim().replace(/^[#*\s]+|[*:\s]+$/g, "");
+    if (
+      /^(?:required (?:skills|qualifications)|requirements)$/i.test(heading)
+    ) {
+      inRequiredSection = true;
+      for (const text of splitRequirementCandidates(line)) headings.add(text);
+      continue;
+    }
+    if (!line.trim()) continue;
+    if (!/^\s*[-*•●▪◦]\s+/.test(line)) {
+      inRequiredSection = false;
+      continue;
+    }
+    if (inRequiredSection) {
+      for (const text of splitRequirementCandidates(line))
+        sectionRequired.add(text);
+    }
+  }
 
   for (const candidate of splitRequirementCandidates(description)) {
+    if (headings.has(candidate)) continue;
     const explicitlyNotRequired =
       /\b(?:not required|not mandatory|no (?:licen[cs]e|certification|experience) required)\b/i.test(
         candidate,
@@ -125,7 +148,10 @@ export function extractApplicationRequirements(
       "",
     );
     const required =
-      REQUIRED_SIGNAL.test(positiveSignals) &&
+      (REQUIRED_SIGNAL.test(positiveSignals) ||
+        (sectionRequired.has(candidate) &&
+          !preferred &&
+          !explicitlyNotRequired)) &&
       (!explicitlyNotRequired ||
         /\b(?:must|mandatory|shall|minimum|at least)\b/i.test(positiveSignals));
 

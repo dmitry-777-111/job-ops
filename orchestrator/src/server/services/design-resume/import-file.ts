@@ -951,7 +951,7 @@ function repairLikelyJson(candidate: string): string {
     .trim();
 }
 
-function buildLocalTextFallbackResume(
+function buildLegacyLocalTextFallbackResume(
   documentText: string,
   fileName: string,
 ): DesignResumeJson {
@@ -1162,6 +1162,232 @@ function buildLocalTextFallbackResume(
       level: 0,
     }));
 
+  return sanitizeNormalizedResume(resume);
+}
+
+export function buildLocalTextFallbackResume(
+  documentText: string,
+  fileName: string,
+): DesignResumeJson {
+  if (
+    !documentText
+      .split(/\r?\n/)
+      .some(
+        (line) =>
+          line.split("|").length >= 3 &&
+          /(?:19|20)\d{2}.*[-–—].*(?:19|20)\d{2}|(?:19|20)\d{2}.*[-–—].*present/i.test(
+            line,
+          ),
+      )
+  ) {
+    return buildLegacyLocalTextFallbackResume(documentText, fileName);
+  }
+  const resume = buildDefaultReactiveResumeDocument() as DesignResumeJson;
+  const lines = documentText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const escapeHtmlText = (text: string) =>
+    text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  const html = (parts: string[]) =>
+    parts.map((line) => `<p>${escapeHtmlText(line)}</p>`).join("");
+  const website = { url: "", label: "", inlineLink: false };
+  type Section =
+    | "summary"
+    | "target"
+    | "experience"
+    | "education"
+    | "skills"
+    | "credentials"
+    | "languages";
+  const heading = (line: string): Section | null => {
+    const text = line
+      .toLowerCase()
+      .replace(/[:：]$/, "")
+      .trim();
+    if (
+      /^(professional profile|profile|professional summary|summary|objective)$/.test(
+        text,
+      )
+    )
+      return "summary";
+    if (/^target position$/.test(text)) return "target";
+    if (
+      /^(work experience|professional experience|employment(?: history)?|experience|earlier .*experience|опыт работы)$/.test(
+        text,
+      )
+    )
+      return "experience";
+    if (/^(education|academic background|образование)$/.test(text))
+      return "education";
+    if (
+      /^(skills|technical (?:skills|capabilities)|core skills|competencies|навыки|ключевые навыки)$/.test(
+        text,
+      )
+    )
+      return "skills";
+    if (/^(licen[cs]es and credentials|certifications|credentials)$/.test(text))
+      return "credentials";
+    if (/^(languages|language skills|языки|знание языков)$/.test(text))
+      return "languages";
+    return null;
+  };
+  const firstHeading = lines.findIndex((line) => heading(line) !== null);
+  const header = lines.slice(
+    0,
+    firstHeading < 0 ? Math.min(lines.length, 3) : firstHeading,
+  );
+  resume.basics.name =
+    header[0] || fileName.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+  resume.basics.headline =
+    header[1] && !/[@+|]/.test(header[1]) ? header[1] : "";
+  resume.basics.email =
+    header.join(" ").match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? "";
+  // Contact matching is confined to the header and requires a real phone-length number.
+  // A date range must never become a phone number, even in an unlabeled header.
+  resume.basics.phone =
+    header
+      .flatMap((line) => line.match(/\+?\d[\d(). -]{5,}\d/g) ?? [])
+      .find((value) => {
+        const digits = value.replace(/\D/g, "").length;
+        return (
+          digits >= 10 &&
+          digits <= 15 &&
+          !/(?:19|20)\d{2}\s*[-–—]\s*(?:19|20)\d{2}/.test(value)
+        );
+      })
+      ?.trim() ?? "";
+  const linkedIn = header
+    .join(" ")
+    .match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[^\s|<>()]+/i)?.[0];
+  if (linkedIn)
+    resume.sections.profiles.items = [
+      {
+        id: "local-profile",
+        hidden: false,
+        icon: "",
+        network: "LinkedIn",
+        username: linkedIn.split("/in/")[1],
+        website: {
+          ...website,
+          url: /^https?:/.test(linkedIn) ? linkedIn : `https://${linkedIn}`,
+          label: "LinkedIn",
+        },
+      },
+    ];
+  const sections: Record<Section, string[]> = {
+    summary: [],
+    target: [],
+    experience: [],
+    education: [],
+    skills: [],
+    credentials: [],
+    languages: [],
+  };
+  const unclassified: string[] = [];
+  let current: Section | null = null;
+  for (const line of lines.slice(
+    firstHeading < 0 ? header.length : firstHeading,
+  )) {
+    const next = heading(line);
+    if (next) {
+      current = next;
+      continue;
+    }
+    // Unknown headings end the preceding section, rather than corrupting its last item.
+    if (/^[A-Z][A-Z /&-]{3,}$/.test(line)) {
+      current = null;
+      unclassified.push(line);
+      continue;
+    }
+    if (current) sections[current].push(line);
+    else unclassified.push(line);
+  }
+  const periodPattern =
+    /^(?:(?:[A-Za-z]+\.?\s+)?(?:19|20)\d{2})\s*[-–—]\s*(?:(?:[A-Za-z]+\.?\s+)?(?:19|20)\d{2}|present|current|now)$/i;
+  type Experience = DesignResumeJson["sections"]["experience"]["items"][number];
+  const experience: Experience[] = [];
+  let item: Experience | null = null;
+  const residual: string[] = [];
+  for (const line of sections.experience) {
+    const fields = line.split(/\s*\|\s*/);
+    const period = fields.at(-1) ?? "";
+    if (fields.length >= 3 && periodPattern.test(period)) {
+      item = {
+        id: `local-experience-${experience.length}`,
+        hidden: false,
+        position: fields[0],
+        company: fields[1],
+        location: fields.slice(2, -1).join(" | "),
+        period,
+        website: { ...website },
+        description: "",
+        roles: [],
+      };
+      experience.push(item);
+    } else if (item) {
+      item.description += html([line]);
+    } else residual.push(line);
+  }
+  resume.sections.experience.items = experience;
+  resume.sections.experience.title = "Professional Experience";
+  resume.sections.education.items = sections.education.flatMap(
+    (line, index) => {
+      const fields = line.split(/\s*\|\s*/);
+      if (fields.length < 2) {
+        residual.push(line);
+        return [];
+      }
+      return [
+        {
+          id: `local-education-${index}`,
+          hidden: false,
+          degree: fields[0],
+          school: fields[1],
+          area: "",
+          grade: "",
+          location: fields[2] ?? "",
+          period: "",
+          website: { ...website },
+          description: html(fields.slice(3)),
+        },
+      ];
+    },
+  );
+  resume.sections.education.title = "Education";
+  resume.sections.skills.items = sections.skills
+    .flatMap((line) => line.split(/\s*[|;•]\s*/))
+    .filter(Boolean)
+    .map((name, index) => ({
+      id: `local-skill-${index}`,
+      hidden: false,
+      icon: "",
+      name,
+      proficiency: "",
+      level: 0,
+      keywords: [],
+    }));
+  // Preserve credentials verbatim: approval to take an exam is not a licence.
+  // Preserve unrecognized text rather than guessing employers, positions or qualifications.
+  resume.summary.title = "Professional Profile";
+  resume.summary.content =
+    html(sections.summary) +
+    (sections.target.length
+      ? `<p><strong>Target position</strong></p>${html(sections.target)}`
+      : "") +
+    (sections.credentials.length
+      ? `<p><strong>Licences and credentials</strong></p>${html(sections.credentials)}`
+      : "") +
+    (sections.languages.length
+      ? `<p><strong>Languages</strong></p>${html(sections.languages)}`
+      : "") +
+    (residual.length || unclassified.length
+      ? `<p><strong>Additional resume information</strong></p>${html([...residual, ...unclassified])}`
+      : "");
   return sanitizeNormalizedResume(resume);
 }
 

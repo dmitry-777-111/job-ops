@@ -12,12 +12,16 @@ import { getActiveCandidateStrategy } from "@server/repositories/candidate-strat
 import { getSetting } from "@server/repositories/settings";
 import { getCurrentAccountEntitlements } from "@server/services/account-entitlements";
 import { enqueueAutoPdfRegenerationForSettingsChanges } from "@server/services/auto-pdf-regeneration";
-import { getDesignResumeStatus } from "@server/services/design-resume";
+import {
+  designResumeToProfile,
+  getCurrentDesignResume,
+  getDesignResumeStatus,
+} from "@server/services/design-resume";
 import { getOriginalEnvValue } from "@server/services/envSettings";
 import { resolveLlmApiKey } from "@server/services/llm/credentials";
 import { isHostedLocalProvider } from "@server/services/llm/hosted-policy";
 import { LlmService } from "@server/services/llm/service";
-import { clearProfileCache, getProfile } from "@server/services/profile";
+import { clearProfileCache } from "@server/services/profile";
 import {
   clearRxResumeResumeCache,
   getResume,
@@ -35,6 +39,7 @@ import type {
   OnboardingRequirementPrimaryAction,
   OnboardingRequirementStatus,
   OnboardingStatusResponse,
+  ResumeProfile,
 } from "@shared/types";
 import { LLM_PROVIDER_VALUES } from "@shared/types";
 
@@ -911,23 +916,52 @@ export async function confirmOnboardingResumeAction(
       { source: input.source },
     );
   }
+  let currentProfile: ResumeProfile | null;
+  const isLocal = input.source.startsWith("local:");
+  if (isLocal) {
+    const document = await getCurrentDesignResume();
+    if (!document || `local:${document.id}` !== input.source) {
+      throw unprocessableEntity(
+        "The selected resume changed. Review the current resume and try again.",
+      );
+    }
+    currentProfile = await designResumeToProfile(document.resumeJson);
+  } else {
+    const resume = await getResume(input.source.slice("rxresume:".length), {
+      forceRefresh: true,
+    });
+    currentProfile = resume.data as ResumeProfile;
+  }
+  if (!currentProfile || typeof currentProfile !== "object") {
+    throw unprocessableEntity(
+      "The selected resume has no usable profile. Review it before confirming.",
+    );
+  }
+  const active = await getActiveMasterCareerProfile();
+  if (
+    !active ||
+    active.sourceRef !== input.source ||
+    JSON.stringify(active.profile) !== JSON.stringify(currentProfile)
+  ) {
+    const draft = await createMasterCareerProfileDraft({
+      profile: currentProfile,
+      source: isLocal ? "design_resume" : "rxresume",
+      sourceRef: input.source,
+      provenance: {
+        activation: "onboarding-resume-confirmation",
+        previousProfileVersionId: active?.id ?? null,
+      },
+    });
+    if (!(await activateMasterCareerProfileVersion(draft.id))) {
+      throw unprocessableEntity(
+        "The confirmed profile could not be activated. Try again.",
+      );
+    }
+  }
   await persistOnboardingSettings(
     { onboardingResumeConfirmedSource: input.source },
     "POST /api/onboarding/actions/resume/confirm",
   );
-
-  if (!(await getActiveMasterCareerProfile())) {
-    const currentProfile = await getProfile();
-    const draft = await createMasterCareerProfileDraft({
-      profile: currentProfile,
-      source: "legacy_current_profile",
-      sourceRef: input.source,
-      provenance: {
-        activation: "onboarding-resume-confirmation",
-      },
-    });
-    await activateMasterCareerProfileVersion(draft.id);
-  }
 
   return getOnboardingStatus();
 }

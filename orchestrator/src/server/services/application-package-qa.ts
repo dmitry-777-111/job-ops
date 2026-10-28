@@ -3,8 +3,17 @@ import type {
   MarketPosting,
   ResumeProfile,
 } from "@shared/types";
-import { buildEvidenceBoundedCoverLetter } from "./application-package-generation";
+import {
+  editorialCoverMatches,
+  normalizeEditorialText,
+  retargetExplicitSummary,
+} from "./application-package-editorial";
+import {
+  applicationTarget,
+  buildEvidenceBoundedCoverLetter,
+} from "./application-package-generation";
 import type { ApplicationVacancyLiveState } from "./application-package-live-gate";
+import { buildProfileEvidenceAtoms } from "./application-package-requirements";
 import {
   type ApplicationPackageStaleReason,
   deriveApplicationPackageStaleReasons,
@@ -16,6 +25,7 @@ export const APPLICATION_PACKAGE_QA_BLOCKING_ISSUES = [
   "targeted_cv_wrong_requisition",
   "missing_cover_letter",
   "cover_letter_not_evidence_bounded",
+  "unresolved_hard_requirements",
   "unsupported_form_answers",
   "vacancy_closed",
   "vacancy_unknown_unacknowledged",
@@ -37,6 +47,20 @@ function canonicalizeProfileForTruthComparison(
   profile: ResumeProfile,
 ): ResumeProfile {
   const clone = JSON.parse(JSON.stringify(profile)) as ResumeProfile;
+  // Normalize presentation only in prose; identity, dates, credentials, skill
+  // levels and every other structured value remain exact and mandatory.
+  const normalize = (value: unknown): void => {
+    if (!value || typeof value !== "object") return;
+    for (const [key, child] of Object.entries(value)) {
+      if (
+        typeof child === "string" &&
+        ["summary", "description", "content"].includes(key)
+      ) {
+        (value as Record<string, unknown>)[key] = normalizeEditorialText(child);
+      } else normalize(child);
+    }
+  };
+  normalize(clone);
   const skillSection = clone.sections?.skills;
   const skills = skillSection?.items;
   if (skillSection && skills) {
@@ -50,11 +74,29 @@ function canonicalizeProfileForTruthComparison(
 function targetedCvPreservesMasterFacts(
   targetedCvJson: Record<string, unknown>,
   profile: ResumeProfile,
+  posting: MarketPosting,
 ): boolean {
   const targeted = canonicalizeProfileForTruthComparison(
     targetedCvJson as ResumeProfile,
   );
-  const master = canonicalizeProfileForTruthComparison(profile);
+  if (
+    JSON.stringify(targeted) ===
+    JSON.stringify(canonicalizeProfileForTruthComparison(profile))
+  )
+    return true;
+  const source = structuredClone(profile);
+  const target = applicationTarget(posting);
+  if (source.basics?.summary)
+    source.basics.summary = retargetExplicitSummary(
+      source.basics.summary,
+      target,
+    );
+  if (source.sections?.summary?.content)
+    source.sections.summary.content = retargetExplicitSummary(
+      source.sections.summary.content,
+      target,
+    );
+  const master = canonicalizeProfileForTruthComparison(source);
   return JSON.stringify(targeted) === JSON.stringify(master);
 }
 
@@ -83,6 +125,7 @@ export function evaluateApplicationPackageQa(input: {
     !targetedCvPreservesMasterFacts(
       input.applicationPackage.targetedCvJson,
       input.profile,
+      input.posting,
     )
   ) {
     blockingIssues.push("targeted_cv_changes_candidate_facts");
@@ -97,10 +140,9 @@ export function evaluateApplicationPackageQa(input: {
     requisition &&
     targetTexts.some((text) => {
       if (!text) return false;
-      const target = text.match(
-        /<p[^>]*>\s*(?:<strong>)?Target position(?:<\/strong>)?\s*<\/p>\s*<p[^>]*>([\s\S]*?)<\/p>/i,
+      const declared = normalizeEditorialText(text).match(
+        /\bTarget position\s+.{0,400}?\bRequisition\s*#?\s*([\w-]+)/i,
       )?.[1];
-      const declared = target?.match(/\bRequisition\s*#?\s*([\w-]+)/i)?.[1];
       return declared !== undefined && declared.toLowerCase() !== requisition;
     })
   ) {
@@ -115,9 +157,31 @@ export function evaluateApplicationPackageQa(input: {
       profile: input.profile,
       evidenceMap: input.applicationPackage.evidenceMap,
     });
-    if (input.applicationPackage.coverLetter !== expectedCoverLetter) {
+    const atoms = buildProfileEvidenceAtoms(input.profile);
+    const evidenceAnchored = input.applicationPackage.evidenceMap.every(
+      (evidence) =>
+        evidence.evidenceSource === "profile" &&
+        atoms.some(
+          (atom) =>
+            atom.ref === evidence.evidenceRef &&
+            atom.text === evidence.evidenceText,
+        ),
+    );
+    if (
+      !evidenceAnchored ||
+      !editorialCoverMatches(
+        input.applicationPackage.coverLetter,
+        expectedCoverLetter,
+      )
+    ) {
       blockingIssues.push("cover_letter_not_evidence_bounded");
     }
+  }
+
+  if (
+    input.applicationPackage.gaps.some((gap) => gap.severity === "hard_gap")
+  ) {
+    blockingIssues.push("unresolved_hard_requirements");
   }
 
   if (Object.keys(input.applicationPackage.formAnswers).length > 0) {

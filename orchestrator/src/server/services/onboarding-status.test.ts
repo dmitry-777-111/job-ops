@@ -4,6 +4,8 @@ const mocks = vi.hoisted(() => ({
   applySettingsUpdates: vi.fn(),
   getConfiguredRxResumeBaseResumeId: vi.fn(),
   getDesignResumeStatus: vi.fn(),
+  getCurrentDesignResume: vi.fn(),
+  designResumeToProfile: vi.fn(),
   getJobOpsAppStatus: vi.fn(),
   getCurrentAccountEntitlements: vi.fn(),
   getActiveCandidateStrategy: vi.fn(),
@@ -52,6 +54,8 @@ vi.mock("@server/services/auto-pdf-regeneration", () => ({
 
 vi.mock("@server/services/design-resume", () => ({
   getDesignResumeStatus: mocks.getDesignResumeStatus,
+  getCurrentDesignResume: mocks.getCurrentDesignResume,
+  designResumeToProfile: mocks.designResumeToProfile,
 }));
 
 vi.mock("@server/services/envSettings", () => ({
@@ -147,6 +151,13 @@ describe("onboarding status engine", () => {
       supersededAt: null,
     });
     mocks.getProfile.mockResolvedValue({ basics: { name: "Candidate" } });
+    mocks.getCurrentDesignResume.mockResolvedValue({
+      id: "doc-1",
+      resumeJson: { basics: { name: "Candidate" } },
+    });
+    mocks.designResumeToProfile.mockResolvedValue({
+      basics: { name: "Candidate" },
+    });
     mocks.createMasterCareerProfileDraft.mockResolvedValue({
       id: "profile-draft",
       version: 1,
@@ -618,16 +629,99 @@ describe("onboarding status engine", () => {
 
     await confirmOnboardingResumeAction({ source: "local:doc-1" });
 
-    expect(mocks.getProfile).toHaveBeenCalledTimes(1);
+    expect(mocks.getProfile).not.toHaveBeenCalled();
     expect(mocks.createMasterCareerProfileDraft).toHaveBeenCalledWith({
       profile: { basics: { name: "Candidate" } },
-      source: "legacy_current_profile",
+      source: "design_resume",
       sourceRef: "local:doc-1",
-      provenance: { activation: "onboarding-resume-confirmation" },
+      provenance: {
+        activation: "onboarding-resume-confirmation",
+        previousProfileVersionId: null,
+      },
     });
     expect(mocks.activateMasterCareerProfileVersion).toHaveBeenCalledWith(
       "profile-draft",
     );
+  });
+
+  it("replaces the active profile from the confirmed document while retaining dates and source", async () => {
+    const fresh = {
+      basics: { name: "Candidate" },
+      sections: {
+        experience: {
+          items: [
+            {
+              id: "exp",
+              company: "Factory",
+              date: "Aug 2020 - May 2023",
+              summary: "Equipment installation",
+            },
+          ],
+        },
+      },
+    };
+    mocks.designResumeToProfile.mockResolvedValue(fresh);
+    await confirmOnboardingResumeAction({ source: "local:doc-1" });
+    expect(mocks.getProfile).not.toHaveBeenCalled();
+    expect(mocks.createMasterCareerProfileDraft).toHaveBeenCalledWith({
+      profile: fresh,
+      source: "design_resume",
+      sourceRef: "local:doc-1",
+      provenance: {
+        activation: "onboarding-resume-confirmation",
+        previousProfileVersionId: "profile-active",
+      },
+    });
+    expect(mocks.activateMasterCareerProfileVersion).toHaveBeenCalledWith(
+      "profile-draft",
+    );
+  });
+
+  it("does not create another profile version for the same confirmed content", async () => {
+    await confirmOnboardingResumeAction({ source: "local:doc-1" });
+    expect(mocks.createMasterCareerProfileDraft).not.toHaveBeenCalled();
+  });
+
+  it("does not confirm a local document replaced between status and read", async () => {
+    mocks.getCurrentDesignResume.mockResolvedValue({
+      id: "doc-other",
+      resumeJson: {},
+    });
+    await expect(
+      confirmOnboardingResumeAction({ source: "local:doc-1" }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect(mocks.applySettingsUpdates).not.toHaveBeenCalled();
+    expect(mocks.createMasterCareerProfileDraft).not.toHaveBeenCalled();
+  });
+
+  it("uses the selected Reactive Resume even when a local document exists", async () => {
+    mocks.getConfiguredRxResumeBaseResumeId.mockResolvedValue({
+      resumeId: "rx-1",
+    });
+    mocks.getResume.mockResolvedValue({
+      data: { basics: { name: "Selected remote profile" } },
+    });
+    await confirmOnboardingResumeAction({ source: "rxresume:rx-1" });
+    expect(mocks.createMasterCareerProfileDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "rxresume",
+        sourceRef: "rxresume:rx-1",
+        profile: { basics: { name: "Selected remote profile" } },
+      }),
+    );
+    expect(mocks.designResumeToProfile).not.toHaveBeenCalled();
+    expect(mocks.getResume).toHaveBeenCalledWith("rx-1", {
+      forceRefresh: true,
+    });
+  });
+
+  it("does not mark confirmation successful when profile activation fails", async () => {
+    mocks.getActiveMasterCareerProfile.mockResolvedValue(null);
+    mocks.activateMasterCareerProfileVersion.mockResolvedValue(null);
+    await expect(
+      confirmOnboardingResumeAction({ source: "local:doc-1" }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect(mocks.applySettingsUpdates).not.toHaveBeenCalled();
   });
 
   it("rejects a new Ollama model action without an explicit model", async () => {

@@ -105,6 +105,109 @@ const currentVersions = {
 };
 
 describe("F3-6D application package QA truth gate", () => {
+  it("rejects a forged stored evidence entry even when the cover matches its template", () => {
+    const applicationPackage = buildPackage();
+    const forged = [
+      {
+        ...evidenceMap[0],
+        evidenceText: "Unrestricted Canadian work authorization",
+      },
+    ];
+    Object.assign(
+      applicationPackage,
+      buildTruthConstrainedApplicationDraft({
+        posting,
+        profile,
+        evidenceMap: forged,
+        gaps: [],
+      }),
+    );
+    applicationPackage.evidenceMap = forged;
+    expect(
+      evaluateApplicationPackageQa({
+        applicationPackage,
+        posting,
+        profile,
+        currentVersions,
+        liveState: "live",
+      }).blockingIssues,
+    ).toContain("cover_letter_not_evidence_bounded");
+  });
+  it("retargets only explicit application text while retaining source and history", () => {
+    const source = structuredClone(profile);
+    source.basics = {
+      ...source.basics,
+      summary:
+        "<p><strong>Target position</strong></p><p>Old role | Old employer | Requisition OLD-7</p><p>No US travel. Licence examination stage.</p>",
+    };
+    const before = JSON.stringify(source);
+    const applicationPackage = buildPackage();
+    Object.assign(
+      applicationPackage,
+      buildTruthConstrainedApplicationDraft({
+        posting,
+        profile: source,
+        evidenceMap,
+        gaps: [],
+      }),
+    );
+    expect(
+      evaluateApplicationPackageQa({
+        applicationPackage,
+        posting,
+        profile: source,
+        currentVersions,
+        liveState: "live",
+      }).pass,
+    ).toBe(true);
+    expect(JSON.stringify(applicationPackage.targetedCvJson)).toContain(
+      "No US travel. Licence examination stage.",
+    );
+    expect(JSON.stringify(source)).toBe(before);
+    const edited = applicationPackage.targetedCvJson as ResumeProfile;
+    edited.basics = {
+      ...source.basics,
+      summary:
+        "Target position Old role | Old employer | Requisition OLD-7 No US travel. Licence examination stage.",
+    };
+    expect(
+      evaluateApplicationPackageQa({
+        applicationPackage,
+        posting,
+        profile: source,
+        currentVersions,
+        liveState: "live",
+      }).blockingIssues,
+    ).toContain("targeted_cv_wrong_requisition");
+  });
+
+  it.each([
+    "company",
+    "position",
+    "date",
+    "institution",
+    "studyType",
+    "skills",
+    "licence",
+    "workAuthorization",
+    "travel",
+  ])("does not accept structured fact mutation: %s", (field) => {
+    const applicationPackage = buildPackage();
+    applicationPackage.targetedCvJson = {
+      ...applicationPackage.targetedCvJson,
+      [field]: "Invented fact",
+    };
+    expect(
+      evaluateApplicationPackageQa({
+        applicationPackage,
+        posting,
+        profile,
+        currentVersions,
+        liveState: "live",
+      }).blockingIssues,
+    ).toContain("targeted_cv_changes_candidate_facts");
+  });
+
   it.each([
     ["OTHER-2", false],
     ["req-1", true],
@@ -124,6 +227,10 @@ describe("F3-6D application package QA truth gate", () => {
         gaps: [],
       }),
     );
+    // Exercise a stored/manual edit; generation now retargets the source.
+    (applicationPackage.targetedCvJson as ResumeProfile).basics = {
+      ...source.basics,
+    };
     const before = JSON.stringify(source);
     const result = evaluateApplicationPackageQa({
       applicationPackage,
@@ -240,7 +347,7 @@ describe("F3-6D application package QA truth gate", () => {
     expect(acknowledged.pass).toBe(true);
   });
 
-  it("reports hard gaps without converting them into invented positive claims", () => {
+  it("blocks unresolved hard requirements even for factually unchanged documents", () => {
     const applicationPackage = buildPackage();
     applicationPackage.gaps = [
       {
@@ -259,8 +366,59 @@ describe("F3-6D application package QA truth gate", () => {
       liveState: "live",
     });
 
-    expect(result.pass).toBe(true);
+    expect(result.pass).toBe(false);
+    expect(result.blockingIssues).toContain("unresolved_hard_requirements");
     expect(result.hardGapCount).toBe(1);
     expect(result.gapCount).toBe(1);
+  });
+
+  it("accepts inert CV formatting and cover greeting/bullet edits without altering facts", () => {
+    const applicationPackage = buildPackage();
+    (applicationPackage.targetedCvJson as ResumeProfile).basics = {
+      ...profile.basics,
+      summary: "<p><strong>Industrial</strong>   technician.</p>",
+    };
+    applicationPackage.coverLetter = (applicationPackage.coverLetter ?? "")
+      .replace("Dear Hiring Team,", "Dear Hiring Manager,")
+      .replace("- PLC", "• PLC")
+      .replace("Sincerely,", "Kind regards,");
+    expect(
+      evaluateApplicationPackageQa({
+        applicationPackage,
+        posting,
+        profile,
+        currentVersions,
+        liveState: "live",
+      }).pass,
+    ).toBe(true);
+  });
+
+  it.each([
+    "I hold a 309A licence.",
+    "I am authorized to work for any employer in Canada.",
+    "I am available for unrestricted international travel.",
+    "I program PLCs.",
+    "I worked at Another Employer from 2020 to 2025.",
+    "I hold an engineering degree.",
+  ])("rejects a new factual assertion in both documents: %s", (claim) => {
+    const applicationPackage = buildPackage();
+    (applicationPackage.targetedCvJson as ResumeProfile).basics = {
+      ...profile.basics,
+      summary: claim,
+    };
+    applicationPackage.coverLetter += `\n${claim}`;
+    const result = evaluateApplicationPackageQa({
+      applicationPackage,
+      posting,
+      profile,
+      currentVersions,
+      liveState: "live",
+    });
+    expect(result.blockingIssues).toEqual(
+      expect.arrayContaining([
+        "targeted_cv_changes_candidate_facts",
+        "cover_letter_not_evidence_bounded",
+      ]),
+    );
   });
 });
