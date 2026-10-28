@@ -233,3 +233,13 @@ The initial targeted run loaded the patched service after slow environment start
 
 Next bounded check: historical stage ancestry (fromStage) should reflect the chronological predecessor rather than a future stage.
 Validation: first two-file run 30 passed / 2 failed after API setup timeout, mock error and temporary DB EBUSY. Unchanged code rerun with --no-file-parallelism: 32/32 PASS, exit 0 (Node 22 / Vitest 4.1.6). Orchestrator check:types PASS, exit 0.
+
+## D finalization — 2026-10-28 (bounded, not accepted)
+
+Remote baseline: `6f37b4a78ef8707c690b4537885ee90bc72c4699`. Transfer only the explicit wrong-requisition QA guard and synthetic regression from the preserved local candidate; import/profile/parser and unrelated experiments remain local.
+
+Reproduced on baseline: wrong explicit target incorrectly passed QA (1 failed, 1 passed, 5 skipped). After guard: 16/16 focused QA, approval, export and private-isolation tests passed. Corrected an optional-basics typing issue in the regression fixture; final QA-only rerun and focused types/Biome/diff checks recorded in local evidence. No broad CI or deployment acceptance claimed.
+
+The existing private test package was corrected in place with a backup: target corrected, unsupported travel wording removed, cover expanded from pinned source experience, candidate history/education/credentials unchanged. Separate-process reload retained CV, cover and review notes. Unapproved export rejected; no approval, submission, employer outcome, profile or job-state change. Private artifacts are not in GitHub.
+
+Product PASS is not established: exact master/template comparisons still block editorial changes. Hard requirement gaps remain; eligibility UNKNOWN and real application NOT APPROVED. D FAIL; E not ready. No suitable substitute was proven or newly searched. This commit uses [skip ci]; production and running test UI remain untouched.

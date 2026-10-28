@@ -105,6 +105,40 @@ const currentVersions = {
 };
 
 describe("F3-6D application package QA truth gate", () => {
+  it.each([
+    ["OTHER-2", false],
+    ["req-1", true],
+  ])("checks an explicit source target requisition %s", (id, passes) => {
+    const source = structuredClone(profile);
+    source.basics = {
+      ...source.basics,
+      summary: `<p><strong>Target position</strong></p><p>Technician | Employer | Requisition ${id}</p>`,
+    };
+    const applicationPackage = buildPackage();
+    Object.assign(
+      applicationPackage,
+      buildTruthConstrainedApplicationDraft({
+        posting,
+        profile: source,
+        evidenceMap,
+        gaps: [],
+      }),
+    );
+    const before = JSON.stringify(source);
+    const result = evaluateApplicationPackageQa({
+      applicationPackage,
+      posting,
+      profile: source,
+      currentVersions,
+      liveState: "live",
+    });
+    expect(result.pass).toBe(passes);
+    expect(result.blockingIssues).toEqual(
+      passes ? [] : ["targeted_cv_wrong_requisition"],
+    );
+    expect(JSON.stringify(source)).toBe(before);
+  });
+
   it("passes a current deterministic evidence-bounded package", () => {
     const result = evaluateApplicationPackageQa({
       applicationPackage: buildPackage(),

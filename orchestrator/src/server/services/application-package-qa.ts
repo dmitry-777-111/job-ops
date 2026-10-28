@@ -13,6 +13,7 @@ import {
 export const APPLICATION_PACKAGE_QA_BLOCKING_ISSUES = [
   "missing_targeted_cv",
   "targeted_cv_changes_candidate_facts",
+  "targeted_cv_wrong_requisition",
   "missing_cover_letter",
   "cover_letter_not_evidence_bounded",
   "unsupported_form_answers",
@@ -85,6 +86,25 @@ export function evaluateApplicationPackageQa(input: {
     )
   ) {
     blockingIssues.push("targeted_cv_changes_candidate_facts");
+  }
+
+  // An unchanged source can still be an application for another requisition.
+  // Inspect explicit target paragraphs only, never historical employment text.
+  const cv = input.applicationPackage.targetedCvJson as ResumeProfile | null;
+  const targetTexts = [cv?.basics?.summary, cv?.sections?.summary?.content];
+  const requisition = input.posting.officialRequisitionId?.trim().toLowerCase();
+  if (
+    requisition &&
+    targetTexts.some((text) => {
+      if (!text) return false;
+      const target = text.match(
+        /<p[^>]*>\s*(?:<strong>)?Target position(?:<\/strong>)?\s*<\/p>\s*<p[^>]*>([\s\S]*?)<\/p>/i,
+      )?.[1];
+      const declared = target?.match(/\bRequisition\s*#?\s*([\w-]+)/i)?.[1];
+      return declared !== undefined && declared.toLowerCase() !== requisition;
+    })
+  ) {
+    blockingIssues.push("targeted_cv_wrong_requisition");
   }
 
   if (!input.applicationPackage.coverLetter) {
