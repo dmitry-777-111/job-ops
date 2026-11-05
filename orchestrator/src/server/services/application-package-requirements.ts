@@ -163,7 +163,9 @@ export function extractApplicationRequirements(
       );
     const preferred =
       PREFERRED_SIGNAL.test(candidate) ||
-      (sectionPreferred.has(candidate) && !explicitlyNotRequired);
+      (sectionPreferred.has(candidate) &&
+        !sectionRequired.has(candidate) &&
+        !explicitlyNotRequired);
     // A positive mandatory clause must not be erased by an unrelated optional clause.
     // Mixed requirements remain mandatory until they are split into distinct facts.
     const positiveSignals = candidate.replace(

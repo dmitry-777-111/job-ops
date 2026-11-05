@@ -34,6 +34,13 @@ const description = [
 ].join("\n");
 
 describe("stored Cintas qualification structure", () => {
+  it("never downgrades a required qualification repeated under Preferred", () => {
+    const rows = extractApplicationRequirements(
+      "Required\n* PLC knowledge\nPreferred\n* PLC knowledge",
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ text: "PLC knowledge", mandatory: true });
+  });
   it("retains all six mandatory and three preferred qualifications, excluding headings and administrative notices", () => {
     const rows = extractApplicationRequirements(description);
     expect(rows.map((row) => row.text)).toEqual([...required, ...preferred]);
