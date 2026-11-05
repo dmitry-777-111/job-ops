@@ -112,35 +112,58 @@ export function extractApplicationRequirements(
   const seen = new Set<string>();
   const result: ApplicationRequirementItem[] = [];
   const sectionRequired = new Set<string>();
+  const sectionPreferred = new Set<string>();
   const headings = new Set<string>();
-  let inRequiredSection = false;
+  let section: "required" | "preferred" | null = null;
   for (const line of description.split(/\r?\n/)) {
     const heading = line.trim().replace(/^[#*\s]+|[*:\s]+$/g, "");
-    if (
-      /^(?:required (?:skills|qualifications)|requirements)$/i.test(heading)
-    ) {
-      inRequiredSection = true;
+    const requiredHeading =
+      /^(?:required(?: (?:skills|qualifications))?|requirements)$/i.test(
+        heading,
+      );
+    const preferredHeading = /^preferred(?: (?:skills|qualifications))?$/i.test(
+      heading,
+    );
+    if (requiredHeading || preferredHeading) {
+      section = requiredHeading ? "required" : "preferred";
       for (const text of splitRequirementCandidates(line)) headings.add(text);
       continue;
     }
     if (!line.trim()) continue;
     if (!/^\s*[-*•●▪◦]\s+/.test(line)) {
-      inRequiredSection = false;
+      section = null;
       continue;
     }
-    if (inRequiredSection) {
+    if (section) {
       for (const text of splitRequirementCandidates(line))
-        sectionRequired.add(text);
+        (section === "required" ? sectionRequired : sectionPreferred).add(text);
     }
   }
 
   for (const candidate of splitRequirementCandidates(description)) {
     if (headings.has(candidate)) continue;
+    // These exact administrative notices describe accommodation requests and
+    // posting duration, not candidate qualifications. Do not suppress other
+    // "Applicants are required" or "at least" statements.
+    if (
+      /^This job posting will remain open for at least five \(5\) days\.$/i.test(
+        candidate,
+      ) ||
+      (/^Applicants are required to make their needs known in advance\.$/i.test(
+        candidate,
+      ) &&
+        /accommodations will be provided in all parts of the hiring process\./i.test(
+          description,
+        ))
+    )
+      continue;
     const explicitlyNotRequired =
       /\b(?:not required|not mandatory|no (?:licen[cs]e|certification|experience) required)\b/i.test(
         candidate,
       );
-    const preferred = PREFERRED_SIGNAL.test(candidate);
+    const preferred =
+      PREFERRED_SIGNAL.test(candidate) ||
+      (sectionPreferred.has(candidate) && !explicitlyNotRequired);
     // A positive mandatory clause must not be erased by an unrelated optional clause.
     // Mixed requirements remain mandatory until they are split into distinct facts.
     const positiveSignals = candidate.replace(
