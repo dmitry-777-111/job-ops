@@ -10,7 +10,7 @@ import type { ApplicationPackage } from "@shared/types";
 import { buildTruthConstrainedApplicationDraft } from "./application-package-generation";
 import { buildApplicationPackagePreparation } from "./application-package-preparation";
 
-export const APPLICATION_PACKAGE_GENERATION_POLICY_VERSION = "freeze3-mvp-v1";
+export const APPLICATION_PACKAGE_GENERATION_POLICY_VERSION = "freeze3-mvp-v2";
 
 export async function prepareApplicationPackageDraft(input: {
   marketPostingId: string;

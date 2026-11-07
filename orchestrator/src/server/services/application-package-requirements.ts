@@ -6,6 +6,12 @@ import type {
   ApplicationRequirementItem,
   ResumeProfile,
 } from "@shared/types";
+import { normalizeEditorialText } from "./application-package-editorial";
+import {
+  completedExperienceMonths,
+  hasIndustrialRepairDuties,
+  industrialRepairYearsRequired,
+} from "./application-package-industrial-evidence";
 
 const REQUIRED_SIGNAL =
   /\b(must|required|requirement|minimum|at least|mandatory|shall)\b/i;
@@ -252,6 +258,14 @@ export function buildProfileEvidenceAtoms(
   }
 
   for (const item of profile.sections?.experience?.items ?? []) {
+    if (item.date?.trim() && item.summary?.trim()) {
+      pushAtom(
+        atoms,
+        "sections.experience." + item.id + ".datedSummary",
+        `${item.date.trim()}: ${normalizeEditorialText(item.summary)}`,
+        "experience",
+      );
+    }
     pushAtom(
       atoms,
       "sections.experience." + item.id + ".position",
@@ -333,7 +347,27 @@ export function mapApplicationRequirementsToEvidence(input: {
   const gaps: ApplicationGapItem[] = [];
 
   for (const requirement of input.requirements) {
-    const evidence = findConservativeSkillEvidence(requirement, atoms);
+    let evidence = findConservativeSkillEvidence(requirement, atoms);
+    const years =
+      requirement.category === "experience"
+        ? industrialRepairYearsRequired(requirement.text)
+        : null;
+    if (!evidence && years !== null && years > 0) {
+      const item = input.profile.sections?.experience?.items?.find((item) => {
+        const months = completedExperienceMonths(item.date ?? "");
+        return (
+          months !== null &&
+          months >= years * 12 &&
+          hasIndustrialRepairDuties(item.summary ?? "")
+        );
+      });
+      if (item)
+        evidence =
+          atoms.find(
+            (atom) =>
+              atom.ref === `sections.experience.${item.id}.datedSummary`,
+          ) ?? null;
+    }
     if (evidence) {
       evidenceMap.push({
         requirementKey: requirement.key,
